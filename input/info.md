@@ -3,7 +3,7 @@ Requirements
 
 ## Enforce Process
 
-* Collect high-level requirements
+* Collect high-level requirements/input
   * Loose and unstructured as a starting point
 * Create Domain Model
   * Define Entities
@@ -61,6 +61,7 @@ Requirements
 ## Link items together
 
 * Using well-defined Entities
+* Using tags
 
 ## Connect an Item with JIRA
 
