@@ -1,0 +1,10 @@
+include("../gubg/recipes.chai")
+
+cook.recipe("proast", TargetType.Executable, fun(rcp){
+    rcp.add("src", "**.[hc]pp")
+    rcp.include_path("/usr/local/include/notcurses")
+    rcp.include_path("/usr/local/include/ncpp")
+    rcp.library("notcurses++")
+    rcp.library("notcurses")
+    rcp.depends_on("gubg/std/func")
+})
