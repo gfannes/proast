@@ -1,4 +1,4 @@
-ProPr
-=====
+ProAst
+======
 
-ProPr is a *Project Process* assistant.
+ProAst is a *Project Assistant*.

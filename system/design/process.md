@@ -12,10 +12,11 @@ Process
 
 ## System
 ### Domain
+What should be in the domain model? Only a model of the domain, or also an object model of the solution? If so, this should probably be placed after the design.
 #### Tags
 #### Model
 Maybe a functional and non-functional design would be better than architectural and design
-Or simply use the `system/design` folder without more hierarchy
+Or simply use the `system/design` or `system/blueprint` folder without more hierarchy
 ### Architecture (structure)
 Architecture is on a higher level than design, and more hierarchical in nature
 Partitions the solution in major regions of functionality, interface, protocols, ...
@@ -34,3 +35,26 @@ TODO: try to merge architecture and design, or create a clear distinction betwee
 ### Sprint
 
 ## Report
+
+input
+  roles
+  resources
+  info
+    <subfolders>/<file>
+  requirements
+    <subfolders>/<file>
+system
+  tags
+  model
+    <namespace>/<entity>
+  design
+    <subfolders>/<file>
+features
+  <area>
+    <capability>
+      <feature>
+planning
+  prio
+  sprints
+    
+report
