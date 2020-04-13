@@ -91,7 +91,7 @@ namespace proast { namespace view {
             log::stream() << "Created notcurses context" << std::endl;
             {
                 nc_->get_term_dim(row_cnt_,col_cnt_);
-                log::stream() << "y: " << row_cnt_ << ", x: " << col_cnt_ << "" << std::endl;
+                log::stream() << "Row count: " << row_cnt_ << ", Col count: " << col_cnt_ << "" << std::endl;
             }
             MSS_END();
         }
