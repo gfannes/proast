@@ -18,6 +18,14 @@ Requirements
   * Current status
   * Progress since last report
 
+## Recursive process
+
+* Apply the same structure and process from high to low level in a nested manner
+  * Prioritized requirements
+  * Design
+    * Documented decisions
+  * Features distributed over nested capability areas
+
 ## Text UI
 
 * Use VI keybindings to navigate Items, Folders and Files
