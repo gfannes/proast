@@ -58,3 +58,15 @@ planning
   sprints
     
 report
+
+
+Focus on steps that are needed at all levels
+
+root
+description
+info
+requirements
+design
+model
+plan
+validation
