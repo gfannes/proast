@@ -1,4 +1,3 @@
-ProAst
-======
+Project Assistant
+=================
 
-ProAst is a *Project Assistant*.
