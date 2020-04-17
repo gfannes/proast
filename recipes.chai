@@ -1,7 +1,7 @@
 include("../gubg/recipes.chai")
 
 cook.recipe("proast", TargetType.Executable, fun(rcp){
-    rcp.add("app/src", "**.[hc]pp")
+    rcp.add("tui_app/src", "**.[hc]pp")
     rcp.include_path("/usr/local/include/notcurses")
     rcp.include_path("/usr/local/include/ncpp")
     rcp.library("notcurses++")
