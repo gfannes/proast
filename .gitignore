@@ -5,3 +5,4 @@
 build.ninja
 proast_1.resp
 ./proast
+.extern/
