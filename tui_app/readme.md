@@ -17,3 +17,4 @@ Text-UI application
 ### Should
 
 * allow creation of project documentation as a `.pdf` file
+* allow easy reordering of sprints by changing the rang index of a sprint and regenerate the rang indices with a stride of 10
