@@ -15,7 +15,15 @@ Store data in a file system for a project
 
 Where possible, information will represented in a file system with a hierarchy as similar as possible as the structure of the project data. Human-readable descriptions will use [markdown](/home/geertf/gubg/gubg.io/src/gubg/parse/naft/spec.md) and well-structured data will use [.naft](http://github.com/gfannes/gubg.io/src/gubg/parse/naft/spec.md), either directly, or embedded in a markdown file.
 
-Embedding such annotation data will use a [fenced code block](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code) at the start or bottom of the markdown file without language specification.
+### Annotation
+
+Embedding such annotation data will use a [fenced code block](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code) at the start or bottom of the markdown file without language specification, and use following schema:
+
+```
+[proast]{
+    [status](open|done|blocked)
+}
+```
 
 ## Model
 

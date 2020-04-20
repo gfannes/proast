@@ -6,11 +6,18 @@
 bool main_(int argc, const char **argv)
 {
     MSS_BEGIN(bool);
+
     proast::App app;
-    for (bool quit = false; !quit;)
+
+    MSS(app.process(argc, argv));
+
+    MSS(app.prepare());
+
+    while (!app.quit())
     {
-        MSS(app.process(quit));
+        MSS(app());
     }
+
     MSS_END();
 }
 

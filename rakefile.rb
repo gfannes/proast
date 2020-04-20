@@ -26,8 +26,20 @@ end
 
 task :dependencies => ".extern/notcurses/ok"
 
+task :version_git_hash_header do
+    File.open("tui_app/src/proast/version_git_hash.hpp", "w") do |fo|
+        git_hash = `git log -n1 --abbrev=8 --abbrev-commit`.split[1]
+        case git_hash
+        when NilClass
+            puts("Warning: this is not a git repo")
+        else
+            fo.puts("#define PROAST_GIT_HASH \"#{git_hash}\"")
+        end
+    end
+end
+
 desc "Build proast"
-task :build => :dependencies do
+task :build => [:dependencies, :version_git_hash_header] do
     sh "cook -g ninja -T c++.std=17 proast"
     sh "ninja -v"
 end
