@@ -40,13 +40,24 @@ end
 
 desc "Build proast"
 task :build => [:dependencies, :version_git_hash_header] do
-    sh "cook -g ninja -T c++.std=17 proast"
+    sh "cook -g ninja -T c++.std=17 proast/app"
     sh "ninja -v"
+end
+
+desc "Run unit tests, filter is colon-separated selection filter"
+task :ut, [:filter] do |t,args|
+    filter = (args[:filter] || "ut").split(":").map{|e|"[#{e}]"}*""
+
+    sh "cook -g ninja -T c++.std=17 proast/ut"
+    sh "ninja -v"
+
+    cmd = %w[./proast.ut -d yes -a] << filter
+    sh(*cmd)
 end
 
 desc "Run proast"
 task :test => :build do
-    sh "./proast"
+    sh "./proast.app"
 end
 
 desc "Clear cached binaries"

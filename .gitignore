@@ -4,5 +4,7 @@
 .ninja_log
 build.ninja
 proast_1.resp
-./proast
+proast.app
+proast.ut
 .extern/
+*.resp
