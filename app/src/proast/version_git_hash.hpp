@@ -1,0 +1,1 @@
+#define PROAST_GIT_HASH "43cbc084"

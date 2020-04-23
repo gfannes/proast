@@ -2,7 +2,7 @@ include("../gubg/recipes.chai")
 
 root.book("proast", fun(b){
     b.recipe("app", TargetType.Executable, fun(rcp){
-        rcp.add("tui_app/src", "**.[hc]pp")
+        rcp.add("app/src", "**.[hc]pp")
         rcp.include_path("/usr/local/include/notcurses")
         rcp.include_path("/usr/local/include/ncpp")
         rcp.library("notcurses++")
@@ -11,7 +11,7 @@ root.book("proast", fun(b){
     })
 
     b.recipe("ut", TargetType.Executable, fun(rcp){
-        rcp.add("tui_app/unit_test/src", "**.[hc]pp")
+        rcp.add("app/unit_test/src", "**.[hc]pp")
         rcp.depends_on("catch/main")
     })
 })

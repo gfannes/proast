@@ -1,10 +1,10 @@
 [sprint]{
     [goal]{Self-hosting}
     [features]{
-        [tui_app/logging]
-        [tui_app/options]
-        [tui_app/error_handling]
-        [tui_app/ui/list_box]
-        [tui_app/ui/mvp]
+        [app/logging]
+        [app/options]
+        [app/error_handling]
+        [app/ui/list_box]
+        [app/ui/mvp]
     }
 }
