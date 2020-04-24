@@ -2,6 +2,7 @@
 #define HEADER_proast_view_View_hpp_ALREADY_INCLUDED
 
 #include <proast/view/Events.hpp>
+#include <proast/model/ListBox.hpp>
 #include <gubg/mss.hpp>
 #include <ncpp.hh>
 #include <thread>
@@ -19,9 +20,10 @@ namespace proast { namespace view {
                 events_->message("Events destination was set");
         }
 
-        bool show_mode_line(const std::vector<std::string> &mode_line, std::size_t active_ix)
+        bool show_mode(const model::ListBox &list_box)
         {
             MSS_BEGIN(bool);
+
             MSS(!!nc_);
             auto plane = nc_->get_stdplane();
             MSS(!!plane);
@@ -37,13 +39,14 @@ namespace proast { namespace view {
                     ++col;
                 }
             };
-            for (auto ix = 0u; ix < mode_line.size(); ++ix)
+            auto show_item = [&](const std::string &item, bool is_active)
             {
-                const auto is_active = ix == active_ix;
                 set(is_active ? "#" : " ");
-                set(mode_line[ix]);
+                set(item);
                 set(is_active ? "#" : " ");
-            }
+            };
+            list_box.each_item(show_item);
+
             MSS_END();
         }
 

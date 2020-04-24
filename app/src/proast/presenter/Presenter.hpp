@@ -59,22 +59,15 @@ namespace proast { namespace presenter {
                     quit = true;
                     break;
 
-                case 'i': model_.set_mode("input"); break;
-                case 's': model_.set_mode("system"); break;
-                case 'f': model_.set_mode("features"); break;
-                case 'p': model_.set_mode("planning"); break;
-                case 'r': model_.set_mode("report"); break;
+                case 'd': model_.set_mode("develop"); break;
+                case 'r': model_.set_mode("rework"); break;
             }
         }
 
     private:
         void repaint_()
         {
-            std::size_t ix;
-            for (ix = 0u; ix < mode_line_.size(); ++ix)
-                if (mode_line_[ix] == model_.mode)
-                    break;
-            view_.show_mode_line(mode_line_, ix);
+            view_.show_mode(model_.mode_lb);
         }
         void message_(const std::string &str) const
         {
@@ -83,7 +76,6 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         view::View &view_;
-        const std::vector<std::string> mode_line_ = {"input", "system", "features", "planning", "report"};
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();

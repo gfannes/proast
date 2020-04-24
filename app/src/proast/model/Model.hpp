@@ -2,6 +2,7 @@
 #define HEADER_proast_model_Model_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Events.hpp>
+#include <proast/model/ListBox.hpp>
 #include <gubg/mss.hpp>
 
 namespace proast { namespace model { 
@@ -16,22 +17,11 @@ namespace proast { namespace model {
                 events_->message("Events destination was set");
         }
 
-        //TODO: Replace with enum
-        std::string mode;
+        ListBox mode_lb = {"develop", "rework"};
         void set_mode(const std::string &m)
         {
-            std::string new_mode;
-            if (false) {}
-            else if (m == "input")    {new_mode = m;}
-            else if (m == "system")   {new_mode = m;}
-            else if (m == "features") {new_mode = m;}
-            else if (m == "planning") {new_mode = m;}
-            else if (m == "report")   {new_mode = m;}
-            if (!new_mode.empty() && new_mode != mode)
-            {
-                mode = new_mode;
+            if (mode_lb.set_active(m))
                 events_->notify();
-            }
         }
 
         bool operator()()
