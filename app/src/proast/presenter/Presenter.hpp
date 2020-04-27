@@ -1,12 +1,24 @@
 #ifndef HEADER_proast_presenter_Presenter_hpp_ALREADY_INCLUDED
 #define HEADER_proast_presenter_Presenter_hpp_ALREADY_INCLUDED
 
+#include <proast/presenter/ListBox.hpp>
 #include <proast/model/Model.hpp>
 #include <proast/view/View.hpp>
 #include <gubg/mss.hpp>
 #include <chrono>
 
 namespace proast { namespace presenter { 
+
+    inline const char *to_string(model::Mode m)
+    {
+        switch (m)
+        {
+            case model::Mode::Develop: return "develop"; break;
+            case model::Mode::Rework: return "rework"; break;
+            default: break;
+        }
+        return 0;
+    }
 
     class Presenter: public model::Events, public view::Events
     {
@@ -59,15 +71,23 @@ namespace proast { namespace presenter {
                     quit = true;
                     break;
 
-                case 'd': model_.set_mode("develop"); break;
-                case 'r': model_.set_mode("rework"); break;
+                case 'd': model_.set_mode(model::Mode::Develop); break;
+                case 'r': model_.set_mode(model::Mode::Rework); break;
             }
         }
 
     private:
         void repaint_()
         {
-            view_.show_mode(model_.mode_lb);
+            if (mode_lb_.items.empty())
+                for (auto m = 0u; m < (unsigned int)model::Mode::Nr_; ++m)
+                {
+                    const auto mode_cstr = to_string((model::Mode)m);
+                    if (!!mode_cstr)
+                        mode_lb_.items.emplace_back(mode_cstr);
+                }
+            mode_lb_.set_active((int)model_.mode);
+            view_.show_mode(mode_lb_);
         }
         void message_(const std::string &str) const
         {
@@ -76,6 +96,8 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         view::View &view_;
+
+        ListBox mode_lb_;
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();

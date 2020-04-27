@@ -2,10 +2,13 @@
 #define HEADER_proast_model_Model_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Events.hpp>
-#include <proast/model/ListBox.hpp>
+#include <proast/model/Tree.hpp>
 #include <gubg/mss.hpp>
+#include <optional>
 
 namespace proast { namespace model { 
+
+    enum class Mode {Develop, Rework, Nr_};
 
     class Model
     {
@@ -17,21 +20,32 @@ namespace proast { namespace model {
                 events_->message("Events destination was set");
         }
 
-        ListBox mode_lb = {"develop", "rework"};
-        void set_mode(const std::string &m)
+        Mode mode = Mode::Develop;
+        void set_mode(Mode m)
         {
-            if (mode_lb.set_active(m))
+            const auto do_notify = (m != mode);
+            mode = m;
+            if (do_notify)
                 events_->notify();
         }
 
         bool operator()()
         {
             MSS_BEGIN(bool);
+            if (!tree_)
+            {
+                std::filesystem::path root;
+                MSS(Tree::find_root(root, std::filesystem::current_path()));
+                tree_.emplace();
+                MSS(tree_->load(root));
+                std::cout << *tree_ << std::endl;
+            }
             MSS_END();
         }
 
     private:
         model::Events *events_{};
+        std::optional<Tree> tree_;
     };
 
 } } 

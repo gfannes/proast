@@ -5,11 +5,12 @@
 #include <string>
 #include <initializer_list>
 
-namespace proast { namespace model { 
+namespace proast { namespace presenter { 
 
     class ListBox
     {
     public:
+        ListBox() {}
         ListBox(std::initializer_list<std::string> il): items(il) { }
 
         std::vector<std::string> items;
@@ -25,14 +26,15 @@ namespace proast { namespace model {
             }
         }
 
-        bool set_active(const std::string &str)
+        bool set_active(int ix)
         {
-            for (active_ix = 0; active_ix < items.size(); ++active_ix)
-                if (str == items[active_ix])
-                    return true;
-
-            active_ix = -1;
-            return false;
+            if (ix < 0 || ix >= items.size())
+            {
+                active_ix = -1;
+                return false;
+            }
+            active_ix = ix;
+            return true;
         }
 
     private:

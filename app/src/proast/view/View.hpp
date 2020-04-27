@@ -2,7 +2,7 @@
 #define HEADER_proast_view_View_hpp_ALREADY_INCLUDED
 
 #include <proast/view/Events.hpp>
-#include <proast/model/ListBox.hpp>
+#include <proast/presenter/ListBox.hpp>
 #include <gubg/mss.hpp>
 #include <ncpp.hh>
 #include <thread>
@@ -20,7 +20,7 @@ namespace proast { namespace view {
                 events_->message("Events destination was set");
         }
 
-        bool show_mode(const model::ListBox &list_box)
+        bool show_mode(const presenter::ListBox &list_box)
         {
             MSS_BEGIN(bool);
 
