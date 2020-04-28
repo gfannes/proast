@@ -5,6 +5,7 @@
 #include <proast/model/Model.hpp>
 #include <proast/view/View.hpp>
 #include <gubg/mss.hpp>
+#include <gubg/Range.hpp>
 #include <chrono>
 
 namespace proast { namespace presenter { 
@@ -38,8 +39,8 @@ namespace proast { namespace presenter {
             if (now >= repaint_tp_)
             {
                 //Repaint from time to time
-                repaint_();
-                repaint_tp_ = now+std::chrono::milliseconds(1000);
+                MSS(repaint_());
+                repaint_tp_ = now+std::chrono::milliseconds(300);
             }
 
             MSS_END();
@@ -77,8 +78,9 @@ namespace proast { namespace presenter {
         }
 
     private:
-        void repaint_()
+        bool repaint_()
         {
+            MSS_BEGIN(bool);
             if (mode_lb_.items.empty())
                 for (auto m = 0u; m < (unsigned int)model::Mode::Nr_; ++m)
                 {
@@ -87,7 +89,19 @@ namespace proast { namespace presenter {
                         mode_lb_.items.emplace_back(mode_cstr);
                 }
             mode_lb_.set_active((int)model_.mode);
+
+            view_.clear_screen();
             view_.show_mode(mode_lb_);
+            view_.show_status(std::string("root path: ")+model_.root_path().string());
+            view_.show_parent(parent_lb_);
+            {
+                MSS(model_.get_me(string_ary_));
+                me_lb_.clear();
+                me_lb_.items.assign(RANGE(string_ary_));
+                view_.show_me(me_lb_);
+            }
+            view_.show_child(child_lb_);
+            MSS_END();
         }
         void message_(const std::string &str) const
         {
@@ -98,6 +112,11 @@ namespace proast { namespace presenter {
         view::View &view_;
 
         ListBox mode_lb_;
+        ListBox parent_lb_;
+        ListBox me_lb_;
+        ListBox child_lb_;
+
+        std::vector<std::string> string_ary_;
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();

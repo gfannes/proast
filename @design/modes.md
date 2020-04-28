@@ -1,6 +1,11 @@
 TUI Modes
 =========
 
+## Breakdown
+
+* Must allow easy entering of requirements, design and sublevels
+  * Make sure not too much time and attention is lost by typing, proast should do all this
+
 ## Input
 
 Manages all project input

@@ -24,7 +24,35 @@ namespace proast { namespace model {
 
     bool Tree::load(const std::filesystem::path &root)
     {
-        return load_(root_, root);
+        MSS_BEGIN(bool);
+        root_path_.clear();
+        MSS(load_(root_, root));
+        root_path_ = root;
+        MSS_END();
+    }
+
+    const std::filesystem::path &Tree::root_path() const { return root_path_; }
+
+    const Node *Tree::find(const Path &path)
+    {
+        const Node *node = &root_;
+        auto follow_path = [&](const std::string &segment)
+        {
+            if (!node)
+                return;
+            const Node *child_node_ptr = nullptr;
+            for (const auto &child_node: node->childs.nodes)
+            {
+                if (child_node.value.short_name == segment)
+                {
+                    child_node_ptr = &child_node;
+                    break;
+                }
+            }
+            node = child_node_ptr;
+        };
+        path.each_segment(follow_path);
+        return node;
     }
 
     void Tree::stream(std::ostream &os) const

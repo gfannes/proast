@@ -2,6 +2,8 @@
 #define HEADER_proast_view_View_hpp_ALREADY_INCLUDED
 
 #include <proast/view/Events.hpp>
+#include <proast/view/Region.hpp>
+#include <proast/view/Cursor.hpp>
 #include <proast/presenter/ListBox.hpp>
 #include <gubg/mss.hpp>
 #include <ncpp.hh>
@@ -20,32 +22,75 @@ namespace proast { namespace view {
                 events_->message("Events destination was set");
         }
 
+        void clear_screen()
+        {
+            auto plane = nc_->get_stdplane();
+            if (!!plane)
+                plane->erase();
+        }
+
         bool show_mode(const presenter::ListBox &list_box)
         {
             MSS_BEGIN(bool);
 
             MSS(!!nc_);
-            auto plane = nc_->get_stdplane();
-            MSS(!!plane);
+            Cursor cursor{mode_region_, *nc_};
 
-            int row = 0, col = 0;
-            auto set = [&](const std::string &str)
-            {
-                for (auto ch: str)
-                {
-                    if (col >= col_cnt_)
-                        return;
-                    plane->putc(row, col, ch);
-                    ++col;
-                }
-            };
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                set(is_active ? "#" : " ");
-                set(item);
-                set(is_active ? "#" : " ");
+                cursor.write(is_active ? "#" : " ");
+                cursor.write(item);
+                cursor.write(is_active ? "#" : " ");
             };
             list_box.each_item(show_item);
+
+            MSS_END();
+        }
+
+        bool show_status(const std::string &str)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!nc_);
+            Cursor cursor{status_region_, *nc_};
+
+            cursor.write(str);
+
+            MSS_END();
+        }
+
+        bool show_parent(const presenter::ListBox &list_box)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!nc_);
+            Cursor cursor{parent_region_, *nc_};
+            cursor.write("PARENT");
+
+            MSS_END();
+        }
+        bool show_me(const presenter::ListBox &list_box)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!nc_);
+            Cursor cursor{me_region_, *nc_};
+            auto show_item = [&](const std::string &item, bool is_active)
+            {
+                cursor.write(item);
+                cursor.newline();
+            };
+            list_box.each_item(show_item);
+
+            MSS_END();
+        }
+        bool show_child(const presenter::ListBox &list_box)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!nc_);
+            Cursor cursor{child_region_, *nc_};
+            cursor.write("CHILD");
 
             MSS_END();
         }
@@ -58,11 +103,15 @@ namespace proast { namespace view {
                 MSS(start_nc_());
             MSS(!!nc_);
 
-            if (false && ch_ <= 'z')
             {
-                fill_screen_(ch_);
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                ++ch_;
+                auto region = screen_region_();
+                mode_region_ = region.pop_top(1);
+                status_region_ = region.pop_bottom(1);
+
+                const auto width = region.width()/7;
+                parent_region_ = region.pop_left(width);
+                me_region_ = region.pop_left(width);
+                child_region_ = region.pop_left(width);
             }
 
             switch (const auto ch = nc_->getc())
@@ -79,7 +128,7 @@ namespace proast { namespace view {
                     break;
             }
 
-            nc_->render();
+            render_screen_();
 
             MSS_END();
         }
@@ -92,36 +141,32 @@ namespace proast { namespace view {
             nc_options.suppress_banner = true;
             nc_.emplace(nc_options, stdout);
             log::stream() << "Created notcurses context" << std::endl;
-            {
-                nc_->get_term_dim(row_cnt_,col_cnt_);
-                log::stream() << "Row count: " << row_cnt_ << ", Col count: " << col_cnt_ << "" << std::endl;
-            }
+
+            log::stream() << screen_region_() << std::endl;
+
             MSS_END();
         }
-
-        bool fill_screen_(const char ch)
+        void render_screen_()
         {
-            MSS_BEGIN(bool);
-            auto plane = nc_->get_stdplane();
-            MSS(!!plane);
+            nc_->render();
+        }
 
-            for (auto rix = 0u; rix < row_cnt_; ++rix)
-            {
-                for (auto cix = 0u; cix < col_cnt_; ++cix)
-                {
-                    plane->putc(rix, cix, ch);
-                }
-            }
-
-            MSS_END();
+        Region screen_region_()
+        {
+            int row_cnt = 0, col_cnt = 0;
+            if (!!nc_)
+                nc_->get_term_dim(row_cnt, col_cnt);
+            return Region(row_cnt, col_cnt);
         }
 
         view::Events *events_{};
 
         std::optional<ncpp::NotCurses> nc_;
-        int row_cnt_{}, col_cnt_{};
-
-        char ch_ = 'a';
+        Region mode_region_;
+        Region parent_region_;
+        Region me_region_;
+        Region child_region_;
+        Region status_region_;
     };
 
 } } 

@@ -13,6 +13,8 @@ namespace proast { namespace presenter {
         ListBox() {}
         ListBox(std::initializer_list<std::string> il): items(il) { }
 
+        void clear() {*this = ListBox{};}
+
         std::vector<std::string> items;
         int active_ix = -1;
 

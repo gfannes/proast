@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
+#include <proast/model/Path.hpp>
 #include <gubg/tree/Node.hpp>
 #include <filesystem>
 #include <string>
@@ -22,9 +23,14 @@ namespace proast { namespace model {
 
         bool load(const std::filesystem::path &root);
 
+        const std::filesystem::path &root_path() const;
+
         void stream(std::ostream &os) const;
 
+        const Node *find(const Path &path);
+
     private:
+        std::filesystem::path root_path_;
         Node root_;
         static bool load_(Node &node, std::filesystem::path path);
     };

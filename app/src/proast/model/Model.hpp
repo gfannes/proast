@@ -5,6 +5,7 @@
 #include <proast/model/Tree.hpp>
 #include <gubg/mss.hpp>
 #include <optional>
+#include <vector>
 
 namespace proast { namespace model { 
 
@@ -42,10 +43,32 @@ namespace proast { namespace model {
             }
             MSS_END();
         }
+        std::filesystem::path root_path() const
+        {
+            if (!!tree_)
+                return tree_->root_path();
+            return std::filesystem::path{};
+        }
+
+        bool get_me(std::vector<std::string> &ary)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+            auto me_node = tree_->find(path_);
+            MSS(!!me_node);
+
+            ary.resize(0);
+            for (const auto &n: me_node->childs.nodes)
+                ary.push_back(n.value.short_name);
+
+            MSS_END();
+        }
 
     private:
         model::Events *events_{};
         std::optional<Tree> tree_;
+        Path path_;
     };
 
 } } 
