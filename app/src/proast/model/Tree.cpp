@@ -34,28 +34,34 @@ namespace proast { namespace model {
 
     const std::filesystem::path &Tree::root_path() const { return root_path_; }
 
-    const Node *Tree::find(const Path &path)
+    bool Tree::find(const Forest *&forest, std::size_t &ix, const Path &path)
     {
-        if (root_forest_.empty())
-            return nullptr;
-        const Node *node = &root_forest_.nodes[0];
+        MSS_BEGIN(bool);
+
+        forest = nullptr;
+        ix = 0;
+
+        if (!root_forest_.empty())
+            forest = &root_forest_;
+
         auto follow_path = [&](const std::string &segment)
         {
-            if (!node)
+            if (!forest)
                 return;
-            const Node *child_node_ptr = nullptr;
-            for (const auto &child_node: node->childs.nodes)
-            {
-                if (child_node.value.short_name == segment)
-                {
-                    child_node_ptr = &child_node;
+
+            forest = &forest->nodes[ix].childs;
+
+            const auto nr_childs = forest->nodes.size();
+            for (ix = 0; ix < nr_childs; ++ix)
+                if (forest->nodes[ix].value.short_name == segment)
                     break;
-                }
-            }
-            node = child_node_ptr;
+
+            if (ix >= nr_childs)
+                forest = nullptr;
         };
         path.each_segment(follow_path);
-        return node;
+
+        MSS_END();
     }
 
     void Tree::stream(std::ostream &os) const

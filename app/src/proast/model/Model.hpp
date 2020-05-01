@@ -6,6 +6,7 @@
 #include <gubg/mss.hpp>
 #include <optional>
 #include <vector>
+#include <cassert>
 
 namespace proast { namespace model { 
 
@@ -50,17 +51,13 @@ namespace proast { namespace model {
             return std::filesystem::path{};
         }
 
-        bool get_me(std::vector<std::string> &ary)
+        bool get_me(const Forest *&forest, std::size_t &ix)
         {
             MSS_BEGIN(bool);
 
             MSS(!!tree_);
-            auto me_node = tree_->find(path_);
-            MSS(!!me_node);
-
-            ary.resize(0);
-            for (const auto &n: me_node->childs.nodes)
-                ary.push_back(n.value.short_name);
+            MSS(tree_->find(forest, ix, path_));
+            assert(!!forest);
 
             MSS_END();
         }

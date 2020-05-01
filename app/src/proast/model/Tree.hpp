@@ -29,7 +29,7 @@ namespace proast { namespace model {
 
         void stream(std::ostream &os) const;
 
-        const Node *find(const Path &path);
+        bool find(const Forest *&forest, std::size_t &ix, const Path &path);
 
     private:
         std::filesystem::path root_path_;

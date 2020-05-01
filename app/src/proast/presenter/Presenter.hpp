@@ -95,9 +95,13 @@ namespace proast { namespace presenter {
             view_.show_status(std::string("root path: ")+model_.root_path().string());
             view_.show_parent(parent_lb_);
             {
-                MSS(model_.get_me(string_ary_));
+                const model::Forest *forest;
+                std::size_t ix;
+                MSS(model_.get_me(forest, ix));
+                MSS(!!forest);
                 me_lb_.clear();
-                me_lb_.items.assign(RANGE(string_ary_));
+                for (const auto &node: forest->nodes)
+                    me_lb_.items.push_back(node.value.short_name);
                 view_.show_me(me_lb_);
             }
             view_.show_child(child_lb_);
@@ -115,8 +119,6 @@ namespace proast { namespace presenter {
         ListBox parent_lb_;
         ListBox me_lb_;
         ListBox child_lb_;
-
-        std::vector<std::string> string_ary_;
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();
