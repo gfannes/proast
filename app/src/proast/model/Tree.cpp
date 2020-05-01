@@ -26,7 +26,8 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
         root_path_.clear();
-        MSS(load_(root_, root));
+        root_forest_.nodes.resize(1);
+        MSS(load_(root_forest_.nodes[0], root));
         root_path_ = root;
         MSS_END();
     }
@@ -35,7 +36,9 @@ namespace proast { namespace model {
 
     const Node *Tree::find(const Path &path)
     {
-        const Node *node = &root_;
+        if (root_forest_.empty())
+            return nullptr;
+        const Node *node = &root_forest_.nodes[0];
         auto follow_path = [&](const std::string &segment)
         {
             if (!node)
@@ -61,7 +64,7 @@ namespace proast { namespace model {
         {
             os << n.value.short_name << std::endl;
         };
-        gubg::tree::stream(os, root_.childs, ftor);
+        gubg::tree::stream(os, root_forest_, ftor);
     }
 
     //Privates

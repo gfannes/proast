@@ -3,6 +3,7 @@
 
 #include <proast/model/Path.hpp>
 #include <gubg/tree/Node.hpp>
+#include <gubg/tree/Forest.hpp>
 #include <filesystem>
 #include <string>
 #include <ostream>
@@ -14,6 +15,7 @@ namespace proast { namespace model {
         std::string short_name;
     };
     using Node = gubg::tree::Node<Data>;
+    using Forest = gubg::tree::Forest<Data>;
 
     class Tree
     {
@@ -31,7 +33,7 @@ namespace proast { namespace model {
 
     private:
         std::filesystem::path root_path_;
-        Node root_;
+        Forest root_forest_;
         static bool load_(Node &node, std::filesystem::path path);
     };
 
