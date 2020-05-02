@@ -105,6 +105,7 @@ namespace proast { namespace presenter {
                 lb.clear();
                 for (const auto &node: forest->nodes)
                     lb.items.push_back(node.value.short_name);
+                lb.active_ix = ix;
             };
 
             {

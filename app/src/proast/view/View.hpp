@@ -77,7 +77,9 @@ namespace proast { namespace view {
             Cursor cursor{me_region_, *nc_};
             auto show_item = [&](const std::string &item, bool is_active)
             {
+                cursor.write(is_active ? "#" : " ");
                 cursor.write(item);
+                cursor.write(is_active ? "#" : " ");
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -92,7 +94,9 @@ namespace proast { namespace view {
             Cursor cursor{child_region_, *nc_};
             auto show_item = [&](const std::string &item, bool is_active)
             {
+                cursor.write(is_active ? "." : " ");
                 cursor.write(item);
+                cursor.write(is_active ? "." : " ");
                 cursor.newline();
             };
             list_box.each_item(show_item);
