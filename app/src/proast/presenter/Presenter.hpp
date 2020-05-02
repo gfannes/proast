@@ -94,17 +94,34 @@ namespace proast { namespace presenter {
             view_.show_mode(mode_lb_);
             view_.show_status(std::string("root path: ")+model_.root_path().string());
             view_.show_parent(parent_lb_);
+
+            const model::Forest *forest = nullptr;
+            std::size_t ix;
+
+            auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
-                const model::Forest *forest;
-                std::size_t ix;
-                MSS(model_.get_me(forest, ix));
-                MSS(!!forest);
-                me_lb_.clear();
+                if (!forest)
+                    return ;
+                lb.clear();
                 for (const auto &node: forest->nodes)
-                    me_lb_.items.push_back(node.value.short_name);
-                view_.show_me(me_lb_);
+                    lb.items.push_back(node.value.short_name);
+            };
+
+            {
+                MSS(model_.get_me(forest, ix));
+                fill_lb(me_lb_, forest, ix);
             }
+
+            {
+                const auto &me = forest->nodes[ix];
+                forest = (ix < me.nr_childs() ? &me.childs : nullptr);
+                ix = me.value.active_ix;
+                fill_lb(child_lb_, forest, ix);
+            }
+
+            view_.show_me(me_lb_);
             view_.show_child(child_lb_);
+
             MSS_END();
         }
         void message_(const std::string &str) const

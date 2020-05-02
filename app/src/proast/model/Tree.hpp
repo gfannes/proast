@@ -13,6 +13,7 @@ namespace proast { namespace model {
     struct Data
     {
         std::string short_name;
+        std::size_t active_ix = 0;
     };
     using Node = gubg::tree::Node<Data>;
     using Forest = gubg::tree::Forest<Data>;

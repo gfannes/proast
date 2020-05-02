@@ -90,7 +90,12 @@ namespace proast { namespace view {
 
             MSS(!!nc_);
             Cursor cursor{child_region_, *nc_};
-            cursor.write("CHILD");
+            auto show_item = [&](const std::string &item, bool is_active)
+            {
+                cursor.write(item);
+                cursor.newline();
+            };
+            list_box.each_item(show_item);
 
             MSS_END();
         }

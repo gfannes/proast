@@ -51,7 +51,7 @@ namespace proast { namespace model {
 
             forest = &forest->nodes[ix].childs;
 
-            const auto nr_childs = forest->nodes.size();
+            const auto nr_childs = forest->size();
             for (ix = 0; ix < nr_childs; ++ix)
                 if (forest->nodes[ix].value.short_name == segment)
                     break;
