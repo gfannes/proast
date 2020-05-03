@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_presenter_Presenter_hpp_ALREADY_INCLUDED
 #define HEADER_proast_presenter_Presenter_hpp_ALREADY_INCLUDED
 
+#include <proast/presenter/Commander.hpp>
 #include <proast/presenter/ListBox.hpp>
 #include <proast/model/Model.hpp>
 #include <proast/view/View.hpp>
@@ -21,13 +22,14 @@ namespace proast { namespace presenter {
         return 0;
     }
 
-    class Presenter: public model::Events, public view::Events
+    class Presenter: public model::Events, public view::Events, public Commander::Events
     {
     public:
         Presenter(model::Model &m, view::View &v): model_(m), view_(v)
         {
             model_.set_events_dst(this);
             view_.set_events_dst(this);
+            commander_.set_events_dst(this);
         }
         virtual ~Presenter() {}
 
@@ -65,16 +67,18 @@ namespace proast { namespace presenter {
         }
         void view_received(const char32_t ch) override
         {
-            switch (ch)
-            {
-                case 'q':
-                    message_("Received quit signal");
-                    quit = true;
-                    break;
+            commander_.process(ch);
+        }
 
-                case 'd': model_.set_mode(model::Mode::Develop); break;
-                case 'r': model_.set_mode(model::Mode::Rework); break;
-            }
+        //Commander API
+        void commander_quit() override
+        {
+            message_("Received quit signal");
+            quit = true;
+        }
+        void commander_set_mode(model::Mode mode) override
+        {
+            model_.set_mode(mode);
         }
 
     private:
@@ -132,6 +136,8 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         view::View &view_;
+
+        Commander commander_;
 
         ListBox mode_lb_;
         ListBox parent_lb_;

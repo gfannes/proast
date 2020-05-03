@@ -65,6 +65,9 @@ namespace proast {
                 presenter_.reset();
             }
 
+            //Brute-force manner to reduce CPU burning
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
             MSS_END();
         }
 
