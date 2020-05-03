@@ -6,6 +6,11 @@
 
 namespace proast { namespace presenter { 
 
+    enum Movement
+    {
+        Left, Down, Up, Right,
+    };
+
     //Translates key-presses into commands
 
     class Commander
@@ -15,8 +20,9 @@ namespace proast { namespace presenter {
         class Events
         {
         public:
-            virtual void commander_quit() = 0;
-            virtual void commander_set_mode(model::Mode) = 0;
+            virtual bool commander_quit() = 0;
+            virtual bool commander_set_mode(model::Mode) = 0;
+            virtual bool commander_move(Movement) = 0;
         };
 
         //Set the events listener
@@ -36,9 +42,17 @@ namespace proast { namespace presenter {
             MSS(!!events_);
             switch (ch)
             {
-                case 'q': events_->commander_quit(); break;
-                case 'd': events_->commander_set_mode(model::Mode::Develop); break;
-                case 'r': events_->commander_set_mode(model::Mode::Rework); break;
+                case 'q': MSS(events_->commander_quit()); break;
+
+                          //Mode
+                case 'd': MSS(events_->commander_set_mode(model::Mode::Develop)); break;
+                case 'r': MSS(events_->commander_set_mode(model::Mode::Rework)); break;
+
+                          //Movement
+                case 'h': MSS(events_->commander_move(Movement::Left)); break;
+                case 'j': MSS(events_->commander_move(Movement::Down)); break;
+                case 'k': MSS(events_->commander_move(Movement::Up)); break;
+                case 'l': MSS(events_->commander_move(Movement::Right)); break;
             }
             MSS_END();
         }

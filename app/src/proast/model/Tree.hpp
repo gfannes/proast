@@ -1,11 +1,11 @@
 #ifndef HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
-#include <proast/model/Path.hpp>
 #include <gubg/tree/Node.hpp>
 #include <gubg/tree/Forest.hpp>
 #include <filesystem>
 #include <string>
+#include <vector>
 #include <ostream>
 
 namespace proast { namespace model { 
@@ -17,6 +17,8 @@ namespace proast { namespace model {
     };
     using Node = gubg::tree::Node<Data>;
     using Forest = gubg::tree::Forest<Data>;
+
+    using Path = std::vector<std::string>;
 
     class Tree
     {

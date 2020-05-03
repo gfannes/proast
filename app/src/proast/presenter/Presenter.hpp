@@ -71,14 +71,60 @@ namespace proast { namespace presenter {
         }
 
         //Commander API
-        void commander_quit() override
+        bool commander_quit() override
         {
+            MSS_BEGIN(bool);
             message_("Received quit signal");
             quit = true;
+            MSS_END();
         }
-        void commander_set_mode(model::Mode mode) override
+        bool commander_set_mode(model::Mode mode) override
         {
+            MSS_BEGIN(bool);
             model_.set_mode(mode);
+            MSS_END();
+        }
+        bool commander_move(Movement movement) override
+        {
+            MSS_BEGIN(bool);
+
+            auto path = model_.path();
+
+            const model::Forest *forest;
+            std::size_t ix;
+            MSS(model_.get(forest, ix, path));
+
+            switch (movement)
+            {
+                case Movement::Left:
+                    if (!path.empty())
+                        path.pop_back();
+                    break;
+                case Movement::Right:
+                    {
+                        const auto &me = forest->nodes[ix];
+                        const auto child_ix = me.value.active_ix;
+                        if (child_ix < me.nr_childs())
+                        {
+                            const auto &child = me.childs.nodes[child_ix];
+                            path.push_back(child.value.short_name);
+                        }
+                    }
+                    break;
+                case Movement::Up:
+                    if (ix > 0 && !path.empty())
+                        path.back() = forest->nodes[ix-1].value.short_name;
+                    break;
+                case Movement::Down:
+                    if (ix+1 < forest->size() && !path.empty())
+                        path.back() = forest->nodes[ix+1].value.short_name;
+                    break;
+            }
+
+            model_.set_path(path);
+            repaint_();
+
+            MSS_END();
         }
 
     private:
@@ -99,31 +145,46 @@ namespace proast { namespace presenter {
             view_.show_status(std::string("root path: ")+model_.root_path().string());
             view_.show_parent(parent_lb_);
 
-            const model::Forest *forest = nullptr;
-            std::size_t ix;
-
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
+                lb.clear();
                 if (!forest)
                     return ;
-                lb.clear();
                 for (const auto &node: forest->nodes)
                     lb.items.push_back(node.value.short_name);
                 lb.active_ix = ix;
             };
 
+            auto path = model_.path();
+            //Me and childs
             {
-                MSS(model_.get_me(forest, ix));
+                const model::Forest *forest = nullptr;
+                std::size_t ix;
+                MSS(model_.get(forest, ix, path));
                 fill_lb(me_lb_, forest, ix);
-            }
 
-            {
                 const auto &me = forest->nodes[ix];
                 forest = (ix < me.nr_childs() ? &me.childs : nullptr);
                 ix = me.value.active_ix;
                 fill_lb(child_lb_, forest, ix);
             }
 
+            //Parent
+            {
+                const model::Forest *forest = nullptr;
+                std::size_t ix;
+
+                if (!path.empty())
+                {
+                    path.pop_back();
+
+                    MSS(model_.get(forest, ix, path));
+                }
+
+                fill_lb(parent_lb_, forest, ix);
+            }
+
+            view_.show_parent(parent_lb_);
             view_.show_me(me_lb_);
             view_.show_child(child_lb_);
 

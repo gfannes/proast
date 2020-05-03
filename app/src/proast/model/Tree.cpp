@@ -38,28 +38,24 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        forest = nullptr;
+        forest = &root_forest_;
         ix = 0;
 
-        if (!root_forest_.empty())
-            forest = &root_forest_;
-
-        auto follow_path = [&](const std::string &segment)
+        for (const auto &segment: path)
         {
-            if (!forest)
-                return;
+            MSS(ix < forest->size());
 
+            //Update forest
             forest = &forest->nodes[ix].childs;
 
+            //Update ix
             const auto nr_childs = forest->size();
             for (ix = 0; ix < nr_childs; ++ix)
                 if (forest->nodes[ix].value.short_name == segment)
                     break;
+        }
 
-            if (ix >= nr_childs)
-                forest = nullptr;
-        };
-        path.each_segment(follow_path);
+        MSS(ix < forest->size());
 
         MSS_END();
     }

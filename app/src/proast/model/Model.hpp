@@ -51,12 +51,15 @@ namespace proast { namespace model {
             return std::filesystem::path{};
         }
 
-        bool get_me(const Forest *&forest, std::size_t &ix)
+        const Path &path() const {return path_;}
+        void set_path(const Path &path) {path_ = path;}
+
+        bool get(const Forest *&forest, std::size_t &ix, const Path &path)
         {
             MSS_BEGIN(bool);
 
             MSS(!!tree_);
-            MSS(tree_->find(forest, ix, path_));
+            MSS(tree_->find(forest, ix, path));
             assert(!!forest);
 
             MSS_END();
