@@ -122,7 +122,8 @@ namespace proast { namespace presenter {
             }
 
             model_.set_path(path);
-            repaint_();
+
+            MSS(repaint_());
 
             MSS_END();
         }
@@ -131,6 +132,9 @@ namespace proast { namespace presenter {
         bool repaint_()
         {
             MSS_BEGIN(bool);
+
+            view_.clear_screen();
+
             if (mode_lb_.items.empty())
                 for (auto m = 0u; m < (unsigned int)model::Mode::Nr_; ++m)
                 {
@@ -140,10 +144,15 @@ namespace proast { namespace presenter {
                 }
             mode_lb_.set_active((int)model_.mode);
 
-            view_.clear_screen();
-            view_.show_mode(mode_lb_);
+            if (true)
+            {
+                view_.show_path(model_.path());
+            }
+            else
+            {
+                view_.show_mode(mode_lb_);
+            }
             view_.show_status(std::string("root path: ")+model_.root_path().string());
-            view_.show_parent(parent_lb_);
 
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
@@ -160,7 +169,7 @@ namespace proast { namespace presenter {
             {
                 const model::Forest *forest = nullptr;
                 std::size_t ix;
-                MSS(model_.get(forest, ix, path));
+                MSS(model_.get(forest, ix, path), log::stream() << "Error: could not get me and childs\n");
                 fill_lb(me_lb_, forest, ix);
 
                 const auto &me = forest->nodes[ix];
@@ -178,7 +187,7 @@ namespace proast { namespace presenter {
                 {
                     path.pop_back();
 
-                    MSS(model_.get(forest, ix, path));
+                    MSS(model_.get(forest, ix, path), log::stream() << "Error: could not get parent\n");
                 }
 
                 fill_lb(parent_lb_, forest, ix);
@@ -187,6 +196,8 @@ namespace proast { namespace presenter {
             view_.show_parent(parent_lb_);
             view_.show_me(me_lb_);
             view_.show_child(child_lb_);
+
+            view_.render_screen();
 
             MSS_END();
         }

@@ -24,11 +24,35 @@ namespace proast { namespace view {
 
         void clear_screen()
         {
+            if (!nc_)
+                return;
             auto plane = nc_->get_stdplane();
-            if (!!plane)
-                plane->erase();
+            if (!plane)
+                return;
+            plane->erase();
+        }
+        void render_screen()
+        {
+            if (!nc_)
+                return;
+            nc_->render();
         }
 
+        bool show_path(const model::Path &path)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!nc_);
+            Cursor cursor{path_region_, *nc_};
+
+            for (const auto &segment: path)
+            {
+                cursor.write("/");
+                cursor.write(segment);
+            }
+
+            MSS_END();
+        }
         bool show_mode(const presenter::ListBox &list_box)
         {
             MSS_BEGIN(bool);
@@ -121,7 +145,7 @@ namespace proast { namespace view {
 
             {
                 auto region = screen_region_();
-                mode_region_ = region.pop_top(1);
+                path_region_ = mode_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 
                 const auto width = region.width()/7;
@@ -144,8 +168,6 @@ namespace proast { namespace view {
                     break;
             }
 
-            render_screen_();
-
             MSS_END();
         }
 
@@ -162,10 +184,6 @@ namespace proast { namespace view {
 
             MSS_END();
         }
-        void render_screen_()
-        {
-            nc_->render();
-        }
 
         Region screen_region_()
         {
@@ -178,6 +196,7 @@ namespace proast { namespace view {
         view::Events *events_{};
 
         std::optional<ncpp::NotCurses> nc_;
+        Region path_region_;
         Region mode_region_;
         Region parent_region_;
         Region me_region_;
