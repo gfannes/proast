@@ -24,18 +24,20 @@ namespace proast { namespace model {
     {
     public:
         //Steps down starting from `start` until  the `@root` subfolder is found
-        static bool find_root(std::filesystem::path &root, const std::filesystem::path &start);
+        static bool find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start);
 
         bool load(const std::filesystem::path &root);
 
-        const std::filesystem::path &root_path() const;
+        const std::filesystem::path &root_filepath() const;
 
         void stream(std::ostream &os) const;
+
+        Path root_path() const;
 
         bool find(const Forest *&forest, std::size_t &ix, const Path &path);
 
     private:
-        std::filesystem::path root_path_;
+        std::filesystem::path root_filepath_;
         Forest root_forest_;
         static bool load_(Node &node, std::filesystem::path path);
     };

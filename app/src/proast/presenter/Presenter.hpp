@@ -152,7 +152,7 @@ namespace proast { namespace presenter {
             {
                 view_.show_mode(mode_lb_);
             }
-            view_.show_status(std::string("root path: ")+model_.root_path().string());
+            view_.show_status(std::string("root path: ")+model_.root_filepath().string());
 
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
@@ -183,7 +183,7 @@ namespace proast { namespace presenter {
                 const model::Forest *forest = nullptr;
                 std::size_t ix;
 
-                if (!path.empty())
+                if (path.size() > 1)
                 {
                     path.pop_back();
 

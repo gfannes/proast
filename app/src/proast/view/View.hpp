@@ -89,6 +89,7 @@ namespace proast { namespace view {
 
             MSS(!!nc_);
             Cursor cursor{parent_region_, *nc_};
+
             auto show_item = [&](const std::string &item, bool is_active)
             {
                 cursor.write(is_active ? "#" : " ");
@@ -106,6 +107,7 @@ namespace proast { namespace view {
 
             MSS(!!nc_);
             Cursor cursor{me_region_, *nc_};
+
             auto show_item = [&](const std::string &item, bool is_active)
             {
                 cursor.write(is_active ? "#" : " ");
@@ -123,6 +125,7 @@ namespace proast { namespace view {
 
             MSS(!!nc_);
             Cursor cursor{child_region_, *nc_};
+
             auto show_item = [&](const std::string &item, bool is_active)
             {
                 cursor.write(is_active ? "." : " ");
@@ -145,6 +148,7 @@ namespace proast { namespace view {
 
             {
                 auto region = screen_region_();
+                region.pop_top(1);
                 path_region_ = mode_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 

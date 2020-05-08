@@ -11,7 +11,7 @@ TEST_CASE("model::Tree tests", "[ut][model][Tree]")
     SECTION("find_root")
     {
         std::filesystem::path root;
-        REQUIRE(model::Tree::find_root(root, cwd/"a/b/c"));
+        REQUIRE(model::Tree::find_root_filepath(root, cwd/"a/b/c"));
         REQUIRE(root == cwd);
     }
 

@@ -2,6 +2,7 @@
 #define HEADER_proast_view_Cursor_hpp_ALREADY_INCLUDED
 
 #include <proast/view/Region.hpp>
+#include <proast/log.hpp>
 #include <ncpp.hh>
 #include <string>
 

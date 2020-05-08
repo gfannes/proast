@@ -34,25 +34,39 @@ namespace proast { namespace model {
         bool operator()()
         {
             MSS_BEGIN(bool);
+
             if (!tree_)
             {
                 std::filesystem::path root;
-                MSS(Tree::find_root(root, std::filesystem::current_path()));
+                MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
                 tree_.emplace();
                 MSS(tree_->load(root));
-                std::cout << *tree_ << std::endl;
+                path_ = tree_->root_path();
             }
+
             MSS_END();
         }
-        std::filesystem::path root_path() const
+        std::filesystem::path root_filepath() const
         {
             if (!!tree_)
-                return tree_->root_path();
+                return tree_->root_filepath();
             return std::filesystem::path{};
         }
 
         const Path &path() const {return path_;}
-        void set_path(const Path &path) {path_ = path;}
+        void set_path(const Path &path)
+        {
+            if (path.empty())
+            {
+                if (!!tree_)
+                    path_ = tree_->root_path();
+                else
+                    path_.clear();
+                return;
+            }
+
+            path_ = path;
+        }
 
         bool get(const Forest *&forest, std::size_t &ix, const Path &path)
         {
