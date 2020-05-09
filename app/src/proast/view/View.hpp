@@ -147,8 +147,6 @@ namespace proast { namespace view {
 
             {
                 auto region = screen_region_();
-                //TODO: not clear why the first row cannot be used. This is a work-around.
-                /* region.pop_top(1); */
                 path_region_ = mode_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 
