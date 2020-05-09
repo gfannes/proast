@@ -13,6 +13,7 @@ Clone frome [github](https://github.com/dankamongmen/notcurses) and building wor
   * Has [nice documentation](https://nick-black.com/htp-notcurses.pdf)
 * Con
   * No windows support
+  * First line drops sometimes
 
 ### [ncurses](https://invisible-island.net/ncurses/announce.html)
 
@@ -23,3 +24,7 @@ Install via `yay final cut` and link with `-lfinal`
 * Con
   * Seems to add windows border around everything
 
+### [termbox](https://github.com/nsf/termbox)
+
+* Pro
+  * Simple API

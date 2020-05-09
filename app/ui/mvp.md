@@ -9,4 +9,4 @@ Integrate the Model-View-Presenter pattern
 * create toplevel classes for Model, Present and View
   * Integrate these into the `proast/App`
 * create Events classes for Model and View
-* create [notcurses](https://github.com/dankamongmen/notcurses)-based View
+* create [termbox](https://github.com/nsf/termbox)-based View

@@ -113,7 +113,6 @@ namespace proast { namespace model {
             MSS(false);
         }
 
-        std::cout << path << std::endl;
         std::list<std::filesystem::path> sub_paths;
         for (const auto &sub: std::filesystem::directory_iterator{path})
         {
@@ -130,7 +129,6 @@ namespace proast { namespace model {
                     if (false) {}
                     else if (std::filesystem::is_directory(sub_path))
                     {
-                        std::cout << " d " << sub_path << std::endl;
                         sub_paths.emplace_back(sub_path);
                     }
                     else if (std::filesystem::is_regular_file(sub_path))
@@ -141,7 +139,6 @@ namespace proast { namespace model {
                             do_add = true;
                         if (do_add)
                         {
-                            std::cout << " f " << sub_path << std::endl;
                             sub_paths.emplace_back(sub_path);
                         }
                     }

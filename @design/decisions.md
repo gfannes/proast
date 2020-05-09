@@ -34,4 +34,4 @@ Design decisions
 
 ## Logging
 
-* Notcurses in full-screen mode should not be combined with `stdoud`.
+* Termbox in full-screen mode should not be combined with `stdout`.

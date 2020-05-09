@@ -6,7 +6,6 @@
 #include <proast/log.hpp>
 #include <proast/presenter/Presenter.hpp>
 #include <gubg/mss.hpp>
-#include <ncpp.hh>
 #include <optional>
 #include <thread>
 #include <memory>

@@ -5,4 +5,4 @@ Provide logging framework
 
 ### Must
 
-* support logging when [notcurses](https://github.com/dankamongmen/notcurses) is active and all access to `stdout` is prohibited.
+* support logging when [termbox](https://github.com/nsf/termbox) is active and all access to `stdout` is prohibited.

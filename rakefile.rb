@@ -8,23 +8,17 @@ file ".extern" do
     puts "creating dir .extern"
     FileUtils.mkdir(".extern")
 end
-file ".extern/notcurses/ok" => ".extern" do
+file ".extern/termbox/ok" => ".extern" do
     Dir.chdir(".extern") do
-        FileUtils.rm_rf("notcurses")
-        sh "git clone https://github.com/dankamongmen/notcurses"
-        Dir.chdir("notcurses") do
-            FileUtils.mkdir("build")
-            Dir.chdir("build") do
-                sh "cmake .."
-                sh "make -j 4"
-                sh "sudo make install"
-            end
+        FileUtils.rm_rf("termbox")
+        sh "git clone https://github.com/nsf/termbox"
+        Dir.chdir("termbox") do
             sh "touch ok"
         end
     end
 end
 
-task :dependencies => ".extern/notcurses/ok"
+task :dependencies => ".extern/termbox/ok"
 
 task :version_git_hash_header do
     File.open("app/src/proast/version_git_hash.hpp", "w") do |fo|
@@ -70,5 +64,4 @@ end
 desc "Remove everything"
 task :proper => :clear do
     FileUtils.rm_rf(".extern")
-    sh "sudo rm -rf .extern/notcurses"
 end

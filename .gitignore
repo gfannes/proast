@@ -8,3 +8,4 @@ proast.app
 proast.ut
 .extern/
 *.resp
+*.a

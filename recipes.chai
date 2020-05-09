@@ -1,12 +1,13 @@
 include("../gubg/recipes.chai")
 
+root.recipe("termbox/func", fun(rcp){
+    rcp.add(".extern/termbox/src", "termbox.[hc]")
+})
+
 root.book("proast", fun(b){
     b.recipe("func", fun(rcp){
         rcp.add("app/src", "proast/**.[hc]pp")
-        rcp.include_path("/usr/local/include/notcurses")
-        rcp.include_path("/usr/local/include/ncpp")
-        rcp.library("notcurses++")
-        rcp.library("notcurses")
+        rcp.depends_on("termbox/func")
         rcp.depends_on("gubg/std/func")
         rcp.depends_on("gubg/algo/func")
     })
