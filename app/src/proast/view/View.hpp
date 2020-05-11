@@ -63,9 +63,7 @@ namespace proast { namespace view {
 
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(is_active ? "#" : " ");
-                cursor.write(item);
-                cursor.write(is_active ? "#" : " ");
+                cursor.write(item, is_active);
             };
             list_box.each_item(show_item);
 
@@ -91,9 +89,7 @@ namespace proast { namespace view {
 
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(is_active ? "#" : " ");
-                cursor.write(item);
-                cursor.write(is_active ? "#" : " ");
+                cursor.write(item, is_active);
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -108,9 +104,7 @@ namespace proast { namespace view {
 
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(is_active ? "#" : " ");
-                cursor.write(item);
-                cursor.write(is_active ? "#" : " ");
+                cursor.write(item, is_active);
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -125,9 +119,7 @@ namespace proast { namespace view {
 
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(is_active ? "." : " ");
-                cursor.write(item);
-                cursor.write(is_active ? "." : " ");
+                cursor.write(item, is_active);
                 cursor.newline();
             };
             list_box.each_item(show_item);
