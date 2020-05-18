@@ -53,6 +53,7 @@ namespace proast { namespace presenter {
                 case 'j': MSS(events_->commander_move(Movement::Down)); break;
                 case 'k': MSS(events_->commander_move(Movement::Up)); break;
                 case 'l': MSS(events_->commander_move(Movement::Right)); break;
+                case '\n': MSS(events_->commander_move(Movement::Right)); break;
             }
             MSS_END();
         }

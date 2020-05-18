@@ -144,6 +144,18 @@ namespace proast { namespace view {
             MSS_END();
         }
 
+        template <typename Ftor>
+        void pause(Ftor &&ftor)
+        {
+            if (termbox_ok_)
+                tb_shutdown();
+
+            ftor();
+
+            if (termbox_ok_)
+                tb_init();
+        }
+
         bool operator()()
         {
             MSS_BEGIN(bool);
@@ -171,7 +183,16 @@ namespace proast { namespace view {
             {
                 case TB_EVENT_KEY:
                     {
-                        const auto ch = event.ch;
+                        uint32_t ch;
+                        switch (event.key)
+                        {
+                            case TB_KEY_ENTER:
+                                ch = '\n';
+                                break;
+                            default:
+                                ch = event.ch;
+                                break;
+                        }
                         events_->message(std::string("Received character: ")+std::to_string(ch));
                         events_->received(ch);
                     }

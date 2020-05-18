@@ -8,6 +8,7 @@
 #include <gubg/mss.hpp>
 #include <gubg/Range.hpp>
 #include <chrono>
+#include <sstream>
 
 namespace proast { namespace presenter { 
 
@@ -103,11 +104,26 @@ namespace proast { namespace presenter {
                 case Movement::Right:
                     {
                         const auto &me = forest->nodes[ix];
-                        const auto child_ix = me.value.active_ix;
-                        if (child_ix < me.nr_childs())
+                        const auto &childs = me.childs;
+                        if (childs.empty())
                         {
-                            const auto &child = me.childs.nodes[child_ix];
-                            path.push_back(child.value.short_name);
+                            if (std::filesystem::is_regular_file(me.value.path))
+                            {
+                                view_.pause([&](){
+                                        std::ostringstream oss;
+                                        oss << "nvim " << me.value.path;
+                                        std::system(oss.str().c_str());
+                                        });
+                            }
+                        }
+                        else
+                        {
+                            const auto child_ix = me.value.active_ix;
+                            if (child_ix < me.nr_childs())
+                            {
+                                const auto &child = me.childs.nodes[child_ix];
+                                path.push_back(child.value.short_name);
+                            }
                         }
                     }
                     break;

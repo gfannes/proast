@@ -79,6 +79,7 @@ namespace proast { namespace view {
 #define unroll_fields(ftor) ftor(x_begin_) ftor(y_begin_) ftor(x_end_) ftor(y_end_)
 #define ftor(name) if (name != rhs.name) return false;
             unroll_fields(ftor)
+#undef ftor
 #undef unroll_fields
             return true;
         }
