@@ -3,6 +3,7 @@
 
 #include <gubg/tree/Node.hpp>
 #include <gubg/tree/Forest.hpp>
+#include <gubg/markup/Document.hpp>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -12,8 +13,11 @@ namespace proast { namespace model {
 
     struct Data
     {
+        std::filesystem::path path;
         std::string short_name;
         std::size_t active_ix = 0;
+        //Replace this with markdown::ast::Tree
+        gubg::markup::Document preview;
     };
     using Node = gubg::tree::Node<Data>;
     using Forest = gubg::tree::Forest<Data>;

@@ -133,7 +133,7 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            view_.clear_screen();
+            status_ = std::string("Loaded root path: ")+model_.root_filepath().string();
 
             if (mode_lb_.items.empty())
                 for (auto m = 0u; m < (unsigned int)model::Mode::Nr_; ++m)
@@ -143,16 +143,6 @@ namespace proast { namespace presenter {
                         mode_lb_.items.emplace_back(mode_cstr);
                 }
             mode_lb_.set_active((int)model_.mode);
-
-            if (true)
-            {
-                view_.show_path(model_.path());
-            }
-            else
-            {
-                view_.show_mode(mode_lb_);
-            }
-            view_.show_status(std::string("root path: ")+model_.root_filepath().string());
 
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
@@ -167,15 +157,20 @@ namespace proast { namespace presenter {
             auto path = model_.path();
             //Me and childs
             {
-                const model::Forest *forest = nullptr;
-                std::size_t ix;
-                MSS(model_.get(forest, ix, path), log::stream() << "Error: could not get me and childs\n");
-                fill_lb(me_lb_, forest, ix);
+                const model::Forest *me_forest = nullptr;
+                std::size_t me_ix;
+                MSS(model_.get(me_forest, me_ix, path), log::stream() << "Error: could not get me and childs\n");
+                fill_lb(me_lb_, me_forest, me_ix);
 
-                const auto &me = forest->nodes[ix];
-                forest = (ix < me.nr_childs() ? &me.childs : nullptr);
-                ix = me.value.active_ix;
-                fill_lb(child_lb_, forest, ix);
+                const auto &me = me_forest->nodes[me_ix];
+                const auto childs_forest = (me_ix < me.nr_childs() ? &me.childs : nullptr);
+                const auto child_ix = me.value.active_ix;
+                fill_lb(child_lb_, childs_forest, child_ix);
+
+                if (Clock::now() >= show_path_)
+                    status_ = std::string("Current path: ") + me.value.path.string();
+
+                preview_mu_ = me.value.preview;
             }
 
             //Parent
@@ -193,11 +188,24 @@ namespace proast { namespace presenter {
                 fill_lb(parent_lb_, forest, ix);
             }
 
-            view_.show_parent(parent_lb_);
-            view_.show_me(me_lb_);
-            view_.show_child(child_lb_);
+            {
+                view_.clear_screen();
 
-            view_.render_screen();
+                if (true)
+                    view_.show_path(model_.path());
+                else
+                    view_.show_mode(mode_lb_);
+
+                view_.show_status(status_);
+
+                view_.show_parent(parent_lb_);
+                view_.show_me(me_lb_);
+                view_.show_child(child_lb_);
+
+                view_.show_preview(preview_mu_);
+
+                view_.render_screen();
+            }
 
             MSS_END();
         }
@@ -211,13 +219,16 @@ namespace proast { namespace presenter {
 
         Commander commander_;
 
+        std::string status_;
         ListBox mode_lb_;
         ListBox parent_lb_;
         ListBox me_lb_;
         ListBox child_lb_;
+        gubg::markup::Document preview_mu_;
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();
+        Clock::time_point show_path_ = Clock::now() + std::chrono::seconds(2);
     };
 
 } } 

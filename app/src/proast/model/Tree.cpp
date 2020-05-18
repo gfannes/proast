@@ -1,7 +1,9 @@
 #include <proast/model/Tree.hpp>
 #include <gubg/mss.hpp>
 #include <gubg/tree/stream.hpp>
+#include <gubg/OnlyOnce.hpp>
 #include <list>
+#include <fstream>
 #include <cassert>
 
 namespace proast { namespace model { 
@@ -93,6 +95,8 @@ namespace proast { namespace model {
         MSS_BEGIN(bool);
         L(C(path));
 
+        node.value.path = path;
+
         if (false) {}
         else if (std::filesystem::is_directory(path))
         {
@@ -104,6 +108,19 @@ namespace proast { namespace model {
             else
             {
                 node.value.short_name = path.stem().string();
+
+                {
+                    std::ifstream fi{path};
+                    gubg::OnlyOnce is_title;
+                    for (std::string str; std::getline(fi, str); )
+                    {
+                        gubg::markup::Style style;
+                        style.attention = (is_title() ? 1 : 0);
+                        auto ftor = [&](auto &line) { line.add(str, style); };
+                        node.value.preview.add_line(ftor);
+                    }
+                }
+
                 //This is a file: there is no folder to recurse
                 return true;
             }

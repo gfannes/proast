@@ -126,6 +126,23 @@ namespace proast { namespace view {
 
             MSS_END();
         }
+        bool show_preview(const gubg::markup::Document &doc)
+        {
+            MSS_BEGIN(bool);
+
+            Cursor cursor{preview_region_};
+
+            std::size_t prev_line_ix = 0;
+            auto show = [&](std::size_t line_ix, const std::string &txt, const gubg::markup::Style &style)
+            {
+                for (; prev_line_ix < line_ix; ++prev_line_ix)
+                    cursor.newline();
+                cursor.write(txt, style.attention > 0);
+            };
+            doc.each(show);
+
+            MSS_END();
+        }
 
         bool operator()()
         {
@@ -145,7 +162,8 @@ namespace proast { namespace view {
                 const auto width = region.width()/7;
                 parent_region_ = region.pop_left(width);
                 me_region_ = region.pop_left(width);
-                child_region_ = region.pop_left(width);
+
+                child_region_ = preview_region_ = region.pop_all();
             }
 
             tb_event event{};
@@ -184,6 +202,7 @@ namespace proast { namespace view {
         Region me_region_;
         Region child_region_;
         Region status_region_;
+        Region preview_region_;
     };
 
 } } 
