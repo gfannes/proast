@@ -18,3 +18,10 @@ Text-UI application
 
 * allow creation of project documentation as a `.pdf` file
 * allow easy reordering of sprints by changing the rang index of a sprint and regenerate the rang indices with a stride of 10
+
+## TODO
+
+* Show preview of readme
+  * Add to model how the different paths for a Node will be called
+* Test if feature with subfeature can be shown
+* Add support for `gg` and `G`

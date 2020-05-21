@@ -152,12 +152,19 @@ namespace proast { namespace model {
                     {
                         const auto ext_str = sub_path.extension().string();
                         bool do_add = false;
-                        if (ext_str == ".md" && sub_path.filename() != "readme.md")
-                            do_add = true;
-                        if (do_add)
+                        if (ext_str == ".md")
                         {
-                            sub_paths.emplace_back(sub_path);
+                            if (sub_path.filename() == "readme.md")
+                            {
+                                node.value.path = sub_path;
+                            }
+                            else
+                            {
+                                do_add = true;
+                            }
                         }
+                        if (do_add)
+                            sub_paths.emplace_back(sub_path);
                     }
                     break;
             }
