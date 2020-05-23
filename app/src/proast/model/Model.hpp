@@ -72,9 +72,33 @@ namespace proast { namespace model {
         {
             MSS_BEGIN(bool);
 
-            MSS(!!tree_);
-            MSS(tree_->find(forest, ix, path));
-            assert(!!forest);
+            Forest *my_forest;
+            {
+                MSS(!!tree_);
+                MSS(tree_->find(my_forest, ix, path));
+                assert(!!my_forest);
+            }
+            forest = my_forest;
+
+            MSS_END();
+        }
+        bool get_parent(Node *&parent, const Path &path)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!path.empty());
+            auto parent_path = path;
+            parent_path.pop_back();
+
+            Forest *forest;
+            std::size_t ix;
+            {
+                MSS(!!tree_);
+                MSS(tree_->find(forest, ix, parent_path));
+                assert(!!forest);
+            }
+
+            parent = &forest->nodes[ix];
 
             MSS_END();
         }

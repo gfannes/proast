@@ -194,7 +194,8 @@ namespace proast { namespace view {
                                 ch = event.ch;
                                 break;
                         }
-                        events_->message(std::string("Received character: ")+std::to_string(ch));
+                        if (false)
+                            events_->message(std::string("Received character: ")+std::to_string(ch));
                         events_->received(ch);
                     }
                     break;

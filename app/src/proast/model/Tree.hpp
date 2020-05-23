@@ -38,7 +38,7 @@ namespace proast { namespace model {
 
         Path root_path() const;
 
-        bool find(const Forest *&forest, std::size_t &ix, const Path &path);
+        bool find(Forest *&forest, std::size_t &ix, const Path &path);
 
     private:
         std::filesystem::path root_filepath_;

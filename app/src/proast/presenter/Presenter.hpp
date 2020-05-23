@@ -95,6 +95,17 @@ namespace proast { namespace presenter {
             std::size_t ix;
             MSS(model_.get(forest, ix, path));
 
+            auto set_new_ix = [&](std::size_t new_ix)
+            {
+                MSS_BEGIN(bool);
+                path.back() = forest->nodes[new_ix].value.short_name;
+
+                model::Node *parent;
+                MSS(model_.get_parent(parent, path));
+                parent->value.active_ix = new_ix;
+                MSS_END();
+            };
+
             switch (movement)
             {
                 case Movement::Left:
@@ -123,11 +134,11 @@ namespace proast { namespace presenter {
                     break;
                 case Movement::Up:
                     if (ix > 0 && !path.empty())
-                        path.back() = forest->nodes[ix-1].value.short_name;
+                        set_new_ix(ix-1);
                     break;
                 case Movement::Down:
                     if (ix+1 < forest->size() && !path.empty())
-                        path.back() = forest->nodes[ix+1].value.short_name;
+                        set_new_ix(ix+1);
                     break;
             }
 
@@ -197,8 +208,8 @@ namespace proast { namespace presenter {
                 fill_lb(me_lb_, me_forest, me_ix);
 
                 const auto &me = me_forest->nodes[me_ix];
-                const auto childs_forest = (me_ix < me.nr_childs() ? &me.childs : nullptr);
                 const auto child_ix = me.value.active_ix;
+                const auto childs_forest = (child_ix < me.nr_childs() ? &me.childs : nullptr);
                 fill_lb(child_lb_, childs_forest, child_ix);
 
                 if (Clock::now() >= show_path_)

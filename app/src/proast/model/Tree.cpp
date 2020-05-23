@@ -45,13 +45,13 @@ namespace proast { namespace model {
         return path;
     }
 
-    bool Tree::find(const Forest *&forest, std::size_t &ix, const Path &path)
+    bool Tree::find(Forest *&forest, std::size_t &ix, const Path &path)
     {
         MSS_BEGIN(bool);
 
         MSS(!path.empty());
 
-        const Forest *my_forest = nullptr;
+        Forest *my_forest = nullptr;
         std::size_t my_ix = 0;
         for (const auto &segment: path)
         {

@@ -21,7 +21,6 @@ Text-UI application
 
 ## TODO
 
-* `file_format/markdown` subfolder is not shown
 * Add support for creating files
 * Add to model how the different paths for a Node will be called
 * Test if feature with subfeature can be shown
