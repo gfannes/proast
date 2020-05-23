@@ -43,7 +43,7 @@ namespace proast { namespace model {
     private:
         std::filesystem::path root_filepath_;
         Forest root_forest_;
-        static bool load_(Node &node, std::filesystem::path path);
+        static bool load_(Node &node, const std::string &stem, std::filesystem::path path);
     };
 
     inline std::ostream &operator<<(std::ostream &os, const Tree &tree)

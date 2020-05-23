@@ -2,7 +2,7 @@
 #include <gubg/mss.hpp>
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
-#include <list>
+#include <map>
 #include <fstream>
 #include <cassert>
 
@@ -30,7 +30,7 @@ namespace proast { namespace model {
         MSS_BEGIN(bool);
         root_filepath_.clear();
         root_forest_.nodes.resize(1);
-        MSS(load_(root_forest_.nodes[0], root));
+        MSS(load_(root_forest_.nodes[0], root.stem().string(), root));
         root_filepath_ = root;
         MSS_END();
     }
@@ -90,54 +90,67 @@ namespace proast { namespace model {
     }
 
     //Privates
-    bool Tree::load_(Node &node, std::filesystem::path path)
+    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path path)
     {
         MSS_BEGIN(bool);
         L(C(path));
 
+        node.value.short_name = stem;
         node.value.path = path;
+
+        auto load_preview = [&]()
+        {
+            std::ifstream fi{node.value.path};
+            gubg::OnlyOnce is_title;
+            for (std::string str; std::getline(fi, str); )
+            {
+                gubg::markup::Style style;
+                style.attention = (is_title() ? 1 : 0);
+                auto ftor = [&](auto &line) { line.add(str, style); };
+                node.value.preview.add_line(ftor);
+            }
+        };
+
 
         if (false) {}
         else if (std::filesystem::is_directory(path))
         {
-            node.value.short_name = path.filename().string();
+            auto check_for_content = [&](const auto &content_path)
+            {
+                if (std::filesystem::is_regular_file(content_path))
+                {
+                    node.value.path = content_path;
+
+                    load_preview();
+                    return true;
+                }
+                return false;
+            };
+            check_for_content(path / "readme.md") || check_for_content(std::filesystem::path{path} += ".md");
         }
         else if (std::filesystem::is_regular_file(path))
         {
-            if (false) {}
-            else
-            {
-                node.value.short_name = path.stem().string();
+            load_preview();
 
-                {
-                    std::ifstream fi{path};
-                    gubg::OnlyOnce is_title;
-                    for (std::string str; std::getline(fi, str); )
-                    {
-                        gubg::markup::Style style;
-                        style.attention = (is_title() ? 1 : 0);
-                        auto ftor = [&](auto &line) { line.add(str, style); };
-                        node.value.preview.add_line(ftor);
-                    }
-                }
-
-                //This is a file: there is no folder to recurse
-                return true;
-            }
+            //This is a file: there is no folder to recurse
+            return true;
         }
         else
         {
             MSS(false);
         }
 
-        std::list<std::filesystem::path> sub_paths;
+        using Stem__Path = std::map<std::string, std::filesystem::path>;
+        Stem__Path stem__dir;
+        Stem__Path stem__file;
         for (const auto &sub: std::filesystem::directory_iterator{path})
         {
             const auto sub_path = sub.path();
-            const auto fn_str = sub_path.filename().string();
-            if (fn_str.empty())
+
+            const auto stem = sub_path.stem().string();
+            if (stem.empty())
                 continue;
-            switch (fn_str[0])
+            switch (stem[0])
             {
                 case '@':
                 case '.':
@@ -146,35 +159,37 @@ namespace proast { namespace model {
                     if (false) {}
                     else if (std::filesystem::is_directory(sub_path))
                     {
-                        sub_paths.emplace_back(sub_path);
+                        stem__dir.emplace(stem, sub_path);
                     }
                     else if (std::filesystem::is_regular_file(sub_path))
                     {
-                        const auto ext_str = sub_path.extension().string();
                         bool do_add = false;
-                        if (ext_str == ".md")
                         {
-                            if (sub_path.filename() == "readme.md")
-                            {
-                                node.value.path = sub_path;
-                            }
-                            else
-                            {
+                            const auto ext_str = sub_path.extension().string();
+                            if (ext_str == ".md" && sub_path.filename() != "readme.md")
                                 do_add = true;
-                            }
                         }
                         if (do_add)
-                            sub_paths.emplace_back(sub_path);
+                            stem__file.emplace(stem, sub_path);
                     }
                     break;
             }
         }
 
-        node.childs.nodes.resize(sub_paths.size());
-        auto n = node.childs.nodes.begin();
-        for (const auto &sub_path: sub_paths)
+        Stem__Path stem__path;
         {
-            MSS(load_(*n, sub_path));
+            stem__path.swap(stem__dir);
+
+            for (const auto &[stem, file]: stem__file)
+                if (!stem__path.count(stem))
+                    stem__path.emplace(stem, file);
+        }
+
+        node.childs.nodes.resize(stem__path.size());
+        auto n = node.childs.nodes.begin();
+        for (const auto &[stem, subpath]: stem__path)
+        {
+            MSS(load_(*n, stem, subpath));
             ++n;
         }
 

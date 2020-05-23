@@ -23,6 +23,7 @@ namespace proast { namespace presenter {
             virtual bool commander_quit() = 0;
             virtual bool commander_set_mode(model::Mode) = 0;
             virtual bool commander_move(Movement) = 0;
+            virtual bool commander_open() = 0;
         };
 
         //Set the events listener
@@ -53,7 +54,8 @@ namespace proast { namespace presenter {
                 case 'j': MSS(events_->commander_move(Movement::Down)); break;
                 case 'k': MSS(events_->commander_move(Movement::Up)); break;
                 case 'l': MSS(events_->commander_move(Movement::Right)); break;
-                case '\n': MSS(events_->commander_move(Movement::Right)); break;
+
+                case '\n': MSS(events_->commander_open()); break;
             }
             MSS_END();
         }

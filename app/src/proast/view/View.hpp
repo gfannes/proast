@@ -174,8 +174,9 @@ namespace proast { namespace view {
                 const auto width = region.width()/7;
                 parent_region_ = region.pop_left(width);
                 me_region_ = region.pop_left(width);
+                child_region_ = region.pop_left(width);
 
-                child_region_ = preview_region_ = region.pop_all();
+                preview_region_ = region.pop_all();
             }
 
             tb_event event{};

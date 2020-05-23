@@ -108,13 +108,7 @@ namespace proast { namespace presenter {
                         if (childs.empty())
                         {
                             if (std::filesystem::is_regular_file(me.value.path))
-                            {
-                                view_.pause([&](){
-                                        std::ostringstream oss;
-                                        oss << "nvim " << me.value.path;
-                                        std::system(oss.str().c_str());
-                                        });
-                            }
+                                return commander_open();
                         }
                         else
                         {
@@ -138,6 +132,30 @@ namespace proast { namespace presenter {
             }
 
             model_.set_path(path);
+
+            MSS(repaint_());
+
+            MSS_END();
+        }
+        bool commander_open() override
+        {
+            MSS_BEGIN(bool);
+
+            auto path = model_.path();
+
+            const model::Forest *forest;
+            std::size_t ix;
+            MSS(model_.get(forest, ix, path));
+
+            const auto &me = forest->nodes[ix];
+            if (std::filesystem::is_regular_file(me.value.path))
+            {
+                view_.pause([&](){
+                        std::ostringstream oss;
+                        oss << "nvim " << me.value.path;
+                        std::system(oss.str().c_str());
+                        });
+            }
 
             MSS(repaint_());
 
