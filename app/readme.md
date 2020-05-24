@@ -21,13 +21,14 @@ Text-UI application
 
 ## TODO
 
+* Load `@`-folders as well and annotate as requirements
+* Rename `@root` into `.proast`
 * Add support for creating files via `a`
-* Rework `g` into `gg`
 * Reload tree from time to time
 * Reload subtree after edit
 * Store metadata in `<!--[proast](a:)(b:)(c:)-->`
 * Store `active_ix` in .proast folder
-* Rename `@root` into `.proast`
-* Load `@`-folders as well and annotate as requirements
 * Add to model how the different paths for a Node will be called
 * Test if feature with subfeature can be shown
+* Rework `g` into `gg`
+* Git hash header should not require "git checkout ." each time

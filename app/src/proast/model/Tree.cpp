@@ -15,7 +15,7 @@ namespace proast { namespace model {
         root = start;
         while (true)
         {
-            if (std::filesystem::exists(root / "@root"))
+            if (std::filesystem::exists(root / ".proast"))
                 return true;
             const auto parent = root.parent_path();
             MSS_Q(parent != root);
@@ -152,7 +152,6 @@ namespace proast { namespace model {
                 continue;
             switch (stem[0])
             {
-                case '@':
                 case '.':
                     break;
                 default:

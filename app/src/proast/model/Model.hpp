@@ -3,9 +3,12 @@
 
 #include <proast/model/Events.hpp>
 #include <proast/model/Tree.hpp>
+#include <gubg/OnlyOnce.hpp>
 #include <gubg/mss.hpp>
 #include <optional>
 #include <vector>
+#include <chrono>
+#include <fstream>
 #include <cassert>
 
 namespace proast { namespace model { 
@@ -42,6 +45,14 @@ namespace proast { namespace model {
                 tree_.emplace();
                 MSS(tree_->load(root));
                 path_ = tree_->root_path();
+            }
+
+            const auto now = Clock::now();
+            if (now >= save_tp_)
+            {
+                //Save from time to time
+                MSS(save_());
+                save_tp_ = now+std::chrono::milliseconds(300);
             }
 
             MSS_END();
@@ -104,9 +115,51 @@ namespace proast { namespace model {
         }
 
     private:
+        bool save_()
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            const auto active_ixs_fn = tree_->root_filepath() / ".proast/active_ixs.txt";
+            std::ofstream fo{active_ixs_fn};
+
+            Path path;
+            auto ftor = [&](auto &node, const auto &int_path, auto visit_count)
+            {
+                if (visit_count == 0)
+                {
+                    path.push_back(node.value.short_name);
+                    fo << '[';
+                    gubg::OnlyOnce skip_separator;
+                    for (const auto &segment: path)
+                    {
+                        if (!skip_separator())
+                            fo << ':';
+                        fo << segment;
+                    }
+                    fo << ']';
+                    fo << "(active_ix:" << node.value.active_ix << ")";
+                    fo << std::endl;
+                }
+                else
+                {
+                    assert(!path.empty());
+                    MSS(!path.empty());
+                    path.pop_back();
+                }
+            };
+            tree_->root_forest().dfs(ftor);
+
+            MSS_END();
+        }
+
         model::Events *events_{};
         std::optional<Tree> tree_;
         Path path_;
+
+        using Clock = std::chrono::high_resolution_clock;
+        Clock::time_point save_tp_ = Clock::now();
     };
 
 } } 
