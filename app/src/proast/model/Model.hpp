@@ -3,6 +3,8 @@
 
 #include <proast/model/Events.hpp>
 #include <proast/model/Tree.hpp>
+#include <gubg/file/system.hpp>
+#include <gubg/naft/Range.hpp>
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/mss.hpp>
 #include <optional>
@@ -44,6 +46,7 @@ namespace proast { namespace model {
                 MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
                 tree_.emplace();
                 MSS(tree_->load(root));
+                MSS(load_metadata_());
                 path_ = tree_->root_path();
             }
 
@@ -51,7 +54,7 @@ namespace proast { namespace model {
             if (now >= save_tp_)
             {
                 //Save from time to time
-                MSS(save_());
+                MSS(save_metadata_());
                 save_tp_ = now+std::chrono::milliseconds(300);
             }
 
@@ -115,14 +118,20 @@ namespace proast { namespace model {
         }
 
     private:
-        bool save_()
+        std::filesystem::path metadata_fn_() const
+        {
+            std::filesystem::path fn;
+            if (tree_)
+                fn = tree_->root_filepath() / ".proast/metadata.txt";
+            return fn;
+        }
+        bool save_metadata_()
         {
             MSS_BEGIN(bool);
 
             MSS(!!tree_);
 
-            const auto active_ixs_fn = tree_->root_filepath() / ".proast/active_ixs.txt";
-            std::ofstream fo{active_ixs_fn};
+            std::ofstream fo{metadata_fn_()};
 
             Path path;
             auto ftor = [&](auto &node, const auto &int_path, auto visit_count)
@@ -148,8 +157,43 @@ namespace proast { namespace model {
                     MSS(!path.empty());
                     path.pop_back();
                 }
+                return true;
             };
             tree_->root_forest().dfs(ftor);
+
+            MSS_END();
+        }
+        bool load_metadata_()
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            std::string content;
+            MSS(gubg::file::read(content, metadata_fn_()));
+
+            gubg::naft::Range range{content};
+
+            for (std::string tag; range.pop_tag(tag); )
+            {
+                Path path;
+                {
+                    gubg::Strange strange{tag};
+                    for (std::string segment; strange.pop_until(segment, ':') || strange.pop_all(segment); )
+                        path.push_back(segment);
+                }
+
+                gubg::naft::Attrs attrs;
+                range.pop_attrs(attrs);
+
+                auto it = attrs.find("active_ix");
+                if (it != attrs.end())
+                {
+                    Node *node;
+                    if (tree_->find(node, path))
+                        node->value.active_ix = std::stoul(it->second);
+                }
+            }
 
             MSS_END();
         }

@@ -21,8 +21,7 @@ Text-UI application
 
 ## TODO
 
-* Load `@`-folders as well and annotate as requirements
-* Rename `@root` into `.proast`
+* Annotate `@`-folders and files as requirements
 * Add support for creating files via `a`
 * Reload tree from time to time
 * Reload subtree after edit

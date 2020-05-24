@@ -66,7 +66,7 @@ namespace proast { namespace model {
                 my_forest = &my_forest->nodes[my_ix].childs;
             }
 
-            //Search the my_ix for "segment"
+            //Search the my_forest for "segment"
             const auto nr_childs = my_forest->size();
             for (my_ix = 0; my_ix < nr_childs; ++my_ix)
                 if (my_forest->nodes[my_ix].value.short_name == segment)
@@ -76,6 +76,39 @@ namespace proast { namespace model {
 
         forest = my_forest;
         ix = my_ix;
+
+        MSS_END();
+    }
+    bool Tree::find(Node *&node, const Path &path)
+    {
+        MSS_BEGIN(bool);
+
+        MSS(!path.empty());
+
+        Forest *my_forest = nullptr;
+        std::size_t my_ix = 0;
+        for (const auto &segment: path)
+        {
+            //Set/update the my_forest where to look for "segment"
+            if (!my_forest)
+            {
+                my_forest = &root_forest_;
+            }
+            else
+            {
+                assert(my_ix < my_forest->size());
+                my_forest = &my_forest->nodes[my_ix].childs;
+            }
+
+            //Search the my_forest for "segment"
+            const auto nr_childs = my_forest->size();
+            for (my_ix = 0; my_ix < nr_childs; ++my_ix)
+                if (my_forest->nodes[my_ix].value.short_name == segment)
+                    break;
+            MSS(my_ix < my_forest->size());
+        }
+
+        node = &my_forest->nodes[my_ix];
 
         MSS_END();
     }
