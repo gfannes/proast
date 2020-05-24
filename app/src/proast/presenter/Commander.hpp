@@ -8,7 +8,7 @@ namespace proast { namespace presenter {
 
     enum Movement
     {
-        Left, Down, Up, Right,
+        Left, Down, Up, Right, Top, Bottom,
     };
 
     //Translates key-presses into commands
@@ -54,6 +54,8 @@ namespace proast { namespace presenter {
                 case 'j': MSS(events_->commander_move(Movement::Down)); break;
                 case 'k': MSS(events_->commander_move(Movement::Up)); break;
                 case 'l': MSS(events_->commander_move(Movement::Right)); break;
+                case 'g': MSS(events_->commander_move(Movement::Top)); break;
+                case 'G': MSS(events_->commander_move(Movement::Bottom)); break;
 
                 case '\n': MSS(events_->commander_open()); break;
             }

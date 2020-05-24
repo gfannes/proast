@@ -140,6 +140,12 @@ namespace proast { namespace presenter {
                     if (ix+1 < forest->size() && !path.empty())
                         set_new_ix(ix+1);
                     break;
+                case Movement::Top:
+                    set_new_ix(0);
+                    break;
+                case Movement::Bottom:
+                    set_new_ix(forest->empty() ? 0 : forest->size()-1);
+                    break;
             }
 
             model_.set_path(path);
