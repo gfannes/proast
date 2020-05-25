@@ -46,16 +46,22 @@ namespace proast { namespace model {
                 MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
                 tree_.emplace();
                 MSS(tree_->load(root));
-                MSS(load_metadata_());
+                if (!load_metadata_())
+                    log::stream() << "Warning: Could not load metadata" << std::endl;
                 path_ = tree_->root_path();
             }
 
             const auto now = Clock::now();
-            if (now >= save_tp_)
+            if (save_tp_ && now >= *save_tp_)
             {
                 //Save from time to time
-                MSS(save_metadata_());
-                save_tp_ = now+std::chrono::milliseconds(300);
+                if (!save_metadata_())
+                {
+                    log::stream() << "Warning: Could not save metadata" << std::endl;
+                    save_tp_.reset();
+                }
+                else
+                    save_tp_ = now+std::chrono::milliseconds(300);
             }
 
             MSS_END();
@@ -118,12 +124,16 @@ namespace proast { namespace model {
         }
 
     private:
-        std::filesystem::path metadata_fn_() const
+        std::filesystem::path proast_dir_() const
         {
             std::filesystem::path fn;
             if (tree_)
-                fn = tree_->root_filepath() / ".proast/metadata.txt";
+                fn = tree_->root_filepath() / ".proast";
             return fn;
+        }
+        std::filesystem::path metadata_fn_() const
+        {
+            return proast_dir_() / "metadata.naft";
         }
         bool save_metadata_()
         {
@@ -131,7 +141,16 @@ namespace proast { namespace model {
 
             MSS(!!tree_);
 
-            std::ofstream fo{metadata_fn_()};
+            const auto metadata_fn = metadata_fn_();
+            if (!std::filesystem::exists(metadata_fn))
+            {
+                const auto proast_dir = proast_dir_();
+                if (!std::filesystem::exists(proast_dir))
+                    std::filesystem::create_directories(proast_dir);
+            }
+
+            std::ofstream fo{metadata_fn};
+            MSS(fo.good());
 
             Path path;
             auto ftor = [&](auto &node, const auto &int_path, auto visit_count)
@@ -203,7 +222,7 @@ namespace proast { namespace model {
         Path path_;
 
         using Clock = std::chrono::high_resolution_clock;
-        Clock::time_point save_tp_ = Clock::now();
+        std::optional<Clock::time_point> save_tp_ = Clock::now();
     };
 
 } } 

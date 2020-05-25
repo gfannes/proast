@@ -15,7 +15,7 @@ namespace proast { namespace model {
         root = start;
         while (true)
         {
-            if (std::filesystem::exists(root / ".proast"))
+            if (std::filesystem::exists(root / ".proast_root"))
                 return true;
             const auto parent = root.parent_path();
             MSS_Q(parent != root);

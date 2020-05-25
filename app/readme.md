@@ -21,12 +21,13 @@ Text-UI application
 
 ## TODO
 
+* Rework `active_ix` into `active_child_key`
+* Store `path` in `.proast` folder
 * Annotate `@`-folders and files as requirements
 * Add support for creating files via `a`
 * Reload tree from time to time
 * Reload subtree after edit
 * Store metadata in `<!--[proast](a:)(b:)(c:)-->`
-* Store `active_ix` in .proast folder
 * Add to model how the different paths for a Node will be called
 * Test if feature with subfeature can be shown
 * Rework `g` into `gg`
