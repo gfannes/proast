@@ -4,10 +4,26 @@
 #include <gubg/OnlyOnce.hpp>
 #include <map>
 #include <fstream>
+#include <sstream>
 #include <cassert>
 
 namespace proast { namespace model { 
 
+    //Free functions
+    std::string to_string(const Path &path)
+    {
+        std::ostringstream oss;
+        gubg::OnlyOnce skip_separator;
+        for (const auto &e: path)
+        {
+            if (!skip_separator())
+                oss << '/';
+            oss << e;
+        }
+        return oss.str();
+    }
+
+    //Tree
     bool Tree::find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start)
     {
         MSS_BEGIN(bool);
@@ -49,7 +65,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        MSS(!path.empty());
+        MSS_Q(!path.empty());
 
         Forest *my_forest = nullptr;
         std::size_t my_ix = 0;
@@ -71,7 +87,7 @@ namespace proast { namespace model {
             for (my_ix = 0; my_ix < nr_childs; ++my_ix)
                 if (my_forest->nodes[my_ix].value.short_name == segment)
                     break;
-            MSS(my_ix < my_forest->size());
+            MSS_Q(my_ix < my_forest->size());
         }
 
         forest = my_forest;
@@ -83,7 +99,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        MSS(!path.empty());
+        MSS_Q(!path.empty());
 
         Forest *my_forest = nullptr;
         std::size_t my_ix = 0;
@@ -105,7 +121,7 @@ namespace proast { namespace model {
             for (my_ix = 0; my_ix < nr_childs; ++my_ix)
                 if (my_forest->nodes[my_ix].value.short_name == segment)
                     break;
-            MSS(my_ix < my_forest->size());
+            MSS_Q(my_ix < my_forest->size());
         }
 
         node = &my_forest->nodes[my_ix];

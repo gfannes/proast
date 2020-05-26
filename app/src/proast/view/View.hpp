@@ -5,6 +5,7 @@
 #include <proast/view/Region.hpp>
 #include <proast/view/Cursor.hpp>
 #include <proast/presenter/ListBox.hpp>
+#include <proast/presenter/Dialog.hpp>
 #include <gubg/mss.hpp>
 #include <thread>
 #include <vector>
@@ -52,20 +53,6 @@ namespace proast { namespace view {
                 cursor.write("/");
                 cursor.write(segment);
             }
-
-            MSS_END();
-        }
-        bool show_mode(const presenter::ListBox &list_box)
-        {
-            MSS_BEGIN(bool);
-
-            Cursor cursor{mode_region_};
-
-            auto show_item = [&](const std::string &item, bool is_active)
-            {
-                cursor.write(item, is_active);
-            };
-            list_box.each_item(show_item);
 
             MSS_END();
         }
@@ -143,6 +130,19 @@ namespace proast { namespace view {
 
             MSS_END();
         }
+        bool show_dialog(const presenter::Dialog &dialog)
+        {
+            MSS_BEGIN(bool);
+
+            Cursor cursor{dialog_region_};
+            cursor.fill('.');
+            cursor.write(dialog.caption(), true);
+            cursor.newline();
+            cursor.newline();
+            cursor.write(dialog.content(), false);
+
+            MSS_END();
+        }
 
         template <typename Ftor>
         void pause(Ftor &&ftor)
@@ -168,10 +168,15 @@ namespace proast { namespace view {
 
             {
                 auto region = screen_region_();
-                path_region_ = mode_region_ = region.pop_top(1);
+                path_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 
                 const auto width = region.width()/7;
+                const auto height = region.height()/7;
+                {
+                    dialog_region_ = region;
+                    dialog_region_.pop_border(height, width);
+                }
                 parent_region_ = region.pop_left(width);
                 me_region_ = region.pop_left(width);
                 child_region_ = region.pop_left(width);
@@ -184,18 +189,23 @@ namespace proast { namespace view {
             {
                 case TB_EVENT_KEY:
                     {
+                        if (false)
+                            events_->message(std::string("Received event.ch:")+std::to_string(event.ch)+", event.key:"+std::to_string(event.key));
+
                         uint32_t ch;
                         switch (event.key)
                         {
-                            case TB_KEY_ENTER:
-                                ch = '\n';
-                                break;
+                            case TB_KEY_ENTER:     ch = '\n'; break;
+                            case TB_KEY_ESC:       ch = 0x1B; break;
+                            case 0x7F:             ch = 0x7F; break;//Backspace
                             default:
                                 ch = event.ch;
                                 break;
                         }
+
                         if (false)
-                            events_->message(std::string("Received character: ")+std::to_string(ch));
+                            events_->message(std::string("Received character: ")+std::to_string((int)ch));
+
                         events_->received(ch);
                     }
                     break;
@@ -220,12 +230,12 @@ namespace proast { namespace view {
 
         bool termbox_ok_ = false;
         Region path_region_;
-        Region mode_region_;
         Region parent_region_;
         Region me_region_;
         Region child_region_;
         Region status_region_;
         Region preview_region_;
+        Region dialog_region_;
     };
 
 } } 

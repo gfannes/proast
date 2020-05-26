@@ -13,6 +13,15 @@ namespace proast { namespace view {
     public:
         Cursor(const Region &region): region_(region) {}
 
+        void fill(char ch)
+        {
+            tb_cell cell{};
+            cell.ch = ch;
+            for (auto x = region_.x_begin(); x < region_.x_end(); ++x)
+                for (auto y = region_.y_begin(); y < region_.y_end(); ++y)
+                    tb_put_cell(x, y, &cell);
+        }
+
         void write(const std::string &str, bool highlight = false)
         {
             if (row_abs_ >= region_.y_end())

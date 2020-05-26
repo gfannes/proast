@@ -74,6 +74,14 @@ namespace proast { namespace view {
             return res;
         }
 
+        void pop_border(unsigned int y_amount, unsigned int x_amount)
+        {
+            pop_left(x_amount);
+            pop_right(x_amount);
+            pop_top(y_amount);
+            pop_bottom(y_amount);
+        }
+
         bool operator==(const Region &rhs) const
         {
 #define unroll_fields(ftor) ftor(x_begin_) ftor(y_begin_) ftor(x_end_) ftor(y_end_)

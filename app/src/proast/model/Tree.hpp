@@ -15,7 +15,7 @@ namespace proast { namespace model {
     {
         std::filesystem::path path;
         std::string short_name;
-        std::size_t active_ix = 0;
+        std::string active_child_key;
         //Replace this with markdown::ast::Tree
         gubg::markup::Document preview;
     };
@@ -23,6 +23,7 @@ namespace proast { namespace model {
     using Forest = gubg::tree::Forest<Data>;
 
     using Path = std::vector<std::string>;
+    std::string to_string(const Path &);
 
     class Tree
     {

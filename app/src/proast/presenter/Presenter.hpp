@@ -12,17 +12,6 @@
 
 namespace proast { namespace presenter { 
 
-    inline const char *to_string(model::Mode m)
-    {
-        switch (m)
-        {
-            case model::Mode::Develop: return "develop"; break;
-            case model::Mode::Rework: return "rework"; break;
-            default: break;
-        }
-        return 0;
-    }
-
     class Presenter: public model::Events, public view::Events, public Commander::Events
     {
     public:
@@ -38,13 +27,23 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            const auto now = Clock::now();
-            if (now >= repaint_tp_)
+            bool do_repaint = false;
+
+            //Repaint from time to time
             {
-                //Repaint from time to time
-                MSS(repaint_());
-                repaint_tp_ = now+std::chrono::milliseconds(300);
+                const auto now = Clock::now();
+                if (now >= repaint_tp_)
+                {
+                    do_repaint = true;
+                    repaint_tp_ = now+std::chrono::milliseconds(300);
+                }
             }
+            //Always repaint  when commander is waiting for input
+            if (commander_.waits_for_input())
+                do_repaint = true;
+
+            if (do_repaint)
+                MSS(repaint_());
 
             MSS_END();
         }
@@ -79,12 +78,6 @@ namespace proast { namespace presenter {
             quit = true;
             MSS_END();
         }
-        bool commander_set_mode(model::Mode mode) override
-        {
-            MSS_BEGIN(bool);
-            model_.set_mode(mode);
-            MSS_END();
-        }
         bool commander_move(Movement movement) override
         {
             MSS_BEGIN(bool);
@@ -102,7 +95,7 @@ namespace proast { namespace presenter {
 
                 model::Node *parent;
                 MSS(model_.get_parent(parent, path));
-                parent->value.active_ix = new_ix;
+                parent->value.active_child_key = path.back();
                 MSS_END();
             };
 
@@ -123,12 +116,18 @@ namespace proast { namespace presenter {
                         }
                         else
                         {
-                            const auto child_ix = me.value.active_ix;
-                            if (child_ix < me.nr_childs())
+                            std::string active_child_key;
+                            if (active_child_key.empty())
                             {
-                                const auto &child = me.childs.nodes[child_ix];
-                                path.push_back(child.value.short_name);
+                                if (me.find_child_ix([&](const auto &node){return node.value.short_name == me.value.active_child_key;}))
+                                    active_child_key = me.value.active_child_key;
                             }
+                            if (active_child_key.empty())
+                            {
+                                if (!me.childs.empty())
+                                    active_child_key = me.childs.nodes[0].value.short_name;
+                            }
+                            path.push_back(active_child_key);
                         }
                     }
                     break;
@@ -178,6 +177,32 @@ namespace proast { namespace presenter {
 
             MSS_END();
         }
+        bool commander_add(const std::string &str, bool insert, bool is_final) override
+        {
+            MSS_BEGIN(bool);
+            if (is_final)
+            {
+                dialog_.reset();
+                if (!str.empty())
+                    model_.add_item(str, insert);
+            }
+            else
+            {
+                if (!dialog_)
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption(insert ? "Insert new item" : "Add new item");
+                }
+                dialog_->set_content(str);
+            }
+            MSS_END();
+        }
+        bool commander_remove() override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.remove_current());
+            MSS_END();
+        }
 
     private:
         bool repaint_()
@@ -185,15 +210,6 @@ namespace proast { namespace presenter {
             MSS_BEGIN(bool);
 
             status_ = std::string("Loaded root path: ")+model_.root_filepath().string();
-
-            if (mode_lb_.items.empty())
-                for (auto m = 0u; m < (unsigned int)model::Mode::Nr_; ++m)
-                {
-                    const auto mode_cstr = to_string((model::Mode)m);
-                    if (!!mode_cstr)
-                        mode_lb_.items.emplace_back(mode_cstr);
-                }
-            mode_lb_.set_active((int)model_.mode);
 
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
@@ -210,13 +226,15 @@ namespace proast { namespace presenter {
             {
                 const model::Forest *me_forest = nullptr;
                 std::size_t me_ix;
-                MSS(model_.get(me_forest, me_ix, path), log::stream() << "Error: could not get me and childs\n");
+                MSS(model_.get(me_forest, me_ix, path), log::stream() << "Error: could not get me and childs for path " << model::to_string(path) << "\n");
                 fill_lb(me_lb_, me_forest, me_ix);
 
                 const auto &me = me_forest->nodes[me_ix];
-                const auto child_ix = me.value.active_ix;
-                const auto childs_forest = (child_ix < me.nr_childs() ? &me.childs : nullptr);
-                fill_lb(child_lb_, childs_forest, child_ix);
+                auto child_ix = me.find_child_ix([&](const auto &node){return node.value.short_name == me.value.active_child_key;});
+                if (!child_ix)
+                    child_ix = me.find_child_ix([](const auto &node){return true;});
+                const auto childs_forest = (child_ix ? &me.childs : nullptr);
+                fill_lb(child_lb_, childs_forest, *child_ix);
 
                 if (Clock::now() >= show_path_)
                     status_ = std::string("Current path: ") + me.value.path.string();
@@ -242,10 +260,7 @@ namespace proast { namespace presenter {
             {
                 view_.clear_screen();
 
-                if (true)
-                    view_.show_path(model_.path());
-                else
-                    view_.show_mode(mode_lb_);
+                view_.show_path(model_.path());
 
                 view_.show_status(status_);
 
@@ -254,6 +269,9 @@ namespace proast { namespace presenter {
                 view_.show_child(child_lb_);
 
                 view_.show_preview(preview_mu_);
+                
+                if (dialog_)
+                    view_.show_dialog(*dialog_);
 
                 view_.render_screen();
             }
@@ -271,11 +289,11 @@ namespace proast { namespace presenter {
         Commander commander_;
 
         std::string status_;
-        ListBox mode_lb_;
         ListBox parent_lb_;
         ListBox me_lb_;
         ListBox child_lb_;
         gubg::markup::Document preview_mu_;
+        std::optional<Dialog> dialog_;
 
         using Clock = std::chrono::high_resolution_clock;
         Clock::time_point repaint_tp_ = Clock::now();

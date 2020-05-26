@@ -15,8 +15,6 @@
 
 namespace proast { namespace model { 
 
-    enum class Mode {Develop, Rework, Nr_};
-
     class Model
     {
     public:
@@ -27,31 +25,74 @@ namespace proast { namespace model {
                 events_->message("Events destination was set");
         }
 
-        Mode mode = Mode::Develop;
-        void set_mode(Mode m)
+        bool add_item(const std::string &short_name, bool insert)
         {
-            const auto do_notify = (m != mode);
-            mode = m;
-            if (do_notify)
-                events_->notify();
+            MSS_BEGIN(bool);
+
+            if (!insert)
+            {
+                if (path_.size() > 1)
+                    path_.pop_back();
+            }
+
+            path_.push_back(short_name);
+            auto fp = local_filepath(path_);
+            log::stream() << "Note: Creating folder " << fp << std::endl;
+            std::filesystem::create_directories(fp);
+            fp /= "readme.md";
+            std::ofstream fo{fp};
+
+            MSS(fo.good());
+            MSS(reload_());
+
+            MSS_END();
+        }
+
+        bool remove_current()
+        {
+            MSS_BEGIN(bool);
+
+            const Forest *forest;
+            std::size_t ix;
+            MSS(get(forest, ix, path_));
+
+            {
+                auto current_fp = current_filepath();
+                auto trash_fp = trash_filepath(path_);
+                log::stream() << "Note: Moving " << current_fp << " to " << trash_fp << std::endl;
+                std::filesystem::remove_all(trash_fp);
+                std::filesystem::create_directories(trash_fp);
+                std::filesystem::rename(current_fp, trash_fp);
+
+                current_fp += ".md";
+                trash_fp += ".md";
+                if (std::filesystem::exists(current_fp))
+                    std::filesystem::rename(current_fp, trash_fp);
+            }
+
+            path_.pop_back();
+            if (ix+1 < forest->size())
+                path_.push_back(forest->nodes[ix+1].value.short_name);
+            else if (forest->size() > 1)
+                path_.push_back(forest->nodes[ix-1].value.short_name);
+
+            MSS(reload_());
+
+            MSS_END();
         }
 
         bool operator()()
         {
             MSS_BEGIN(bool);
 
-            if (!tree_)
+            const auto now = Clock::now();
+
+            if (!tree_ || now >= reload_tp_)
             {
-                std::filesystem::path root;
-                MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
-                tree_.emplace();
-                MSS(tree_->load(root));
-                if (!load_metadata_())
-                    log::stream() << "Warning: Could not load metadata" << std::endl;
-                path_ = tree_->root_path();
+                MSS(reload_());
+                reload_tp_ = now+std::chrono::milliseconds(1000);
             }
 
-            const auto now = Clock::now();
             if (save_tp_ && now >= *save_tp_)
             {
                 //Save from time to time
@@ -71,6 +112,23 @@ namespace proast { namespace model {
             if (!!tree_)
                 return tree_->root_filepath();
             return std::filesystem::path{};
+        }
+        std::filesystem::path local_filepath(const Path &path) const
+        {
+            auto fp = root_filepath();
+            for (auto ix = 1u; ix < path.size(); ++ix)
+                fp /= path[ix];
+            return fp;
+        }
+        std::filesystem::path current_filepath() const { return local_filepath(path_); }
+        std::filesystem::path trash_filepath(const Path &path) const
+        {
+            auto fp = root_filepath();
+            fp /= ".proast";
+            fp /= "trash";
+            for (auto ix = 1u; ix < path.size(); ++ix)
+                fp /= path[ix];
+            return fp;
         }
 
         const Path &path() const {return path_;}
@@ -167,7 +225,8 @@ namespace proast { namespace model {
                         fo << segment;
                     }
                     fo << ']';
-                    fo << "(active_ix:" << node.value.active_ix << ")";
+                    if (!node.value.active_child_key.empty())
+                        fo << "(active_child_key:" << node.value.active_child_key << ")";
                     fo << std::endl;
                 }
                 else
@@ -205,14 +264,29 @@ namespace proast { namespace model {
                 gubg::naft::Attrs attrs;
                 range.pop_attrs(attrs);
 
-                auto it = attrs.find("active_ix");
+                auto it = attrs.find("active_child_key");
                 if (it != attrs.end())
                 {
                     Node *node;
                     if (tree_->find(node, path))
-                        node->value.active_ix = std::stoul(it->second);
+                        node->value.active_child_key = it->second;
                 }
             }
+
+            MSS_END();
+        }
+        bool reload_()
+        {
+            MSS_BEGIN(bool);
+
+            std::filesystem::path root;
+            MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
+            tree_.emplace();
+            MSS(tree_->load(root));
+            if (!load_metadata_())
+                log::stream() << "Warning: Could not load metadata" << std::endl;
+            if (path_.empty())
+                path_ = tree_->root_path();
 
             MSS_END();
         }
@@ -223,6 +297,7 @@ namespace proast { namespace model {
 
         using Clock = std::chrono::high_resolution_clock;
         std::optional<Clock::time_point> save_tp_ = Clock::now();
+        Clock::time_point reload_tp_ = Clock::now();
     };
 
 } } 
