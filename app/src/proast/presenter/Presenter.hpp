@@ -215,7 +215,7 @@ namespace proast { namespace presenter {
             {
                 dialog_.reset();
                 if (!str.empty())
-                    model_.rename_item(str);
+                    MSS(model_.rename_item(str), log::stream() << "Warning: Could not rename" << std::endl);
             }
             else
             {
