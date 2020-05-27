@@ -1,4 +1,5 @@
 #include <proast/model/Tree.hpp>
+#include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
@@ -140,17 +141,18 @@ namespace proast { namespace model {
     }
 
     //Privates
-    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path path) const
+    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path directory) const
     {
         MSS_BEGIN(bool);
-        L(C(path));
 
         node.value.short_name = stem;
-        node.value.path = path;
+        node.value.directory = directory;
 
-        auto load_preview = [&]()
+        auto setup_content = [&](const std::filesystem::path &content_fp)
         {
-            std::ifstream fi{node.value.path};
+            node.value.content_fp = content_fp;
+
+            std::ifstream fi{content_fp};
             gubg::OnlyOnce is_title;
             for (std::string str; std::getline(fi, str); )
             {
@@ -161,84 +163,66 @@ namespace proast { namespace model {
             }
         };
 
+        const auto content_fp_leaf = cfg_.content_fp_leaf(directory);
+        const auto content_fp_nonleaf = cfg_.content_fp_nonleaf(directory);
 
-        if (false) {}
-        else if (std::filesystem::is_directory(path))
+        if (!std::filesystem::exists(directory))
         {
-            auto check_for_content = [&](const auto &content_path)
-            {
-                if (std::filesystem::is_regular_file(content_path))
-                {
-                    node.value.path = content_path;
+            MSS(std::filesystem::is_regular_file(content_fp_leaf));
+            setup_content(content_fp_leaf);
 
-                    load_preview();
-                    return true;
-                }
-                return false;
-            };
-            check_for_content(path/cfg_.index_filename()) || check_for_content(std::filesystem::path{path} += cfg_.extension());
-        }
-        else if (std::filesystem::is_regular_file(path))
-        {
-            load_preview();
-
-            //This is a file: there is no folder to recurse
+            //This is a leaf: there is no folder to recurse
             return true;
         }
-        else
-        {
-            MSS(false);
-        }
+
+        //This should be directory, and hence a nonleaf
+        MSS(std::filesystem::is_directory(directory));
+
+        if (std::filesystem::exists(content_fp_leaf))
+            log::stream() << "Warning: Leaf-type content files are ignored when the corresponding directory is present: " << content_fp_leaf << " " << directory << std::endl;
+
+        if (std::filesystem::is_regular_file(content_fp_nonleaf))
+            setup_content(content_fp_nonleaf);
 
         using Stem__Path = std::map<std::string, std::filesystem::path>;
         Stem__Path stem__dir;
-        Stem__Path stem__file;
-        for (const auto &sub: std::filesystem::directory_iterator{path})
+        for (const auto &sub: std::filesystem::directory_iterator{directory})
         {
             const auto sub_path = sub.path();
 
             const auto stem = sub_path.stem().string();
-            if (stem.empty())
+            if (stem.empty() || stem == cfg_.index_name())
                 continue;
+
             switch (stem[0])
             {
                 case '.':
                     break;
                 default:
-                    if (false) {}
-                    else if (std::filesystem::is_directory(sub_path))
-                    {
-                        stem__dir.emplace(stem, sub_path);
-                    }
-                    else if (std::filesystem::is_regular_file(sub_path))
                     {
                         bool do_add = false;
+                        if (false) {}
+                        else if (std::filesystem::is_directory(sub_path))
+                            do_add = true;
+                        else if (std::filesystem::is_regular_file(sub_path))
                         {
                             const auto ext_str = sub_path.extension().string();
-                            if (ext_str == cfg_.extension() && sub_path.filename() != cfg_.index_filename())
+                            if (ext_str == cfg_.extension())
                                 do_add = true;
                         }
+
                         if (do_add)
-                            stem__file.emplace(stem, sub_path);
+                            stem__dir.emplace(stem, directory / stem);
                     }
                     break;
             }
         }
 
-        Stem__Path stem__path;
-        {
-            stem__path.swap(stem__dir);
-
-            for (const auto &[stem, file]: stem__file)
-                if (!stem__path.count(stem))
-                    stem__path.emplace(stem, file);
-        }
-
-        node.childs.nodes.resize(stem__path.size());
+        node.childs.nodes.resize(stem__dir.size());
         auto n = node.childs.nodes.begin();
-        for (const auto &[stem, subpath]: stem__path)
+        for (const auto &[stem, dir]: stem__dir)
         {
-            MSS(load_(*n, stem, subpath));
+            MSS(load_(*n, stem, dir));
             ++n;
         }
 

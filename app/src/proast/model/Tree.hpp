@@ -9,12 +9,15 @@
 #include <string>
 #include <vector>
 #include <ostream>
+#include <optional>
 
 namespace proast { namespace model { 
 
     struct Data
     {
-        std::filesystem::path path;
+        std::filesystem::path directory;
+        std::optional<std::filesystem::path> content_fp;
+
         std::string short_name;
         std::string active_child_key;
         //Replace this with markdown::ast::Tree

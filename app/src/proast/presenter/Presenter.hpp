@@ -111,7 +111,7 @@ namespace proast { namespace presenter {
                         const auto &childs = me.childs;
                         if (childs.empty())
                         {
-                            if (std::filesystem::is_regular_file(me.value.path))
+                            if (me.value.content_fp)
                                 return commander_open();
                         }
                         else
@@ -164,14 +164,25 @@ namespace proast { namespace presenter {
             MSS(model_.get(forest, ix, path));
 
             const auto &me = forest->nodes[ix];
-            if (std::filesystem::is_regular_file(me.value.path))
+
+            std::filesystem::path content_fp;
+            if (me.value.content_fp)
+                content_fp = *me.value.content_fp;
+            else
             {
-                view_.pause([&](){
-                        std::ostringstream oss;
-                        oss << "nvim " << me.value.path;
-                        std::system(oss.str().c_str());
-                        });
+                //Create content file, if it does not already exist
+                if (std::filesystem::exists(me.value.directory))
+                    content_fp = model_.config().content_fp_nonleaf(me.value.directory);
+                else
+                    content_fp = model_.config().content_fp_leaf(me.value.directory);
+                std::ofstream fo{content_fp};
             }
+
+            view_.pause([&](){
+                    std::ostringstream oss;
+                    oss << "nvim " << content_fp;
+                    std::system(oss.str().c_str());
+                    });
 
             MSS(repaint_());
 
@@ -257,7 +268,7 @@ namespace proast { namespace presenter {
                 fill_lb(child_lb_, childs_forest, *child_ix);
 
                 if (Clock::now() >= show_path_)
-                    status_ = std::string("Current path: ") + me.value.path.string();
+                    status_ = std::string("Current directory: ") + me.value.directory.string();
 
                 preview_mu_ = me.value.preview;
             }
@@ -289,7 +300,7 @@ namespace proast { namespace presenter {
                 view_.show_child(child_lb_);
 
                 view_.show_preview(preview_mu_);
-                
+
                 if (dialog_)
                     view_.show_dialog(*dialog_);
 

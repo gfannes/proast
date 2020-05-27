@@ -15,7 +15,11 @@ namespace proast { namespace model {
         static bool create_default(const std::filesystem::path &root);
 
         std::string extension() const {return extension_;}
+        std::string index_name() const {return index_name_;}
         std::string index_filename() const {return index_name_+extension_;}
+
+        std::filesystem::path content_fp_leaf(const std::filesystem::path &directory) const;
+        std::filesystem::path content_fp_nonleaf(const std::filesystem::path &directory) const;
 
         bool reload(const std::filesystem::path &fp);
 

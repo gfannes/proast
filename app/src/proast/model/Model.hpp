@@ -19,6 +19,8 @@ namespace proast { namespace model {
     class Model
     {
     public:
+        const Config &config() const {return cfg_;}
+
         void set_events_dst(model::Events *events)
         {
             events_ = events;
@@ -51,6 +53,40 @@ namespace proast { namespace model {
         bool rename_item(const std::string &new_short_name)
         {
             MSS_BEGIN(bool);
+
+            MSS(path_.size() > 1, log::stream() << "Error: Cannot rename the root, you have to do this manually" << std::endl);
+
+            const Node *me;
+            MSS(get(me, path_));
+
+            auto new_path = path_;
+            {
+                MSS(!new_path.empty());
+                new_path.pop_back();
+                new_path.push_back(new_short_name);
+            }
+
+            const auto &directory = me->value.directory;
+            const auto new_directory = local_filepath(new_path);
+
+            MSS(!std::filesystem::exists(new_directory), log::stream() << "Error: When renaming " << directory << " into " << new_directory << ": target directory already exists" << std::endl);
+
+            const auto new_content_fp_nonleaf = cfg_.content_fp_leaf(new_directory);
+            MSS(!std::filesystem::exists(new_content_fp_nonleaf), log::stream() << "Error: When renaming " << directory << " into " << new_content_fp_nonleaf << ": target file already exists" << std::endl);
+
+            if (std::filesystem::exists(directory))
+            {
+                std::filesystem::rename(directory, new_directory);
+            }
+            else
+            {
+                MSS(!!me->value.content_fp);
+                std::filesystem::rename(*me->value.content_fp, new_content_fp_nonleaf);
+            }
+
+            path_ = new_path;
+            MSS(reload_());
+
             MSS_END();
         }
 
@@ -164,6 +200,15 @@ namespace proast { namespace model {
             }
             forest = my_forest;
 
+            MSS_END();
+        }
+        bool get(const Node *&node, const Path &path)
+        {
+            MSS_BEGIN(bool);
+            const Forest *forest;
+            std::size_t ix;
+            MSS(get(forest, ix, path));
+            node = &forest->nodes[ix];
             MSS_END();
         }
         bool get_parent(Node *&parent, const Path &path)
@@ -293,10 +338,10 @@ namespace proast { namespace model {
 
             Config::create_default(root);
             const auto config_fp = Config::filepath(root);
-            MSS(config_.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
+            MSS(cfg_.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
 
             tree_.emplace();
-            MSS(tree_->load(root, config_));
+            MSS(tree_->load(root, cfg_));
             if (!load_metadata_())
                 log::stream() << "Warning: Could not load metadata" << std::endl;
             if (path_.empty())
@@ -306,7 +351,7 @@ namespace proast { namespace model {
         }
 
         model::Events *events_{};
-        model::Config config_;
+        model::Config cfg_;
         std::optional<Tree> tree_;
         Path path_;
 

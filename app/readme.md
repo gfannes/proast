@@ -26,10 +26,6 @@ Text-UI application
   * Start with `file.md`
   * Convert to `file/index.md` when subitems are added
   * Create `file/index.md` when it does not exist yet and _commander_open()_ is called
-* Add `.proast/config.naft`
-  * Default markup language
-  * Name of index file
-* Add `.proast/.gitignore` when it does not exist
 * Add reload command
 * Rework `.proast/metadata.naft` format
   * Use `[item]` for MD on nodes
