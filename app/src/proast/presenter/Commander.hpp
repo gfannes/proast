@@ -24,6 +24,7 @@ namespace proast { namespace presenter {
             virtual bool commander_move(Movement) = 0;
             virtual bool commander_open() = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
+            virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_remove() = 0;
         };
 
@@ -45,7 +46,7 @@ namespace proast { namespace presenter {
         }
 
     private:
-        enum class State {Idle, Add, Remove};
+        enum class State {Idle, Add, Rename, Remove, };
 
         bool process_(const char32_t ch)
         {
@@ -73,35 +74,39 @@ namespace proast { namespace presenter {
                         case 'i': add_insert_ = true;  change_state_(State::Add); break;
                         case 'o': add_insert_ = false; change_state_(State::Add); break;
 
+                                  //Rename item
+                        case 'r': change_state_(State::Rename); break;
+
                                   //Remove item
                         case 'd': change_state_(State::Remove); break;
                     }
                     break;
                 case State::Add:
+                case State::Rename:
                     switch (ch)
                     {
                         case '\n':    
                             change_state_(State::Idle);
                             break;
-                        case 0x1B:
-                            if (str_.empty())
+                        case 0x1B://Escape
+                            if (user_input_.empty())
                                 change_state_(State::Idle);
                             else
                             {
-                                str_.clear();
-                                events_->commander_add(str_, add_insert_, false);
+                                user_input_.clear();
+                                user_input_cb_(false);
                             }
                             break;
-                        case 0x7F:
-                            if (!str_.empty())
+                        case 0x7F://Backspace
+                            if (!user_input_.empty())
                             {
-                                str_.pop_back();
-                                events_->commander_add(str_, add_insert_, false);
+                                user_input_.pop_back();
+                                user_input_cb_(false);
                             }
                             break;
                         default:
-                            str_.push_back(ch);
-                            events_->commander_add(str_, add_insert_, false);
+                            user_input_.push_back(ch);
+                            user_input_cb_(false);
                             break;
                     }
                     break;
@@ -128,8 +133,9 @@ namespace proast { namespace presenter {
             switch (state_)
             {
                 case State::Add:
-                    if (events_)
-                        events_->commander_add(str_, add_insert_, true);
+                case State::Rename:
+                    user_input_cb_(true);
+                    user_input_cb_ = nullptr;
                     break;
                 case State::Remove:
                     if (remove_ && events_)
@@ -145,9 +151,22 @@ namespace proast { namespace presenter {
             switch (state_)
             {
                 case State::Add:
-                    str_.clear();
-                    if (events_)
-                        events_->commander_add(str_, add_insert_, false);
+                    user_input_.clear();
+                    user_input_cb_ = [&](bool is_final)
+                    {
+                        if (events_)
+                            events_->commander_add(user_input_, add_insert_, is_final);
+                    };
+                    user_input_cb_(false);
+                    break;
+                case State::Rename:
+                    user_input_.clear();
+                    user_input_cb_ = [&](bool is_final)
+                    {
+                        if (events_)
+                            events_->commander_rename(user_input_, is_final);
+                    };
+                    user_input_cb_(false);
                     break;
                 case State::Remove:
                     remove_ = true;
@@ -159,8 +178,9 @@ namespace proast { namespace presenter {
 
         Events *events_ = nullptr;
         State state_ = State::Idle;
-        std::string str_;
+        std::string user_input_;
         bool add_insert_ = false;
+        std::function<void(bool)> user_input_cb_;
         bool remove_ = false;
     };
 

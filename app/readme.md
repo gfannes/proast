@@ -21,11 +21,23 @@ Text-UI application
 
 ## TODO
 
-* Store `path` in `.proast` folder
+* Add support for rename using `r`
+* Adding an item
+  * Start with `file.md`
+  * Convert to `file/index.md` when subitems are added
+  * Create `file/index.md` when it does not exist yet and _commander_open()_ is called
+* Add `.proast/config.naft`
+  * Default markup language
+  * Name of index file
+* Add `.proast/.gitignore` when it does not exist
+* Add reload command
+* Rework `.proast/metadata.naft` format
+  * Use `[item]` for MD on nodes
+  * Use `[path]` for MD on path
 * Annotate `@`-folders and files as requirements
-* Reload subtree after edit
 * Store metadata in `<!--[proast](a:)(b:)(c:)-->`
 * Add to model how the different paths for a Node will be called
+  * `folder` and `index_fn`
 * Test if feature with subfeature can be shown
 * Rework `g` into `gg`
 * Git hash header should not require "git checkout ." each time

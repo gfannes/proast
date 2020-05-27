@@ -3,6 +3,7 @@
 
 #include <proast/model/Events.hpp>
 #include <proast/model/Tree.hpp>
+#include <proast/model/Config.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/naft/Range.hpp>
 #include <gubg/OnlyOnce.hpp>
@@ -45,6 +46,11 @@ namespace proast { namespace model {
             MSS(fo.good());
             MSS(reload_());
 
+            MSS_END();
+        }
+        bool rename_item(const std::string &new_short_name)
+        {
+            MSS_BEGIN(bool);
             MSS_END();
         }
 
@@ -99,7 +105,7 @@ namespace proast { namespace model {
                 if (!save_metadata_())
                 {
                     log::stream() << "Warning: Could not save metadata" << std::endl;
-                    save_tp_.reset();
+                    save_tp_ = std::nullopt;
                 }
                 else
                     save_tp_ = now+std::chrono::milliseconds(300);
@@ -191,7 +197,10 @@ namespace proast { namespace model {
         }
         std::filesystem::path metadata_fn_() const
         {
-            return proast_dir_() / "metadata.naft";
+            std::filesystem::path fn = proast_dir_();
+            if (!fn.empty())
+                fn /= "metadata.naft";
+            return fn;
         }
         bool save_metadata_()
         {
@@ -281,8 +290,13 @@ namespace proast { namespace model {
 
             std::filesystem::path root;
             MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
+
+            Config::create_default(root);
+            const auto config_fp = Config::filepath(root);
+            MSS(config_.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
+
             tree_.emplace();
-            MSS(tree_->load(root));
+            MSS(tree_->load(root, config_));
             if (!load_metadata_())
                 log::stream() << "Warning: Could not load metadata" << std::endl;
             if (path_.empty())
@@ -292,6 +306,7 @@ namespace proast { namespace model {
         }
 
         model::Events *events_{};
+        model::Config config_;
         std::optional<Tree> tree_;
         Path path_;
 

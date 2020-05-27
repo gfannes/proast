@@ -197,6 +197,26 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
+        bool commander_rename(const std::string &str, bool is_final) override
+        {
+            MSS_BEGIN(bool);
+            if (is_final)
+            {
+                dialog_.reset();
+                if (!str.empty())
+                    model_.rename_item(str);
+            }
+            else
+            {
+                if (!dialog_)
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption("Rename item");
+                }
+                dialog_->set_content(str);
+            }
+            MSS_END();
+        }
         bool commander_remove() override
         {
             MSS_BEGIN(bool);

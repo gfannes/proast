@@ -31,7 +31,7 @@ namespace proast { namespace model {
         root = start;
         while (true)
         {
-            if (std::filesystem::exists(root / ".proast_root"))
+            if (std::filesystem::exists(root/".proast"))
                 return true;
             const auto parent = root.parent_path();
             MSS_Q(parent != root);
@@ -41,9 +41,10 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Tree::load(const std::filesystem::path &root)
+    bool Tree::load(const std::filesystem::path &root, const Config &cfg)
     {
         MSS_BEGIN(bool);
+        cfg_ = cfg;
         root_filepath_.clear();
         root_forest_.nodes.resize(1);
         MSS(load_(root_forest_.nodes[0], root.stem().string(), root));
@@ -139,7 +140,7 @@ namespace proast { namespace model {
     }
 
     //Privates
-    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path path)
+    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path path) const
     {
         MSS_BEGIN(bool);
         L(C(path));
@@ -175,7 +176,7 @@ namespace proast { namespace model {
                 }
                 return false;
             };
-            check_for_content(path / "readme.md") || check_for_content(std::filesystem::path{path} += ".md");
+            check_for_content(path/cfg_.index_filename()) || check_for_content(std::filesystem::path{path} += cfg_.extension());
         }
         else if (std::filesystem::is_regular_file(path))
         {
@@ -214,7 +215,7 @@ namespace proast { namespace model {
                         bool do_add = false;
                         {
                             const auto ext_str = sub_path.extension().string();
-                            if (ext_str == ".md" && sub_path.filename() != "readme.md")
+                            if (ext_str == cfg_.extension() && sub_path.filename() != cfg_.index_filename())
                                 do_add = true;
                         }
                         if (do_add)

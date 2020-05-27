@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
+#include <proast/model/Config.hpp>
 #include <gubg/tree/Node.hpp>
 #include <gubg/tree/Forest.hpp>
 #include <gubg/markup/Document.hpp>
@@ -31,7 +32,7 @@ namespace proast { namespace model {
         //Steps down starting from `start` until  the `@root` subfolder is found
         static bool find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start);
 
-        bool load(const std::filesystem::path &root);
+        bool load(const std::filesystem::path &root, const Config &cfg);
 
         const std::filesystem::path &root_filepath() const;
 
@@ -45,9 +46,11 @@ namespace proast { namespace model {
         Forest &root_forest() {return root_forest_;}
 
     private:
+        bool load_(Node &node, const std::string &stem, std::filesystem::path path) const;
+
+        Config cfg_;
         std::filesystem::path root_filepath_;
         Forest root_forest_;
-        static bool load_(Node &node, const std::string &stem, std::filesystem::path path);
     };
 
     inline std::ostream &operator<<(std::ostream &os, const Tree &tree)
