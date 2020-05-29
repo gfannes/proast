@@ -25,6 +25,7 @@ namespace proast { namespace presenter {
             virtual bool commander_open() = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
+            virtual bool commander_cost(const std::string &str, bool is_final) = 0;
             virtual bool commander_remove() = 0;
         };
 
@@ -46,7 +47,7 @@ namespace proast { namespace presenter {
         }
 
     private:
-        enum class State {Idle, Add, Rename, Remove, };
+        enum class State {Idle, Add, Rename, Remove, Cost, };
 
         bool process_(const char32_t ch)
         {
@@ -79,10 +80,14 @@ namespace proast { namespace presenter {
 
                                   //Remove item
                         case 'd': change_state_(State::Remove); break;
+
+                                  //Cost
+                        case 'c': change_state_(State::Cost); break;
                     }
                     break;
                 case State::Add:
                 case State::Rename:
+                case State::Cost:
                     switch (ch)
                     {
                         case '\n':    
@@ -134,6 +139,7 @@ namespace proast { namespace presenter {
             {
                 case State::Add:
                 case State::Rename:
+                case State::Cost:
                     user_input_cb_(true);
                     user_input_cb_ = nullptr;
                     break;
@@ -151,21 +157,33 @@ namespace proast { namespace presenter {
             switch (state_)
             {
                 case State::Add:
-                    user_input_.clear();
-                    user_input_cb_ = [&](bool is_final)
-                    {
-                        if (events_)
-                            events_->commander_add(user_input_, add_insert_, is_final);
-                    };
-                    user_input_cb_(false);
-                    break;
                 case State::Rename:
+                case State::Cost:
                     user_input_.clear();
-                    user_input_cb_ = [&](bool is_final)
+                    switch (state_)
                     {
-                        if (events_)
-                            events_->commander_rename(user_input_, is_final);
-                    };
+                        case State::Add:
+                            user_input_cb_ = [&](bool is_final)
+                            {
+                                if (events_)
+                                    events_->commander_add(user_input_, add_insert_, is_final);
+                            };
+                            break;
+                        case State::Rename:
+                            user_input_cb_ = [&](bool is_final)
+                            {
+                                if (events_)
+                                    events_->commander_rename(user_input_, is_final);
+                            };
+                            break;
+                        case State::Cost:
+                            user_input_cb_ = [&](bool is_final)
+                            {
+                                if (events_)
+                                    events_->commander_cost(user_input_, is_final);
+                            };
+                            break;
+                    }
                     user_input_cb_(false);
                     break;
                 case State::Remove:

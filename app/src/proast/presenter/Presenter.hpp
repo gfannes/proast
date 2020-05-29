@@ -228,6 +228,25 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
+        bool commander_cost(const std::string &str, bool is_final) override
+        {
+            MSS_BEGIN(bool);
+            if (is_final)
+            {
+                dialog_.reset();
+                MSS(model_.set_cost(str), log::stream() << "Warning: Could not set cost" << std::endl);
+            }
+            else
+            {
+                if (!dialog_)
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption(std::string("Provide cost of item in ")+model_.config().cost_unit());
+                }
+                dialog_->set_content(str);
+            }
+            MSS_END();
+        }
         bool commander_remove() override
         {
             MSS_BEGIN(bool);
@@ -271,6 +290,12 @@ namespace proast { namespace presenter {
                     status_ = std::string("Current directory: ") + me.value.directory.string();
 
                 preview_mu_ = me.value.preview;
+                
+                details_kv_.clear();
+                if (me.value.my_cost)
+                {
+                    details_kv_["cost"] = std::to_string(*me.value.my_cost)+model_.config().cost_unit();
+                }
             }
 
             //Parent
@@ -300,6 +325,7 @@ namespace proast { namespace presenter {
                 view_.show_child(child_lb_);
 
                 view_.show_preview(preview_mu_);
+                view_.show_details(details_kv_);
 
                 if (dialog_)
                     view_.show_dialog(*dialog_);
@@ -324,6 +350,7 @@ namespace proast { namespace presenter {
         ListBox me_lb_;
         ListBox child_lb_;
         gubg::markup::Document preview_mu_;
+        std::map<std::string, std::string> details_kv_;
         std::optional<Dialog> dialog_;
 
         using Clock = std::chrono::high_resolution_clock;

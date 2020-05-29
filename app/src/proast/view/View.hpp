@@ -9,6 +9,7 @@
 #include <gubg/mss.hpp>
 #include <thread>
 #include <vector>
+#include <map>
 
 namespace proast { namespace view { 
 
@@ -130,6 +131,22 @@ namespace proast { namespace view {
 
             MSS_END();
         }
+        bool show_details(const std::map<std::string, std::string> &kv)
+        {
+            MSS_BEGIN(bool);
+
+            Cursor cursor{details_region_};
+
+            for (const auto &[k,v]: kv)
+            {
+                cursor.write(k, true);
+                cursor.write(": ", false);
+                cursor.write(v, false);
+                cursor.newline();
+            }
+
+            MSS_END();
+        }
         bool show_dialog(const presenter::Dialog &dialog)
         {
             MSS_BEGIN(bool);
@@ -172,8 +189,8 @@ namespace proast { namespace view {
                 status_region_ = region.pop_bottom(1);
 
                 const auto width = region.width()/7;
-                const auto height = region.height()/7;
                 {
+                    const auto height = region.height()/7;
                     dialog_region_ = region;
                     dialog_region_.pop_border(height, width);
                 }
@@ -181,7 +198,11 @@ namespace proast { namespace view {
                 me_region_ = region.pop_left(width);
                 child_region_ = region.pop_left(width);
 
-                preview_region_ = region.pop_all();
+                {
+                    const auto height = region.height()/5;
+                    details_region_ = region.pop_bottom(height);
+                    preview_region_ = region.pop_all();
+                }
             }
 
             tb_event event{};
@@ -235,6 +256,7 @@ namespace proast { namespace view {
         Region child_region_;
         Region status_region_;
         Region preview_region_;
+        Region details_region_;
         Region dialog_region_;
     };
 

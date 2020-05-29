@@ -22,6 +22,8 @@ namespace proast { namespace model {
         std::string active_child_key;
         //Replace this with markdown::ast::Tree
         gubg::markup::Document preview;
+
+        std::optional<double> my_cost;
     };
     using Node = gubg::tree::Node<Data>;
     using Forest = gubg::tree::Forest<Data>;

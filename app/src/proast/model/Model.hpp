@@ -89,6 +89,49 @@ namespace proast { namespace model {
 
             MSS_END();
         }
+        bool set_cost(const std::string &cost_str)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            Node *node;
+            MSS(tree_->find(node, path_));
+
+            try
+            {
+                if (cost_str.empty())
+                    node->value.my_cost.reset();
+                else
+                    node->value.my_cost = std::stod(cost_str);
+            }
+            catch (const std::invalid_argument &exc) { return false; }
+
+            if (node->value.content_fp)
+            {
+                std::ofstream fo{*node->value.content_fp};
+
+                fo << "<!--" << std::endl;
+                fo << "[proast]";
+                if (node->value.my_cost)
+                    fo << "(my_cost:" << *node->value.my_cost << ")";
+                fo << std::endl;
+                fo << "-->" << std::endl;
+
+                std::size_t ix = 0;
+                auto ftor = [&](std::size_t line_ix, const std::string &txt, auto style)
+                {
+                    for (; ix < line_ix; ++ix)
+                        fo << std::endl;
+                    fo << txt;
+                };
+                node->value.preview.each(ftor);
+            }
+
+            MSS(reload_());
+
+            MSS_END();
+        }
 
         bool remove_current()
         {

@@ -1,3 +1,6 @@
+<!--
+[proast]
+-->
 Text-UI application
 ===================
 
@@ -21,7 +24,6 @@ Text-UI application
 
 ## TODO
 
-* Add support for rename using `r`
 * Adding an item
   * Start with `file.md`
   * Convert to `file/index.md` when subitems are added
@@ -31,7 +33,6 @@ Text-UI application
   * Use `[item]` for MD on nodes
   * Use `[path]` for MD on path
 * Annotate `@`-folders and files as requirements
-* Store metadata in `<!--[proast](a:)(b:)(c:)-->`
 * Add to model how the different paths for a Node will be called
   * `folder` and `index_fn`
 * Test if feature with subfeature can be shown

@@ -18,6 +18,8 @@ namespace proast { namespace model {
         std::string index_name() const {return index_name_;}
         std::string index_filename() const {return index_name_+extension_;}
 
+        std::string cost_unit() const {return cost_unit_;}
+
         std::filesystem::path content_fp_leaf(const std::filesystem::path &directory) const;
         std::filesystem::path content_fp_nonleaf(const std::filesystem::path &directory) const;
 
@@ -26,6 +28,7 @@ namespace proast { namespace model {
     private:
         std::string index_name_ = "readme";
         std::string extension_ = ".md";
+        std::string cost_unit_ = "hours";
     };
 
 } } 

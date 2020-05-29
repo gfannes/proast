@@ -3,6 +3,7 @@
 #include <gubg/mss.hpp>
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
+#include <gubg/naft/Range.hpp>
 #include <map>
 #include <fstream>
 #include <sstream>
@@ -154,12 +155,42 @@ namespace proast { namespace model {
 
             std::ifstream fi{content_fp};
             gubg::OnlyOnce is_title;
+            bool in_comment = false;
             for (std::string str; std::getline(fi, str); )
             {
-                gubg::markup::Style style;
-                style.attention = (is_title() ? 1 : 0);
-                auto ftor = [&](auto &line) { line.add(str, style); };
-                node.value.preview.add_line(ftor);
+                auto starts_with = [&](const std::string &needle)
+                {
+                    return needle == str.substr(0, needle.size());
+                };
+                if (in_comment)
+                {
+                    if (starts_with("-->"))
+                        in_comment = false;
+                    else
+                    {
+                        gubg::naft::Range range{str};
+                        if (range.pop_tag("proast"))
+                        {
+                            for (const auto &[k,v]: range.pop_attrs())
+                            {
+                                if (false) {}
+                                else if (k == "my_cost") {node.value.my_cost = std::stod(v);}
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (starts_with("<!--"))
+                        in_comment = true;
+                    else
+                    {
+                        gubg::markup::Style style;
+                        style.attention = (is_title() ? 1 : 0);
+                        auto ftor = [&](auto &line) { line.add(str, style); };
+                        node.value.preview.add_line(ftor);
+                    }
+                }
             }
         };
 
