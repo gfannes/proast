@@ -216,9 +216,13 @@ namespace proast { namespace view {
                         uint32_t ch;
                         switch (event.key)
                         {
-                            case TB_KEY_ENTER:     ch = '\n'; break;
-                            case TB_KEY_ESC:       ch = 0x1B; break;
-                            case 0x7F:             ch = 0x7F; break;//Backspace
+                            case TB_KEY_ENTER:        ch = '\n'; break;
+                            case TB_KEY_ESC:          ch = 0x1B; break;
+                            case 0x7F:                ch = 0x7F; break;//Backspace
+                            case TB_KEY_ARROW_UP:     ch = 0x80; break;
+                            case TB_KEY_ARROW_DOWN:   ch = 0x81; break;
+                            case TB_KEY_ARROW_LEFT:   ch = 0x82; break;
+                            case TB_KEY_ARROW_RIGHT:  ch = 0x83; break;
                             default:
                                 ch = event.ch;
                                 break;
