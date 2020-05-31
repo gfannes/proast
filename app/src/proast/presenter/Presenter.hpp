@@ -111,7 +111,7 @@ namespace proast { namespace presenter {
                         const auto &childs = me.childs;
                         if (childs.empty())
                         {
-                            if (me.value.content_fp)
+                            if (me.value.content_fp || me.value.link)
                                 return commander_open();
                         }
                         else
@@ -165,24 +165,33 @@ namespace proast { namespace presenter {
 
             const auto &me = forest->nodes[ix];
 
-            std::filesystem::path content_fp;
-            if (me.value.content_fp)
-                content_fp = *me.value.content_fp;
-            else
+            if (false) {}
+            else if (me.value.directory)
             {
-                //Create content file, if it does not already exist
-                if (std::filesystem::exists(me.value.directory))
-                    content_fp = model_.config().content_fp_nonleaf(me.value.directory);
+                std::filesystem::path content_fp;
+                if (me.value.content_fp)
+                    content_fp = *me.value.content_fp;
                 else
-                    content_fp = model_.config().content_fp_leaf(me.value.directory);
-                std::ofstream fo{content_fp};
-            }
+                {
+                    //Create content file, if it does not already exist
+                    const auto directory = *me.value.directory;
+                    if (std::filesystem::exists(directory))
+                        content_fp = model_.config().content_fp_nonleaf(directory);
+                    else
+                        content_fp = model_.config().content_fp_leaf(directory);
+                    std::ofstream fo{content_fp};
+                }
 
-            view_.pause([&](){
-                    std::ostringstream oss;
-                    oss << "nvim " << content_fp;
-                    std::system(oss.str().c_str());
-                    });
+                view_.pause([&](){
+                        std::ostringstream oss;
+                        oss << "nvim " << content_fp;
+                        std::system(oss.str().c_str());
+                        });
+            }
+            else if (me.value.link)
+            {
+                model_.set_path(*me.value.link);
+            }
 
             MSS(repaint_());
 
@@ -267,7 +276,17 @@ namespace proast { namespace presenter {
                 if (!forest)
                     return ;
                 for (const auto &node: forest->nodes)
+                {
+#if 0
                     lb.items.push_back(node.value.short_name);
+#else
+                    if (false) {}
+                    else if (node.value.directory)
+                        lb.items.push_back(node.value.short_name);
+                    else if (node.value.link)
+                        lb.items.push_back(model::to_string(*node.value.link));
+#endif
+                }
                 lb.active_ix = ix;
             };
 
@@ -287,7 +306,13 @@ namespace proast { namespace presenter {
                 fill_lb(child_lb_, childs_forest, *child_ix);
 
                 if (Clock::now() >= show_path_)
-                    status_ = std::string("Current directory: ") + me.value.directory.string();
+                {
+                    if (false) {}
+                    else if (me.value.directory)
+                        status_ = std::string("Current directory: ") + me.value.directory->string();
+                    else if (me.value.link)
+                        status_ = std::string("Current link: ") + model::to_string(*me.value.link);
+                }
 
                 preview_mu_ = me.value.preview;
                 

@@ -66,7 +66,8 @@ namespace proast { namespace model {
                 new_path.push_back(new_short_name);
             }
 
-            const auto &directory = me->value.directory;
+            MSS(!!me->value.directory);
+            const auto &directory = *me->value.directory;
             const auto new_directory = local_filepath(new_path);
 
             MSS(!std::filesystem::exists(new_directory), log::stream() << "Error: When renaming " << directory << " into " << new_directory << ": target directory already exists" << std::endl);

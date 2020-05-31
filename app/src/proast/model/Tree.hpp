@@ -13,10 +13,16 @@
 
 namespace proast { namespace model { 
 
+    using Path = std::vector<std::string>;
+    std::string to_string(const Path &);
+    Path to_path(const std::string &);
+
     struct Data
     {
-        std::filesystem::path directory;
+        std::optional<std::filesystem::path> directory;
         std::optional<std::filesystem::path> content_fp;
+
+        std::optional<Path> link;
 
         std::string short_name;
         std::string active_child_key;
@@ -27,9 +33,6 @@ namespace proast { namespace model {
     };
     using Node = gubg::tree::Node<Data>;
     using Forest = gubg::tree::Forest<Data>;
-
-    using Path = std::vector<std::string>;
-    std::string to_string(const Path &);
 
     class Tree
     {

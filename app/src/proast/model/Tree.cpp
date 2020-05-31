@@ -4,7 +4,9 @@
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/naft/Range.hpp>
+#include <gubg/Strange.hpp>
 #include <map>
+#include <list>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -23,6 +25,14 @@ namespace proast { namespace model {
             oss << e;
         }
         return oss.str();
+    }
+    Path to_path(const std::string &str)
+    {
+        Path path;
+        gubg::Strange strange{str};
+        for (std::string part; !strange.empty(); path.push_back(part))
+            strange.pop_until(part, '/') || strange.pop_all(part);
+        return path;
     }
 
     //Tree
@@ -149,13 +159,16 @@ namespace proast { namespace model {
         node.value.short_name = stem;
         node.value.directory = directory;
 
+        std::list<Path> links;
         auto setup_content = [&](const std::filesystem::path &content_fp)
         {
+            MSS_BEGIN(bool);
             node.value.content_fp = content_fp;
 
             std::ifstream fi{content_fp};
             gubg::OnlyOnce is_title;
             bool in_comment = false;
+            std::ostringstream oss;
             for (std::string str; std::getline(fi, str); )
             {
                 auto starts_with = [&](const std::string &needle)
@@ -165,24 +178,57 @@ namespace proast { namespace model {
                 if (in_comment)
                 {
                     if (starts_with("-->"))
-                        in_comment = false;
-                    else
                     {
-                        gubg::naft::Range range{str};
-                        if (range.pop_tag("proast"))
+                        in_comment = false;
+
+                        gubg::naft::Range range0{oss.str()};
+                        if (range0.pop_tag("proast"))
                         {
-                            for (const auto &[k,v]: range.pop_attrs())
+                            for (const auto &[k,v]: range0.pop_attrs())
                             {
                                 if (false) {}
                                 else if (k == "my_cost") {node.value.my_cost = std::stod(v);}
                             }
+
+                            gubg::naft::Range range1;
+                            if (range0.pop_block(range1))
+                            {
+                                while (!range1.empty())
+                                {
+                                    if (false) {}
+                                    else if (range1.pop_tag("link"))
+                                    {
+                                        for (const auto &[k,v]: range1.pop_attrs())
+                                        {
+                                            if (false) {}
+                                            else if (k == "path") {links.push_back(to_path(v));}
+                                            else
+                                            {
+                                                MSS(false, log::stream() << "Error: Unknown argument " << k << " for link" << std::endl);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        MSS(false, log::stream() << "Error: Could not parse metadata from " << content_fp << std::endl);
+                                    }
+                                }
+                            }
                         }
+                    }
+                    else
+                    {
+                        oss << str << '\n';
                     }
                 }
                 else
                 {
                     if (starts_with("<!--"))
+                    {
                         in_comment = true;
+
+                        oss.str("");
+                    }
                     else
                     {
                         gubg::markup::Style style;
@@ -192,6 +238,18 @@ namespace proast { namespace model {
                     }
                 }
             }
+            MSS_END();
+        };
+        auto add_links = [&]()
+        {
+            auto ix = node.childs.nodes.size();
+            node.childs.nodes.resize(ix+links.size());
+            for (auto link = links.begin(); ix < node.childs.nodes.size(); ++ix, ++link)
+            {
+                auto &link_node = node.childs.nodes[ix];
+                link_node.value.link = *link;
+                link_node.value.short_name = to_string(*link);
+            }
         };
 
         const auto content_fp_leaf = cfg_.content_fp_leaf(directory);
@@ -200,7 +258,8 @@ namespace proast { namespace model {
         if (!std::filesystem::exists(directory))
         {
             MSS(std::filesystem::is_regular_file(content_fp_leaf));
-            setup_content(content_fp_leaf);
+            MSS(setup_content(content_fp_leaf));
+            add_links();
 
             //This is a leaf: there is no folder to recurse
             return true;
@@ -213,7 +272,7 @@ namespace proast { namespace model {
             log::stream() << "Warning: Leaf-type content files are ignored when the corresponding directory is present: " << content_fp_leaf << " " << directory << std::endl;
 
         if (std::filesystem::is_regular_file(content_fp_nonleaf))
-            setup_content(content_fp_nonleaf);
+            MSS(setup_content(content_fp_nonleaf));
 
         using Stem__Path = std::map<std::string, std::filesystem::path>;
         Stem__Path stem__dir;
@@ -256,6 +315,8 @@ namespace proast { namespace model {
             MSS(load_(*n, stem, dir));
             ++n;
         }
+
+        add_links();
 
         MSS_END();
     }

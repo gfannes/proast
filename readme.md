@@ -1,5 +1,9 @@
 <!--
 [proast]
+{
+[link](path:proast/file_format/markdown)
+[link](path:proast/@design)
+}
 -->
 Project Assistant
 =================
