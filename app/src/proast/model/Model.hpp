@@ -50,6 +50,25 @@ namespace proast { namespace model {
 
             MSS_END();
         }
+        bool add_link(const Path &link_path)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            Node *node;
+            MSS(tree_->find(node, path_));
+
+            auto &child = node->childs.append();
+            //TODO: Made this consistent with how a link node is added in Tree
+            child.value.link = link_path;
+            child.value.short_name = to_string(link_path);
+
+            MSS(save_content_(*node));
+            MSS(reload_());
+
+            MSS_END();
+        }
         bool rename_item(const std::string &new_short_name)
         {
             MSS_BEGIN(bool);
@@ -108,27 +127,7 @@ namespace proast { namespace model {
             }
             catch (const std::invalid_argument &exc) { return false; }
 
-            if (node->value.content_fp)
-            {
-                std::ofstream fo{*node->value.content_fp};
-
-                fo << "<!--" << std::endl;
-                fo << "[proast]";
-                if (node->value.my_cost)
-                    fo << "(my_cost:" << *node->value.my_cost << ")";
-                fo << std::endl;
-                fo << "-->" << std::endl;
-
-                std::size_t ix = 0;
-                auto ftor = [&](std::size_t line_ix, const std::string &txt, auto style)
-                {
-                    for (; ix < line_ix; ++ix)
-                        fo << std::endl;
-                    fo << txt;
-                };
-                node->value.preview.each(ftor);
-            }
-
+            MSS(save_content_(*node));
             MSS(reload_());
 
             MSS_END();
@@ -291,6 +290,42 @@ namespace proast { namespace model {
                 fn /= "metadata.naft";
             return fn;
         }
+
+        bool save_content_(const Node &node) const
+        {
+            MSS_BEGIN(bool);
+            if (node.value.content_fp)
+            {
+                std::ofstream fo{*node.value.content_fp};
+
+                fo << "<!--" << std::endl;
+                fo << "[proast]";
+                if (node.value.my_cost)
+                    fo << "(my_cost:" << *node.value.my_cost << ")";
+                fo << std::endl;
+                fo << "{" << std::endl;
+                for (const auto &child: node.childs.nodes)
+                {
+                    if (child.value.link)
+                    {
+                        fo << "  [link](path:" << to_string(*child.value.link) << ")" << std::endl;
+                    }
+                }
+                fo << "}" << std::endl;
+                fo << "-->" << std::endl;
+
+                std::size_t ix = 0;
+                auto ftor = [&](std::size_t line_ix, const std::string &txt, auto style)
+                {
+                    for (; ix < line_ix; ++ix)
+                        fo << std::endl;
+                    fo << txt;
+                };
+                node.value.preview.each(ftor);
+            }
+            MSS_END();
+        }
+
         bool save_metadata_()
         {
             MSS_BEGIN(bool);

@@ -78,6 +78,36 @@ namespace proast { namespace presenter {
             quit = true;
             MSS_END();
         }
+        bool commander_switch_mode(Mode from, Mode to) override
+        {
+            MSS_BEGIN(bool);
+
+            switch (to)
+            {
+                case Mode::Normal:
+                    switch (from)
+                    {
+                        case Mode::Init:
+                            break;
+                        case Mode::SelectLink:
+                            {
+                                const auto link_path = model_.path();
+                                model_.set_path(normal_path_);
+                                MSS(model_.add_link(link_path));
+                            }
+                            break;
+                    }
+                    break;
+
+                case Mode::SelectLink:
+                    normal_path_ = model_.path();
+                    break;
+            }
+
+            mode_ = to;
+
+            MSS_END();
+        }
         bool commander_move(Movement movement) override
         {
             MSS_BEGIN(bool);
@@ -270,23 +300,30 @@ namespace proast { namespace presenter {
 
             status_ = std::string("Loaded root path: ")+model_.root_filepath().string();
 
+            //Location
+            {
+                location_.clear();
+                switch (mode_)
+                {
+                    case Mode::Normal:
+                        location_ += model::to_string(model_.path());
+                        break;
+                    case Mode::SelectLink:
+                        location_ += "Selecting link for ";
+                        location_ += model::to_string(normal_path_);
+                        location_ += ": ";
+                        location_ += model::to_string(model_.path());
+                        break;
+                }
+            }
+
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
             {
                 lb.clear();
                 if (!forest)
                     return ;
                 for (const auto &node: forest->nodes)
-                {
-#if 0
                     lb.items.push_back(node.value.short_name);
-#else
-                    if (false) {}
-                    else if (node.value.directory)
-                        lb.items.push_back(node.value.short_name);
-                    else if (node.value.link)
-                        lb.items.push_back(model::to_string(*node.value.link));
-#endif
-                }
                 lb.active_ix = ix;
             };
 
@@ -315,7 +352,7 @@ namespace proast { namespace presenter {
                 }
 
                 preview_mu_ = me.value.preview;
-                
+
                 details_kv_.clear();
                 if (me.value.my_cost)
                 {
@@ -341,7 +378,7 @@ namespace proast { namespace presenter {
             {
                 view_.clear_screen();
 
-                view_.show_path(model_.path());
+                view_.show_location(location_);
 
                 view_.show_status(status_);
 
@@ -369,7 +406,10 @@ namespace proast { namespace presenter {
         view::View &view_;
 
         Commander commander_;
+        Mode mode_ = Mode::Init;
+        model::Path normal_path_;
 
+        std::string location_;
         std::string status_;
         ListBox parent_lb_;
         ListBox me_lb_;

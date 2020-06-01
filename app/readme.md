@@ -24,10 +24,11 @@ Text-UI application
 
 ## TODO
 
-* Adding an item
-  * Start with `file.md`
-  * Convert to `file/index.md` when subitems are added
-  * Create `file/index.md` when it does not exist yet and _commander_open()_ is called
+* Support removing a link
+* Support for showing the content of a link
+* Support changing the order for nodes and links
+* Compute aggregated cost
+* Compute fraction complete
 * Add reload command
 * Rework `.proast/metadata.naft` format
   * Use `[item]` for MD on nodes

@@ -43,17 +43,12 @@ namespace proast { namespace view {
             tb_present();
         }
 
-        bool show_path(const model::Path &path)
+        bool show_location(const std::string &str)
         {
             MSS_BEGIN(bool);
 
             Cursor cursor{path_region_};
-
-            for (const auto &segment: path)
-            {
-                cursor.write("/");
-                cursor.write(segment);
-            }
+            cursor.write(str);
 
             MSS_END();
         }

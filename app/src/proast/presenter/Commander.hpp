@@ -6,9 +6,13 @@
 
 namespace proast { namespace presenter { 
 
-    enum Movement
+    enum class Movement
     {
         Left, Down, Up, Right, Top, Bottom,
+    };
+    enum class Mode
+    {
+        Init, Normal, SelectLink,
     };
 
     //Translates key-presses into commands
@@ -21,6 +25,7 @@ namespace proast { namespace presenter {
         {
         public:
             virtual bool commander_quit() = 0;
+            virtual bool commander_switch_mode(Mode from, Mode to) = 0;
             virtual bool commander_move(Movement) = 0;
             virtual bool commander_open() = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
@@ -30,7 +35,11 @@ namespace proast { namespace presenter {
         };
 
         //Set the events listener
-        void set_events_dst(Events *events) {events_ = events;}
+        void set_events_dst(Events *events)
+        {
+            events_ = events;
+            switch_mode_(Mode::Normal);
+        }
 
         bool waits_for_input() const
         {
@@ -77,11 +86,24 @@ namespace proast { namespace presenter {
                         case 'g': MSS(events_->commander_move(Movement::Top)); break;
                         case 'G': MSS(events_->commander_move(Movement::Bottom)); break;
 
-                        case '\n': MSS(events_->commander_open()); break;
+                        case '\n':
+                                  switch (mode_)
+                                  {
+                                      case Mode::Normal:
+                                          MSS(events_->commander_open());
+                                          break;
+                                      case Mode::SelectLink:
+                                          MSS(switch_mode_(Mode::Normal));
+                                          break;
+                                  }
+                                  break;
 
                                    //Add item
                         case 'i': add_insert_ = true;  change_state_(State::Add); break;
                         case 'o': add_insert_ = false; change_state_(State::Add); break;
+
+                                  //Add link
+                        case 'a': MSS(switch_mode_(Mode::SelectLink)); break;
 
                                   //Rename item
                         case 'r': change_state_(State::Rename); break;
@@ -137,6 +159,14 @@ namespace proast { namespace presenter {
             MSS_END();
         }
 
+        bool switch_mode_(Mode mode)
+        {
+            MSS_BEGIN(bool);
+            if (events_)
+                MSS(events_->commander_switch_mode(mode_, mode));
+            mode_ = mode;
+            MSS_END();
+        }
         void change_state_(State new_state)
         {
             if (new_state == state_)
@@ -204,6 +234,7 @@ namespace proast { namespace presenter {
 
         Events *events_ = nullptr;
         State state_ = State::Idle;
+        Mode mode_ = Mode::Init;
         std::string user_input_;
         bool add_insert_ = false;
         std::function<void(bool)> user_input_cb_;
