@@ -24,6 +24,7 @@ Text-UI application
 
 ## TODO
 
+* Adjust links when renaming a node
 * Support removing a link
 * Support for showing the content of a link
 * Support changing the order for nodes and links
