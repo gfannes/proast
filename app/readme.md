@@ -29,7 +29,12 @@ Text-UI application
 * Support for showing the content of a link
 * Support changing the order for nodes and links
 * Compute aggregated cost
+* Indication of completed items
 * Compute fraction complete
+* Support for showing/opening all files
+* Support for multiple trees
+* Support removing a link
+* Support for showing the content of a link
 * Add reload command
 * Rework `.proast/metadata.naft` format
   * Use `[item]` for MD on nodes
@@ -38,5 +43,6 @@ Text-UI application
 * Add to model how the different paths for a Node will be called
   * `folder` and `index_fn`
 * Test if feature with subfeature can be shown
+* Support changing the order for nodes and links
 * Rework `g` into `gg`
 * Git hash header should not require "git checkout ." each time

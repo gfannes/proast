@@ -2,20 +2,16 @@
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Config.hpp>
+#include <proast/model/Path.hpp>
 #include <gubg/tree/Node.hpp>
 #include <gubg/tree/Forest.hpp>
 #include <gubg/markup/Document.hpp>
 #include <filesystem>
 #include <string>
-#include <vector>
 #include <ostream>
 #include <optional>
 
 namespace proast { namespace model { 
-
-    using Path = std::vector<std::string>;
-    std::string to_string(const Path &);
-    Path to_path(const std::string &);
 
     struct Data
     {

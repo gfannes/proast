@@ -292,6 +292,18 @@ namespace proast { namespace presenter {
             MSS(model_.remove_current());
             MSS_END();
         }
+        bool commander_register_bookmark(char32_t ch) override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.register_bookmark(ch));
+            MSS_END();
+        }
+        bool commander_load_bookmark(char32_t ch) override
+        {
+            MSS_BEGIN(bool);
+            MSS_Q(model_.load_bookmark(ch));
+            MSS_END();
+        }
 
     private:
         bool repaint_()

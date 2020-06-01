@@ -32,6 +32,8 @@ namespace proast { namespace presenter {
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool is_final) = 0;
             virtual bool commander_remove() = 0;
+            virtual bool commander_register_bookmark(char32_t) = 0;
+            virtual bool commander_load_bookmark(char32_t) = 0;
         };
 
         //Set the events listener
@@ -56,7 +58,7 @@ namespace proast { namespace presenter {
         }
 
     private:
-        enum class State {Idle, Add, Rename, Remove, Cost, };
+        enum class State {Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, };
 
         bool process_(const char32_t ch)
         {
@@ -113,6 +115,10 @@ namespace proast { namespace presenter {
 
                                   //Cost
                         case 'c': change_state_(State::Cost); break;
+
+                                  //Bookmarks
+                        case 'm': change_state_(State::RegisterBookmark); break;
+                        case '\'': change_state_(State::LoadBookmark); break;
                     }
                     break;
                 case State::Add:
@@ -153,6 +159,19 @@ namespace proast { namespace presenter {
                                   remove_ = false;
                                   change_state_(State::Idle);
                                   break;
+                    }
+                    break;
+                case State::RegisterBookmark:
+                case State::LoadBookmark:
+                    switch (ch)
+                    {
+                        case 0x1B://Escape
+                            change_state_(State::Idle);
+                            break;
+                        default:
+                            bookmark_cb_(ch);
+                            change_state_(State::Idle);
+                            break;
                     }
                     break;
             }
@@ -227,6 +246,20 @@ namespace proast { namespace presenter {
                 case State::Remove:
                     remove_ = true;
                     break;
+                case State::RegisterBookmark:
+                    bookmark_cb_ = [&](char32_t ch)
+                    {
+                        if (events_)
+                            events_->commander_register_bookmark(ch);
+                    };
+                    break;
+                case State::LoadBookmark:
+                    bookmark_cb_ = [&](char32_t ch)
+                    {
+                        if (events_)
+                            events_->commander_load_bookmark(ch);
+                    };
+                    break;
                 default:
                     break;
             }
@@ -239,6 +272,8 @@ namespace proast { namespace presenter {
         bool add_insert_ = false;
         std::function<void(bool)> user_input_cb_;
         bool remove_ = false;
+
+        std::function<void(char32_t)> bookmark_cb_;
     };
 
 } } 

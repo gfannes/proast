@@ -4,6 +4,7 @@
 #include <proast/model/Events.hpp>
 #include <proast/model/Tree.hpp>
 #include <proast/model/Config.hpp>
+#include <proast/model/Bookmarks.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/naft/Range.hpp>
 #include <gubg/OnlyOnce.hpp>
@@ -166,6 +167,19 @@ namespace proast { namespace model {
             MSS_END();
         }
 
+        bool register_bookmark(char32_t ch)
+        {
+            MSS_BEGIN(bool);
+            bookmarks_.set(ch, path_);
+            MSS_END();
+        }
+        bool load_bookmark(char32_t ch)
+        {
+            MSS_BEGIN(bool);
+            MSS_Q(bookmarks_.get(path_, ch));
+            MSS_END();
+        }
+
         bool operator()()
         {
             MSS_BEGIN(bool);
@@ -290,6 +304,13 @@ namespace proast { namespace model {
                 fn /= "metadata.naft";
             return fn;
         }
+        std::filesystem::path bookmarks_fn_() const
+        {
+            std::filesystem::path fn = proast_dir_();
+            if (!fn.empty())
+                fn /= "bookmarks.naft";
+            return fn;
+        }
 
         bool save_content_(const Node &node) const
         {
@@ -372,6 +393,8 @@ namespace proast { namespace model {
             };
             tree_->root_forest().dfs(ftor);
 
+            MSS(bookmarks_.save(bookmarks_fn_()));
+
             MSS_END();
         }
         bool load_metadata_()
@@ -406,6 +429,9 @@ namespace proast { namespace model {
                 }
             }
 
+            if (std::filesystem::exists(bookmarks_fn_()))
+                MSS(bookmarks_.load(bookmarks_fn_()));
+
             MSS_END();
         }
         bool reload_()
@@ -433,6 +459,8 @@ namespace proast { namespace model {
         model::Config cfg_;
         std::optional<Tree> tree_;
         Path path_;
+
+        Bookmarks bookmarks_;
 
         using Clock = std::chrono::high_resolution_clock;
         std::optional<Clock::time_point> save_tp_ = Clock::now();

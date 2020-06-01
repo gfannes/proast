@@ -4,7 +4,6 @@
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/naft/Range.hpp>
-#include <gubg/Strange.hpp>
 #include <map>
 #include <list>
 #include <fstream>
@@ -13,25 +12,6 @@
 
 namespace proast { namespace model { 
 
-    //Free functions
-    std::string to_string(const Path &path)
-    {
-        std::ostringstream oss;
-        for (const auto &e: path)
-            oss << '/' << e;
-        return oss.str();
-    }
-    Path to_path(const std::string &str)
-    {
-        Path path;
-        gubg::Strange strange{str};
-        strange.pop_if('/');
-        for (std::string part; !strange.empty(); path.push_back(part))
-            strange.pop_until(part, '/') || strange.pop_all(part);
-        return path;
-    }
-
-    //Tree
     bool Tree::find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start)
     {
         MSS_BEGIN(bool);
