@@ -38,6 +38,11 @@ task :build => [:dependencies, :version_git_hash_header] do
     sh "ninja -v"
 end
 
+desc "Install proast"
+task :install => :build do
+    sh "sudo cp proast.app /usr/local/bin/proast"
+end
+
 desc "Run unit tests, filter is colon-separated selection filter"
 task :ut, [:filter] do |t,args|
     filter = (args[:filter] || "ut").split(":").map{|e|"[#{e}]"}*""

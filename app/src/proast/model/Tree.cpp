@@ -233,7 +233,7 @@ namespace proast { namespace model {
 
         if (!std::filesystem::exists(directory))
         {
-            MSS(std::filesystem::is_regular_file(content_fp_leaf));
+            MSS(std::filesystem::is_regular_file(content_fp_leaf), log::stream() << "Error: directory " << directory << " does not exist, and neither does " << content_fp_leaf << std::endl);
             MSS(setup_content(content_fp_leaf));
             add_links();
 
