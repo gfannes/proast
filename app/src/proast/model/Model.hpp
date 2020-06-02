@@ -8,19 +8,32 @@
 #include <gubg/file/system.hpp>
 #include <gubg/naft/Range.hpp>
 #include <gubg/OnlyOnce.hpp>
+#include <gubg/hr.hpp>
 #include <gubg/mss.hpp>
 #include <optional>
 #include <vector>
 #include <chrono>
 #include <fstream>
 #include <cassert>
+#include <filesystem>
+#include <cstdlib>
 
 namespace proast { namespace model { 
 
     class Model
     {
     public:
-        const Config &config() const {return cfg_;}
+        Model(const std::vector<std::filesystem::path> &roots): roots_(roots) {}
+
+        const Config &current_config() const
+        {
+            if (path_.empty())
+                return default_config_;
+            auto it = name__config_.find(path_[0]);
+            if (it == name__config_.end())
+                return default_config_;
+            return it->second;
+        }
 
         void set_events_dst(model::Events *events)
         {
@@ -61,7 +74,7 @@ namespace proast { namespace model {
             MSS(tree_->find(node, path_));
 
             auto &child = node->childs.append();
-            //TODO: Made this consistent with how a link node is added in Tree
+            //TODO: Make this consistent with how a link node is added in Tree
             child.value.link = link_path;
             child.value.short_name = to_string(link_path);
 
@@ -92,7 +105,7 @@ namespace proast { namespace model {
 
             MSS(!std::filesystem::exists(new_directory), log::stream() << "Error: When renaming " << directory << " into " << new_directory << ": target directory already exists" << std::endl);
 
-            const auto new_content_fp_nonleaf = cfg_.content_fp_leaf(new_directory);
+            const auto new_content_fp_nonleaf = current_config().content_fp_leaf(new_directory);
             MSS(!std::filesystem::exists(new_content_fp_nonleaf), log::stream() << "Error: When renaming " << directory << " into " << new_content_fp_nonleaf << ": target file already exists" << std::endl);
 
             if (std::filesystem::exists(directory))
@@ -206,26 +219,29 @@ namespace proast { namespace model {
 
             MSS_END();
         }
-        std::filesystem::path root_filepath() const
+        std::filesystem::path root_filepath(const std::string &name) const
         {
             if (!!tree_)
-                return tree_->root_filepath();
+                return tree_->root_filepath(name);
             return std::filesystem::path{};
         }
         std::filesystem::path local_filepath(const Path &path) const
         {
-            auto fp = root_filepath();
-            for (auto ix = 1u; ix < path.size(); ++ix)
-                fp /= path[ix];
+            std::filesystem::path fp;
+            if (!path.empty())
+            {
+                fp = root_filepath(path[0]);
+                for (auto ix = 1u; ix < path.size(); ++ix)
+                    fp /= path[ix];
+            }
             return fp;
         }
         std::filesystem::path current_filepath() const { return local_filepath(path_); }
         std::filesystem::path trash_filepath(const Path &path) const
         {
-            auto fp = root_filepath();
-            fp /= ".proast";
+            auto fp = user_dir_();
             fp /= "trash";
-            for (auto ix = 1u; ix < path.size(); ++ix)
+            for (auto ix = 0u; ix < path.size(); ++ix)
                 fp /= path[ix];
             return fp;
         }
@@ -236,7 +252,7 @@ namespace proast { namespace model {
             if (path.empty())
             {
                 if (!!tree_)
-                    path_ = tree_->root_path();
+                    path_ = tree_->first_root_path();
                 else
                     path_.clear();
                 return;
@@ -280,7 +296,7 @@ namespace proast { namespace model {
             std::size_t ix;
             {
                 MSS(!!tree_);
-                MSS(tree_->find(forest, ix, parent_path));
+                MSS_Q(tree_->find(forest, ix, parent_path));
                 assert(!!forest);
             }
 
@@ -290,23 +306,26 @@ namespace proast { namespace model {
         }
 
     private:
-        std::filesystem::path proast_dir_() const
+        std::filesystem::path user_dir_() const
         {
-            std::filesystem::path fn;
-            if (tree_)
-                fn = tree_->root_filepath() / ".proast";
-            return fn;
+            std::filesystem::path dir;
+            const auto cstr = std::getenv("HOME");
+            if (cstr)
+                dir = cstr;
+            dir /= ".config";
+            dir /= "proast";
+            return dir;
         }
         std::filesystem::path metadata_fn_() const
         {
-            std::filesystem::path fn = proast_dir_();
+            std::filesystem::path fn = user_dir_();
             if (!fn.empty())
                 fn /= "metadata.naft";
             return fn;
         }
         std::filesystem::path bookmarks_fn_() const
         {
-            std::filesystem::path fn = proast_dir_();
+            std::filesystem::path fn = user_dir_();
             if (!fn.empty())
                 fn /= "bookmarks.naft";
             return fn;
@@ -347,7 +366,7 @@ namespace proast { namespace model {
             MSS_END();
         }
 
-        bool save_metadata_()
+        bool save_metadata_() const
         {
             MSS_BEGIN(bool);
 
@@ -356,9 +375,9 @@ namespace proast { namespace model {
             const auto metadata_fn = metadata_fn_();
             if (!std::filesystem::exists(metadata_fn))
             {
-                const auto proast_dir = proast_dir_();
-                if (!std::filesystem::exists(proast_dir))
-                    std::filesystem::create_directories(proast_dir);
+                const auto user_dir = user_dir_();
+                if (!std::filesystem::exists(user_dir))
+                    std::filesystem::create_directories(user_dir);
             }
 
             std::ofstream fo{metadata_fn};
@@ -367,9 +386,22 @@ namespace proast { namespace model {
             Path path;
             auto ftor = [&](auto &node, const auto &int_path, auto visit_count)
             {
+                MSS_BEGIN(bool);
                 if (visit_count == 0)
                 {
-                    path.push_back(node.value.short_name);
+                    {
+                        path.resize(int_path.size());
+                        auto it = path.begin();
+                        const Forest *forest = &tree_->root_forest();
+                        for (auto ix: int_path)
+                        {
+                            MSS(ix < forest->size());
+                            const auto &node = forest->nodes[ix];
+                            *it++ = node.value.short_name;
+                            forest = &node.childs;
+                        }
+                    }
+
                     fo << '[';
                     gubg::OnlyOnce skip_separator;
                     for (const auto &segment: path)
@@ -383,13 +415,7 @@ namespace proast { namespace model {
                         fo << "(active_child_key:" << node.value.active_child_key << ")";
                     fo << std::endl;
                 }
-                else
-                {
-                    assert(!path.empty());
-                    MSS(!path.empty());
-                    path.pop_back();
-                }
-                return true;
+                MSS_END();
             };
             tree_->root_forest().dfs(ftor);
 
@@ -438,26 +464,39 @@ namespace proast { namespace model {
         {
             MSS_BEGIN(bool);
 
-            std::filesystem::path root;
-            MSS(Tree::find_root_filepath(root, std::filesystem::current_path()));
+            std::shared_ptr<Tree> tree{new Tree};
+            name__config_.clear();
 
-            Config::create_default(root);
-            const auto config_fp = Config::filepath(root);
-            MSS(cfg_.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
+            for (const auto &root: roots_)
+            {
+                Config::create_default(root);
 
-            tree_.emplace();
-            MSS(tree_->load(root, cfg_));
+                const std::string name = root.stem().string();
+                auto &config = name__config_[name];
+
+                const auto config_fp = Config::filepath(root);
+                MSS(config.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
+
+                MSS(tree->load(root, config));
+
+                if (path_.empty())
+                    path_ = tree->first_root_path();
+            }
+
+            tree_.swap(tree);
+
             if (!load_metadata_())
                 log::stream() << "Warning: Could not load metadata" << std::endl;
-            if (path_.empty())
-                path_ = tree_->root_path();
 
             MSS_END();
         }
 
+        const std::vector<std::filesystem::path> roots_;
+
         model::Events *events_{};
-        model::Config cfg_;
-        std::optional<Tree> tree_;
+        std::map<std::string, Config> name__config_;
+        const Config default_config_;
+        std::shared_ptr<Tree> tree_;
         Path path_;
 
         Bookmarks bookmarks_;

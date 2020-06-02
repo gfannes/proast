@@ -5,40 +5,24 @@
 
 namespace proast { namespace model { 
 
-    std::filesystem::path Config::directory(const std::filesystem::path &root)
-    {
-        return root/".proast";
-    }
     std::filesystem::path Config::filepath(const std::filesystem::path &root)
     {
-        return Config::directory(root)/"config.naft";
+        return root/".proast.config";
     }
 
     bool Config::create_default(const std::filesystem::path &root)
     {
         MSS_BEGIN(bool);
 
-        const auto dot_proast = Config::directory(root);
-        if (!std::filesystem::exists(dot_proast))
-            std::filesystem::create_directories(dot_proast);
-        MSS(!!std::filesystem::exists(dot_proast));
-
-        auto create_default = [&](std::string name, auto &&ftor)
+        //Create .proast.config if it does not exist yet
         {
-            const auto fp = dot_proast/name;
+            const auto fp = filepath(root);
             if (!std::filesystem::exists(fp))
             {
                 std::ofstream fo{fp};
-                ftor(fo);
+                //TODO: set default values to give an indication to the user what exists
             }
-        };
-
-        create_default(".gitignore", [](auto &fo){
-                fo << "metadata.naft" << std::endl;
-                fo << "trash/" << std::endl;
-                });
-        create_default("config.naft", [](auto &fo){
-                });
+        }
 
         MSS_END();
     }

@@ -25,6 +25,7 @@ namespace proast {
             if (false) {}
             else if (arg == "-h" || arg == "--help") { print_help = true; }
             else if (arg == "-v" || arg == "--version") { print_version = true; }
+            else if (arg == "-r" || arg == "--root") { roots.push_back(std::filesystem::canonical(pop_arg())); }
             else
             {
                 MSS(false, log::stream() << "Error: unknown command-line argument \"" << arg << "\"" << std::endl);
@@ -39,9 +40,20 @@ namespace proast {
         std::ostringstream oss;
 
         oss << exe_name << std::endl;
-        oss << "    -h    Print this help" << std::endl;
-        oss << "    -v    Print version information" << std::endl;
+        oss << "    -h,--help        Print this help" << std::endl;
+        oss << "    -v,--version     Print version information" << std::endl;
+        oss << "    -r,--root <PATH> Use <PATH> as root" << std::endl;
 
         return oss.str();
+    }
+
+    void Options::stream(std::ostream &os) const
+    {
+        os << "[Options]{" << std::endl;
+        os << "  [print_help](bool:" << print_help << ")" << std::endl;
+        os << "  [print_version](bool:" << print_version << ")" << std::endl;
+        for (const auto &root: roots)
+            os << "  [root](path:" << root << ")" << std::endl;
+        os << "}" << std::endl;
     }
 } 

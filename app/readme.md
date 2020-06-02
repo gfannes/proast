@@ -29,12 +29,17 @@ Text-UI application
 * Support for showing the content of a link
 * Support changing the order for nodes and links
 * Compute aggregated cost
+  * Convert different costs for different subtrees
 * Indication of completed items
 * Compute fraction complete
 * Support for showing/opening all files
-* Support for multiple trees
 * Support removing a link
 * Support for showing the content of a link
+* Support for sprints
+  * Defining a new sprint
+  * Selecting a sprint
+  * Adding items to a sprint
+  * Jumping to a sprint to find-out what is next to develop
 * Add reload command
 * Rework `.proast/metadata.naft` format
   * Use `[item]` for MD on nodes

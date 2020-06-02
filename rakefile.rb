@@ -56,7 +56,7 @@ end
 
 desc "Run proast"
 task :test => :build do
-    sh "./proast.app"
+    sh "./proast.app -r ./ -r #{ENV["HOME"]}/nontech"
 end
 
 desc "Clear cached binaries"

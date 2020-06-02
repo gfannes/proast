@@ -16,7 +16,9 @@ namespace proast {
     public:
         bool process(int argc, const char **argv)
         {
-            return options_.parse(argc, argv);
+            const bool ok = options_.parse(argc, argv);
+            std::cout << options_;
+            return ok;
         }
 
         bool prepare()
@@ -37,8 +39,9 @@ namespace proast {
 
             if (create_presenter)
             {
+                model_.reset(new model::Model{options_.roots});
                 view_.reset(new view::View);
-                presenter_.reset(new presenter::Presenter{model_, *view_});
+                presenter_.reset(new presenter::Presenter{*model_, *view_});
             }
 
             MSS_END();
@@ -49,12 +52,14 @@ namespace proast {
         {
             MSS_BEGIN(bool);
 
+            MSS(!!model_);
+            auto &model = *model_;
             MSS(!!view_);
             auto &view = *view_;
             MSS(!!presenter_);
             auto &presenter = *presenter_;
 
-            MSS(model_());
+            MSS(model());
             MSS(view());
             MSS(presenter());
 
@@ -73,7 +78,7 @@ namespace proast {
     private:
         Options options_;
 
-        model::Model model_;
+        std::shared_ptr<model::Model> model_;
         std::shared_ptr<view::View> view_;
         std::shared_ptr<presenter::Presenter> presenter_;
     };

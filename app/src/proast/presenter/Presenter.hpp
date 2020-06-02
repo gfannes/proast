@@ -124,8 +124,8 @@ namespace proast { namespace presenter {
                 path.back() = forest->nodes[new_ix].value.short_name;
 
                 model::Node *parent;
-                MSS(model_.get_parent(parent, path));
-                parent->value.active_child_key = path.back();
+                if (model_.get_parent(parent, path))
+                    parent->value.active_child_key = path.back();
                 MSS_END();
             };
 
@@ -187,11 +187,9 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            auto path = model_.path();
-
             const model::Forest *forest;
             std::size_t ix;
-            MSS(model_.get(forest, ix, path));
+            MSS(model_.get(forest, ix, model_.path()));
 
             const auto &me = forest->nodes[ix];
 
@@ -206,9 +204,9 @@ namespace proast { namespace presenter {
                     //Create content file, if it does not already exist
                     const auto directory = *me.value.directory;
                     if (std::filesystem::exists(directory))
-                        content_fp = model_.config().content_fp_nonleaf(directory);
+                        content_fp = model_.current_config().content_fp_nonleaf(directory);
                     else
-                        content_fp = model_.config().content_fp_leaf(directory);
+                        content_fp = model_.current_config().content_fp_leaf(directory);
                     std::ofstream fo{content_fp};
                 }
 
@@ -280,7 +278,7 @@ namespace proast { namespace presenter {
                 if (!dialog_)
                 {
                     dialog_.emplace();
-                    dialog_->set_caption(std::string("Provide cost of item in ")+model_.config().cost_unit());
+                    dialog_->set_caption(std::string("Provide cost of item in ")+model_.current_config().cost_unit());
                 }
                 dialog_->set_content(str);
             }
@@ -310,7 +308,8 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            status_ = std::string("Loaded root path: ")+model_.root_filepath().string();
+            /* status_ = std::string("Loaded root path: ")+model_.root_filepath().string(); */
+            status_ = "Starting";
 
             //Location
             {
@@ -368,7 +367,7 @@ namespace proast { namespace presenter {
                 details_kv_.clear();
                 if (me.value.my_cost)
                 {
-                    details_kv_["cost"] = std::to_string(*me.value.my_cost)+model_.config().cost_unit();
+                    details_kv_["cost"] = std::to_string(*me.value.my_cost)+model_.current_config().cost_unit();
                 }
             }
 

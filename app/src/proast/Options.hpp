@@ -2,6 +2,9 @@
 #define HEADER_proast_Options_hpp_ALREADY_INCLUDED
 
 #include <string>
+#include <filesystem>
+#include <vector>
+#include <ostream>
 
 namespace proast { 
 
@@ -15,12 +18,22 @@ namespace proast {
         bool print_help = false;
         bool print_version = false;
 
+        std::vector<std::filesystem::path> roots;
+
         bool parse(const int argc, const char **argv);
 
         std::string help() const;
 
+        void stream(std::ostream &os) const;
+
     private:
     };
+
+    inline std::ostream &operator<<(std::ostream &os, const Options &options)
+    {
+        options.stream(os);
+        return os;
+    }
 
 } 
 

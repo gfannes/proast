@@ -12,37 +12,35 @@
 
 namespace proast { namespace model { 
 
-    bool Tree::find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start)
-    {
-        MSS_BEGIN(bool);
-
-        root = start;
-        while (true)
-        {
-            if (std::filesystem::exists(root/".proast"))
-                return true;
-            const auto parent = root.parent_path();
-            MSS_Q(parent != root);
-            root = parent;
-        }
-
-        MSS_END();
-    }
-
     bool Tree::load(const std::filesystem::path &root, const Config &cfg)
     {
         MSS_BEGIN(bool);
-        cfg_ = cfg;
-        root_filepath_.clear();
-        root_forest_.nodes.resize(1);
-        MSS(load_(root_forest_.nodes[0], root.stem().string(), root));
-        root_filepath_ = root;
+
+        const std::string name = root.stem().string();
+        auto it = name__cfg_.find(name);
+        MSS(it == name__cfg_.end());
+
+        name__cfg_[name] = cfg;
+        name__root_filepath_[name].clear();
+
+        auto &node = root_forest_.append();
+        MSS(load_(cfg, node, root.stem().string(), root));
+
+        name__root_filepath_[name] = root;
+
         MSS_END();
     }
 
-    const std::filesystem::path &Tree::root_filepath() const { return root_filepath_; }
+    std::filesystem::path Tree::root_filepath(const std::string &name) const
+    {
+        std::filesystem::path fp;
+        auto it = name__root_filepath_.find(name);
+        if (it != name__root_filepath_.end())
+            fp = it->second;
+        return fp;
+    }
 
-    Path Tree::root_path() const
+    Path Tree::first_root_path() const
     {
         Path path;
         if (!root_forest_.empty())
@@ -128,7 +126,7 @@ namespace proast { namespace model {
     }
 
     //Privates
-    bool Tree::load_(Node &node, const std::string &stem, std::filesystem::path directory) const
+    bool Tree::load_(const Config &cfg, Node &node, const std::string &stem, std::filesystem::path directory) const
     {
         MSS_BEGIN(bool);
 
@@ -228,8 +226,8 @@ namespace proast { namespace model {
             }
         };
 
-        const auto content_fp_leaf = cfg_.content_fp_leaf(directory);
-        const auto content_fp_nonleaf = cfg_.content_fp_nonleaf(directory);
+        const auto content_fp_leaf = cfg.content_fp_leaf(directory);
+        const auto content_fp_nonleaf = cfg.content_fp_nonleaf(directory);
 
         if (!std::filesystem::exists(directory))
         {
@@ -257,7 +255,7 @@ namespace proast { namespace model {
             const auto sub_path = sub.path();
 
             const auto stem = sub_path.stem().string();
-            if (stem.empty() || stem == cfg_.index_name())
+            if (stem.empty() || stem == cfg.index_name())
                 continue;
 
             switch (stem[0])
@@ -273,7 +271,7 @@ namespace proast { namespace model {
                         else if (std::filesystem::is_regular_file(sub_path))
                         {
                             const auto ext_str = sub_path.extension().string();
-                            if (ext_str == cfg_.extension())
+                            if (ext_str == cfg.extension())
                                 do_add = true;
                         }
 
@@ -288,7 +286,7 @@ namespace proast { namespace model {
         auto n = node.childs.nodes.begin();
         for (const auto &[stem, dir]: stem__dir)
         {
-            MSS(load_(*n, stem, dir));
+            MSS(load_(cfg, *n, stem, dir));
             ++n;
         }
 

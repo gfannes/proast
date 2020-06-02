@@ -10,7 +10,6 @@ namespace proast { namespace model {
     class Config
     {
     public:
-        static std::filesystem::path directory(const std::filesystem::path &root);
         static std::filesystem::path filepath(const std::filesystem::path &root);
         static bool create_default(const std::filesystem::path &root);
 

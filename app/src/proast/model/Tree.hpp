@@ -10,6 +10,7 @@
 #include <string>
 #include <ostream>
 #include <optional>
+#include <map>
 
 namespace proast { namespace model { 
 
@@ -38,22 +39,23 @@ namespace proast { namespace model {
 
         bool load(const std::filesystem::path &root, const Config &cfg);
 
-        const std::filesystem::path &root_filepath() const;
+        std::filesystem::path root_filepath(const std::string &name) const;
 
         void stream(std::ostream &os) const;
 
-        Path root_path() const;
+        Path first_root_path() const;
 
         bool find(Forest *&forest, std::size_t &ix, const Path &path);
         bool find(Node *&node, const Path &path);
 
         Forest &root_forest() {return root_forest_;}
+        const Forest &root_forest() const {return root_forest_;}
 
     private:
-        bool load_(Node &node, const std::string &stem, std::filesystem::path path) const;
+        bool load_(const Config &cfg, Node &node, const std::string &stem, std::filesystem::path path) const;
 
-        Config cfg_;
-        std::filesystem::path root_filepath_;
+        std::map<std::string, Config> name__cfg_;
+        std::map<std::string, std::filesystem::path> name__root_filepath_;
         Forest root_forest_;
     };
 
