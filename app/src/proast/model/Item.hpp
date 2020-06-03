@@ -1,0 +1,65 @@
+#ifndef HEADER_proast_model_Item_hpp_ALREADY_INCLUDED
+#define HEADER_proast_model_Item_hpp_ALREADY_INCLUDED
+
+#include <proast/model/Path.hpp>
+#include <string>
+#include <filesystem>
+
+namespace proast { namespace model { 
+
+    //TODO: Replace this with a real struct
+    //For now, std::string was chosen because this can be compared when using the format YYYYMMDD
+    using DateTime = std::string;
+
+    enum class Status
+    {
+        Todo, InDesign, Designed, Implementing, Implemented, Done,
+    };
+    std::string hr(Status);
+
+    enum class Priority
+    {
+        Must, Should, Could, Wont,
+    };
+    enum class Type
+    {
+        Feature, Requirement, Design, Deliverable,
+    };
+
+    class Item
+    {
+    public:
+        std::string key() const;
+        void set_key(const std::string &);
+        void set_key(Type, const std::string &);
+        void set_key(Type, unsigned int ix);
+
+        std::string stem() const;
+
+        DateTime deadline;
+        double cost = 0;
+        Status status = Status::Todo;
+        Path link;
+        Priority priority = Priority::Must;
+        std::filesystem::path filename;
+
+        std::string title() const;
+        void set_title(const std::string &);
+
+        std::string description() const;
+        void set_description(const std::string &);
+
+        Type type() const;
+
+        //Indicates if this item is embedded in the content of its parent
+        bool is_embedded() const;
+
+    private:
+        std::string key_;
+        std::string title_;
+        std::string description_;
+    };
+
+} } 
+
+#endif

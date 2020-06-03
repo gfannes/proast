@@ -42,6 +42,8 @@ namespace proast { namespace model {
                 events_->message("Events destination was set");
         }
 
+        //insert==true: nest new item _under_ path_
+        //insert==false: add new item _next to_ path_
         bool add_item(const std::string &short_name, bool insert)
         {
             MSS_BEGIN(bool);
@@ -55,8 +57,8 @@ namespace proast { namespace model {
             path_.push_back(short_name);
             auto fp = local_filepath(path_);
             log::stream() << "Note: Creating folder " << fp << std::endl;
-            std::filesystem::create_directories(fp);
-            fp /= "readme.md";
+            fp += current_config().extension();
+            std::filesystem::create_directories(fp.parent_path());
             std::ofstream fo{fp};
 
             MSS(fo.good());

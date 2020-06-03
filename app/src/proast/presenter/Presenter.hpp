@@ -211,9 +211,14 @@ namespace proast { namespace presenter {
                 }
 
                 view_.pause([&](){
+                        const auto orig_dir = std::filesystem::current_path();
+                        std::filesystem::current_path(content_fp.parent_path());
+
                         std::ostringstream oss;
-                        oss << "nvim " << content_fp;
+                        oss << "nvim " << content_fp.filename();
                         std::system(oss.str().c_str());
+
+                        std::filesystem::current_path(orig_dir);
                         });
             }
             else if (me.value.link)
