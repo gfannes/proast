@@ -4,6 +4,7 @@
 #include <proast/model/Path.hpp>
 #include <gubg/markup/Document.hpp>
 #include <string>
+#include <vector>
 #include <filesystem>
 #include <optional>
 
@@ -23,10 +24,13 @@ namespace proast { namespace model {
     {
         Must, Should, Could, Wont,
     };
+    std::string hr(Priority);
+
     enum class Type
     {
-        Feature, Requirement, Design, Deliverable,
+        Feature, Requirement, Design, Deliverable, Free,
     };
+    std::string hr(Type);
 
     class Item
     {
@@ -42,15 +46,14 @@ namespace proast { namespace model {
         std::optional<double> my_cost;
         Status status = Status::Todo;
         std::optional<Path> link;
-        Priority priority = Priority::Must;
+        std::optional<Priority> priority;
 
         std::optional<std::filesystem::path> content_fp;
 
         std::string title() const;
         void set_title(const std::string &);
 
-        std::string description() const;
-        void set_description(const std::string &);
+        std::vector<std::string> description;
 
         Type type() const;
 
@@ -70,8 +73,8 @@ namespace proast { namespace model {
 
     private:
         std::string key_;
+        Type type_ = Type::Free;
         std::string title_;
-        std::string description_;
     };
 
     inline std::ostream &operator<<(std::ostream &os, const Item &item)

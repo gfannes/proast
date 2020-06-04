@@ -17,6 +17,29 @@ namespace proast { namespace model {
         }
         return "";
     }
+    std::string hr(Priority prio)
+    {
+        switch (prio)
+        {
+            case Priority::Must: return "Must";
+            case Priority::Should: return "Should";
+            case Priority::Could: return "Could";
+            case Priority::Wont: return "Wont";
+        }
+        return "";
+    }
+    std::string hr(Type type)
+    {
+        switch (type)
+        {
+            case Type::Feature: return "Feature";
+            case Type::Requirement: return "Requirement";
+            case Type::Design: return "Design";
+            case Type::Deliverable: return "Deliverable";
+            case Type::Free: return "Free";
+        }
+        return "";
+    }
 
     namespace my { 
         void append(std::string &str, Type type)
@@ -39,16 +62,28 @@ namespace proast { namespace model {
     }
     void Item::set_key(const std::string &key)
     {
+        type_ = Type::Free;
+        if (!key.empty())
+            switch (key_[0])
+            {
+                case '@': type_ = Type::Requirement;
+                case '_': type_ = Type::Design;
+                case '%': type_ = Type::Deliverable;
+                default: break;
+            }
+
         key_ = key;
     }
     void Item::set_key(Type type, const std::string &stem)
     {
+        type_ = type;
         key_.clear();
         my::append(key_, type);
         key_ += stem;
     }
     void Item::set_key(Type type, unsigned int ix)
     {
+        type_ = type;
         key_.clear();
         my::append(key_, type);
         key_.push_back('#');
@@ -97,29 +132,9 @@ namespace proast { namespace model {
         title_ = str;
     }
 
-    std::string Item::description() const
-    {
-        return description_;
-    }
-    void Item::set_description(const std::string &str)
-    {
-        description_ = str;
-    }
-
     Type Item::type() const
     {
-        if (key_.empty())
-            return Type::Feature;
-
-        switch (key_[0])
-        {
-            case '@': return Type::Requirement;
-            case '_': return Type::Design;
-            case '%': return Type::Deliverable;
-            default: break;
-        }
-
-        return Type::Feature;
+        return type_;
     }
 
     bool Item::is_embedded() const
@@ -139,6 +154,7 @@ namespace proast { namespace model {
                 break;
 
             case Type::Feature:
+            case Type::Free:
                 if (key_.size() >= 1)
                     ch = key_[0];
                 break;
@@ -150,7 +166,8 @@ namespace proast { namespace model {
     void Item::stream(std::ostream &os) const
     {
         os << "[Item](key:" << key() << ")(title:" << title() << "){" << std::endl;
-        os << description();
+        for (const auto &desc: description)
+            os << "  " << desc << std::endl;
         os << "}";
     }
 

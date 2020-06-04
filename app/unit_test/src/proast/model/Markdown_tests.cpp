@@ -1,9 +1,19 @@
-#include <proast/model/Node.hpp>
+#include <proast/model/Markdown.hpp>
 #include <catch.hpp>
 #include <iostream>
 using namespace proast;
 
-TEST_CASE("model::Node read tests", "[ut][model][Node][read]")
+TEST_CASE("model::Node read from directory tests", "[ut][model][Node][read][directory]")
+{
+    const auto cwd = std::filesystem::current_path();
+
+    model::Node node;
+    model::Config config;
+    REQUIRE(model::markdown::read_directory(node, cwd, config));
+    REQUIRE(model::markdown::write_directory(cwd/"generated", node, config));
+}
+
+TEST_CASE("model::Node read tests", "[ut][model][Node][read][string]")
 {
     struct Scn
     {
@@ -55,7 +65,7 @@ This is lost
     }
 
     model::Node node;
-    REQUIRE(model::read_markdown(node, scn.markdown));
+    REQUIRE(model::markdown::read_string(node, scn.markdown));
     std::cout << node.value << std::endl;
     for (const auto &child: node.childs.nodes)
         std::cout << "  " << child.value << std::endl;
@@ -90,14 +100,14 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
     SECTION("all sections")
     {
         node.value.set_key("create_unit_test");
-        node.value.set_description("Creating unit tests is the way to go.");
+        node.value.description.push_back("Creating unit tests is the way to go.");
 
         //Requirements
         {
             auto &child = node.childs.append();
             child.value.set_key(model::Type::Requirement, 0);
             child.value.set_title("Embedded requirement");
-            child.value.set_description("Explain here what should be achieved");
+            child.value.description.push_back("Explain here what should be achieved");
         }
         {
             auto &child = node.childs.append();
@@ -109,7 +119,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
             auto &child = node.childs.append();
             child.value.set_key(model::Type::Design, 0);
             child.value.set_title("Embedded design");
-            child.value.set_description("Make some decisions to narrow-down the solution space");
+            child.value.description.push_back("Make some decisions to narrow-down the solution space");
         }
         {
             auto &child = node.childs.append();
@@ -121,7 +131,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
             auto &child = node.childs.append();
             child.value.set_key(model::Type::Feature, 0);
             child.value.set_title("Embedded feature");
-            child.value.set_description("Breakdown this feature in client-valued subfeatures");
+            child.value.description.push_back("Breakdown this feature in client-valued subfeatures");
         }
         {
             auto &child = node.childs.append();
@@ -134,7 +144,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
     }
 
     std::string markdown;
-    REQUIRE(write_markdown(markdown, node));
+    REQUIRE(model::markdown::write_string(markdown, node));
     std::cout << markdown;
     /* REQUIRE(markdown == exp.markdown); */
 }
