@@ -33,8 +33,8 @@ namespace proast { namespace model {
 
     std::string Item::key() const
     {
-        if (!link.empty())
-            return to_string(link);
+        if (link)
+            return to_string(*link);
         return key_;
     }
     void Item::set_key(const std::string &key)
@@ -124,7 +124,7 @@ namespace proast { namespace model {
 
     bool Item::is_embedded() const
     {
-        if (!link.empty())
+        if (link)
             return false;
 
         char ch = '#';

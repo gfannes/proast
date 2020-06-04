@@ -2,8 +2,10 @@
 #define HEADER_proast_model_Item_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Path.hpp>
+#include <gubg/markup/Document.hpp>
 #include <string>
 #include <filesystem>
+#include <optional>
 
 namespace proast { namespace model { 
 
@@ -37,11 +39,12 @@ namespace proast { namespace model {
         std::string stem() const;
 
         DateTime deadline;
-        double cost = 0;
+        std::optional<double> my_cost;
         Status status = Status::Todo;
-        Path link;
+        std::optional<Path> link;
         Priority priority = Priority::Must;
-        std::filesystem::path filename;
+
+        std::optional<std::filesystem::path> content_fp;
 
         std::string title() const;
         void set_title(const std::string &);
@@ -53,6 +56,13 @@ namespace proast { namespace model {
 
         //Indicates if this item is embedded in the content of its parent
         bool is_embedded() const;
+
+        //Members to remove
+
+        //Replace this with markdown::ast::Tree
+        gubg::markup::Document preview;
+        std::string active_child_key;
+        std::optional<std::filesystem::path> directory;
 
     private:
         std::string key_;

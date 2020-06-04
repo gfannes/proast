@@ -44,7 +44,7 @@ namespace proast { namespace model {
 
         //insert==true: nest new item _under_ path_
         //insert==false: add new item _next to_ path_
-        bool add_item(const std::string &short_name, bool insert)
+        bool add_item(const std::string &key, bool insert)
         {
             MSS_BEGIN(bool);
 
@@ -54,7 +54,7 @@ namespace proast { namespace model {
                     path_.pop_back();
             }
 
-            path_.push_back(short_name);
+            path_.push_back(key);
             auto fp = local_filepath(path_);
             log::stream() << "Note: Creating folder " << fp << std::endl;
             fp += current_config().extension();
@@ -78,14 +78,14 @@ namespace proast { namespace model {
             auto &child = node->childs.append();
             //TODO: Make this consistent with how a link node is added in Tree
             child.value.link = link_path;
-            child.value.short_name = to_string(link_path);
+            child.value.set_key(to_string(link_path));
 
             MSS(save_content_(*node));
             MSS(reload_());
 
             MSS_END();
         }
-        bool rename_item(const std::string &new_short_name)
+        bool rename_item(const std::string &new_key)
         {
             MSS_BEGIN(bool);
 
@@ -98,7 +98,7 @@ namespace proast { namespace model {
             {
                 MSS(!new_path.empty());
                 new_path.pop_back();
-                new_path.push_back(new_short_name);
+                new_path.push_back(new_key);
             }
 
             MSS(!!me->value.directory);
@@ -173,9 +173,9 @@ namespace proast { namespace model {
 
             path_.pop_back();
             if (ix+1 < forest->size())
-                path_.push_back(forest->nodes[ix+1].value.short_name);
+                path_.push_back(forest->nodes[ix+1].value.key());
             else if (forest->size() > 1)
-                path_.push_back(forest->nodes[ix-1].value.short_name);
+                path_.push_back(forest->nodes[ix-1].value.key());
 
             MSS(reload_());
 
@@ -399,7 +399,7 @@ namespace proast { namespace model {
                         {
                             MSS(ix < forest->size());
                             const auto &node = forest->nodes[ix];
-                            *it++ = node.value.short_name;
+                            *it++ = node.value.key();
                             forest = &node.childs;
                         }
                     }

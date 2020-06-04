@@ -19,7 +19,7 @@ TEST_CASE("model::Node tests", "[ut][model][Node]")
     Scn scn;
     Exp exp;
 
-    model::Node_ node;
+    model::Node node;
 
     SECTION("default") { }
     SECTION("title")

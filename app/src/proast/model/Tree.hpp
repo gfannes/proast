@@ -3,8 +3,7 @@
 
 #include <proast/model/Config.hpp>
 #include <proast/model/Path.hpp>
-#include <gubg/tree/Node.hpp>
-#include <gubg/tree/Forest.hpp>
+#include <proast/model/Node.hpp>
 #include <gubg/markup/Document.hpp>
 #include <filesystem>
 #include <string>
@@ -13,23 +12,6 @@
 #include <map>
 
 namespace proast { namespace model { 
-
-    struct Data
-    {
-        std::optional<std::filesystem::path> directory;
-        std::optional<std::filesystem::path> content_fp;
-
-        std::optional<Path> link;
-
-        std::string short_name;
-        std::string active_child_key;
-        //Replace this with markdown::ast::Tree
-        gubg::markup::Document preview;
-
-        std::optional<double> my_cost;
-    };
-    using Node = gubg::tree::Node<Data>;
-    using Forest = gubg::tree::Forest<Data>;
 
     class Tree
     {

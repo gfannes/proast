@@ -5,7 +5,7 @@
 
 namespace proast { namespace model { 
 
-    bool write_markdown(std::string &markdown, const Node_ &node)
+    bool write_markdown(std::string &markdown, const Node &node)
     {
         MSS_BEGIN(bool);
         std::ostringstream oss;
@@ -61,10 +61,10 @@ namespace proast { namespace model {
             }
             else
             {
-                if (child.value.link.empty())
-                    oss << "* [external](key:" << child.value.key() << ")\n";
+                if (child.value.link)
+                    oss << "* [external](path:" << to_string(*child.value.link) << ")\n";
                 else
-                    oss << "* [external](path:" << to_string(child.value.link) << ")\n";
+                    oss << "* [external](key:" << child.value.key() << ")\n";
             }
         }
 
