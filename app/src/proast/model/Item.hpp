@@ -57,6 +57,8 @@ namespace proast { namespace model {
         //Indicates if this item is embedded in the content of its parent
         bool is_embedded() const;
 
+        void clear() {*this = Item{};}
+
         //Members to remove
 
         //Replace this with markdown::ast::Tree
@@ -64,11 +66,19 @@ namespace proast { namespace model {
         std::string active_child_key;
         std::optional<std::filesystem::path> directory;
 
+        void stream(std::ostream &os) const;
+
     private:
         std::string key_;
         std::string title_;
         std::string description_;
     };
+
+    inline std::ostream &operator<<(std::ostream &os, const Item &item)
+    {
+        item.stream(os);
+        return os;
+    }
 
 } } 
 

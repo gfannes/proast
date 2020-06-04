@@ -10,6 +10,7 @@ namespace proast { namespace model {
     using Node = gubg::tree::Node<Item>;
     using Forest = gubg::tree::Forest<Item>;
 
+    bool read_markdown(Node &node, const std::string &markdown);
     bool write_markdown(std::string &markdown, const Node &);
 
 } } 

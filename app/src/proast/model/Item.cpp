@@ -147,4 +147,11 @@ namespace proast { namespace model {
         return ch == '#';
     }
 
+    void Item::stream(std::ostream &os) const
+    {
+        os << "[Item](key:" << key() << ")(title:" << title() << "){" << std::endl;
+        os << description();
+        os << "}";
+    }
+
 } } 

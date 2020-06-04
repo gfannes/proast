@@ -3,7 +3,67 @@
 #include <iostream>
 using namespace proast;
 
-TEST_CASE("model::Node tests", "[ut][model][Node]")
+TEST_CASE("model::Node read tests", "[ut][model][Node][read]")
+{
+    struct Scn
+    {
+        std::string markdown;
+    };
+    struct Exp
+    {
+        model::Item item;
+    };
+
+    Scn scn;
+    Exp exp;
+
+    SECTION("default") { } 
+    SECTION("Only title")
+    {
+        scn.markdown = R"(# My title)";
+        exp.item.set_title("My title");
+    }
+    SECTION("Full")
+    {
+        scn.markdown = R"(# My title
+
+Top-level
+Description
+
+## Requirements
+
+* Must have this and that
+  And it
+  Better
+  Be
+  Good
+
+## Whatever section
+
+This is lost
+
+## Design
+
+* Bla
+  * Subbullet1
+  * Subbullet2
+* Bli
+  * Subbullet1
+  * Subbullet2
+)";
+        exp.item.set_title("My title");
+    }
+
+    model::Node node;
+    REQUIRE(model::read_markdown(node, scn.markdown));
+    std::cout << node.value << std::endl;
+    for (const auto &child: node.childs.nodes)
+        std::cout << "  " << child.value << std::endl;
+    REQUIRE(node.value.key() == exp.item.key());
+    REQUIRE(node.value.title() == exp.item.title());
+}
+
+TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
 {
     struct Scn
     {
@@ -78,4 +138,3 @@ TEST_CASE("model::Node tests", "[ut][model][Node]")
     std::cout << markdown;
     /* REQUIRE(markdown == exp.markdown); */
 }
-
