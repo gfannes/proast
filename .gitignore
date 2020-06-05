@@ -9,3 +9,4 @@ proast.ut
 .extern/
 *.resp
 *.a
+generated/

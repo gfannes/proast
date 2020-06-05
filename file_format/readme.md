@@ -1,5 +1,4 @@
-Store data in a file system for a project
-=========================================
+# Store data in a file system for a project
 
 ## Requirements
 

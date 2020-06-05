@@ -165,7 +165,7 @@ namespace proast { namespace model {
 
     void Item::stream(std::ostream &os) const
     {
-        os << "[Item](key:" << key() << ")(title:" << title() << "){" << std::endl;
+        os << "[Item](key:" << key() << ")(title:" << title() << ")(type:" << hr(type_) << "){" << std::endl;
         for (const auto &desc: description)
             os << "  " << desc << std::endl;
         os << "}";
