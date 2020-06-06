@@ -137,7 +137,7 @@ namespace proast { namespace model { namespace markdown {
         bool add_newline_ = false;
     };
 
-    bool read_string(Node &node, const std::string &markdown)
+    bool read_string_(Node &node, const std::string &markdown)
     {
         MSS_BEGIN(bool);
 
@@ -235,13 +235,13 @@ namespace proast { namespace model { namespace markdown {
                     case Type::Requirement:
                         if (line.pop_if("### "))
                         {
+                            data.clear();
                             if (false) {}
                             else if (line.str() == "Must")   {priority = Priority::Must;}
                             else if (line.str() == "Should") {priority = Priority::Should;}
                             else if (line.str() == "Could")  {priority = Priority::Could;}
                             else if (line.str() == "Wont")   {priority = Priority::Wont;}
                             else { MSS(false, log::stream() << "Error: Unknown priority " << line << "\n"); }
-                            data.clear();
                         }
                         else if (line.pop_if("* "))
                         {
@@ -307,6 +307,34 @@ namespace proast { namespace model { namespace markdown {
                         }
                         break;
                 }
+            }
+        }
+
+        MSS_END();
+    }
+    bool read_string(Node &node, const std::string &markdown)
+    {
+        MSS_BEGIN(bool);
+
+        MSS(read_string_(node, markdown));
+
+        const bool check_node_is_equivalent_with_original = true;
+        if (check_node_is_equivalent_with_original)
+        {
+            std::string my_markdown;
+            MSS(write_string(my_markdown, node));
+            //TODO: Enable this again to ensure metadata is checked as well
+            const bool check_metadata = false;
+            if (!are_equivalent(markdown, my_markdown, check_metadata))
+            {
+                const std::filesystem::path original_fp = "/tmp/original.md";
+                const std::filesystem::path my_fp = "/tmp/my.md";
+                gubg::file::write(markdown, original_fp);
+                gubg::file::write(my_markdown, my_fp);
+                std::ostringstream oss;
+                oss << "meld " << original_fp << " " << my_fp;
+                std::system(oss.str().c_str());
+                MSS(false);
             }
         }
 
@@ -454,6 +482,71 @@ namespace proast { namespace model { namespace markdown {
 
         markdown = oss.str();
         MSS_END();
+    }
+
+    bool are_equivalent(const std::string &m1, const std::string &m2, bool check_metadata)
+    {
+        auto forward = [check_metadata](auto &ix, const std::string &str)
+        {
+            const bool skip_metadata = true;
+
+            if (!check_metadata)
+                if (ix == 0)
+                {
+                    const std::string begin_marker = "<!--";
+                    const std::string end_marker = "-->";
+                    if (str.substr(ix, begin_marker.size()) == begin_marker)
+                    {
+                        const auto eix = str.find(end_marker, ix);
+                        if (eix != std::string::npos)
+                            ix = eix+end_marker.size();
+                    }
+                }
+
+            for (; ix < str.size(); ++ix)
+            {
+                switch (str[ix])
+                {
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                    case ' ':
+                    case '=':
+                        //These characters are skipped
+                        break;
+
+                    default:
+                        return true;
+                }
+            }
+            return false;
+        };
+
+        std::size_t ix1 = 0;
+        std::size_t ix2 = 0;
+
+        while (true)
+        {
+            const auto b1 = forward(ix1, m1);
+            const auto b2 = forward(ix2, m2);
+
+            if (b1 != b2)
+                //One is finished, the other is not
+                return false;
+
+            if (!b1)
+                //Both are finished and hence equal
+                return true;
+
+            //We can compare a next char
+            if (m1[ix1] != m2[ix2])
+                return false;
+
+            ++ix1;
+            ++ix2;
+        }
+
+        return false;
     }
 
 } } } 
