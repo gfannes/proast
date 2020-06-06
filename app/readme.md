@@ -25,12 +25,15 @@ Text-UI application
 ## TODO
 
 * Split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
+* Remove empty folders from time to time
 * Remove '@' indications: type is now driven from the markdown documents
 * Support for filtering on type
 * Type::File for items that are not part of the document
 * Support for changing the type: File to something else
 * Name embedded items using "#<ix>" as global ix in nodes
+* Introduce the concept of physical and embedded items
 * Update all links around a copy-paste
+  * Only paste in physical items
 * Support for "dd" and "da"
 * Support for markdown titles by adding a delayed processing
   * std::optional<gubg::Strange> prev_line
