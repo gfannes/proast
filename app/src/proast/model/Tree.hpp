@@ -16,7 +16,6 @@ namespace proast { namespace model {
     class Tree
     {
     public:
-        //Steps down starting from `start` until  the `@root` subfolder is found
         static bool find_root_filepath(std::filesystem::path &root, const std::filesystem::path &start);
 
         bool load(const std::filesystem::path &root, const Config &cfg);

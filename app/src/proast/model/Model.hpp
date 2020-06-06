@@ -78,7 +78,7 @@ namespace proast { namespace model {
             auto &child = node->childs.append();
             //TODO: Make this consistent with how a link node is added in Tree
             child.value.link = link_path;
-            child.value.set_key(to_string(link_path));
+            child.value.key = to_string(link_path);
 
             MSS(save_content_(*node));
             MSS(reload_());
@@ -173,9 +173,9 @@ namespace proast { namespace model {
 
             path_.pop_back();
             if (ix+1 < forest->size())
-                path_.push_back(forest->nodes[ix+1].value.key());
+                path_.push_back(forest->nodes[ix+1].value.key);
             else if (forest->size() > 1)
-                path_.push_back(forest->nodes[ix-1].value.key());
+                path_.push_back(forest->nodes[ix-1].value.key);
 
             MSS(reload_());
 
@@ -399,7 +399,7 @@ namespace proast { namespace model {
                         {
                             MSS(ix < forest->size());
                             const auto &node = forest->nodes[ix];
-                            *it++ = node.value.key();
+                            *it++ = node.value.key;
                             forest = &node.childs;
                         }
                     }

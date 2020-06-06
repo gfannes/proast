@@ -121,7 +121,7 @@ namespace proast { namespace presenter {
             auto set_new_ix = [&](std::size_t new_ix)
             {
                 MSS_BEGIN(bool);
-                path.back() = forest->nodes[new_ix].value.key();
+                path.back() = forest->nodes[new_ix].value.key;
 
                 model::Node *parent;
                 if (model_.get_parent(parent, path))
@@ -149,13 +149,13 @@ namespace proast { namespace presenter {
                             std::string active_child_key;
                             if (active_child_key.empty())
                             {
-                                if (me.find_child_ix([&](const auto &node){return node.value.key() == me.value.active_child_key;}))
+                                if (me.find_child_ix([&](const auto &node){return node.value.key == me.value.active_child_key;}))
                                     active_child_key = me.value.active_child_key;
                             }
                             if (active_child_key.empty())
                             {
                                 if (!me.childs.empty())
-                                    active_child_key = me.childs.nodes[0].value.key();
+                                    active_child_key = me.childs.nodes[0].value.key;
                             }
                             path.push_back(active_child_key);
                         }
@@ -341,7 +341,7 @@ namespace proast { namespace presenter {
                 if (!forest)
                     return ;
                 for (const auto &node: forest->nodes)
-                    lb.items.push_back(node.value.key());
+                    lb.items.push_back(node.value.key);
                 lb.active_ix = ix;
             };
 
@@ -354,7 +354,7 @@ namespace proast { namespace presenter {
                 fill_lb(me_lb_, me_forest, me_ix);
 
                 const auto &me = me_forest->nodes[me_ix];
-                auto child_ix = me.find_child_ix([&](const auto &node){return node.value.key() == me.value.active_child_key;});
+                auto child_ix = me.find_child_ix([&](const auto &node){return node.value.key == me.value.active_child_key;});
                 if (!child_ix)
                     child_ix = me.find_child_ix([](const auto &node){return true;});
                 const auto childs_forest = (child_ix ? &me.childs : nullptr);

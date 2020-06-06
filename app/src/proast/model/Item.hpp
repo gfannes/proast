@@ -28,7 +28,7 @@ namespace proast { namespace model {
 
     enum class Type
     {
-        Feature, Requirement, Design, Deliverable, Free,
+        Feature, Requirement, Design, Deliverable, Free, File, Directory, 
     };
     std::string hr(Type);
 
@@ -41,12 +41,11 @@ namespace proast { namespace model {
     class Item
     {
     public:
-        std::string key() const;
-        void set_key(const std::string &);
-        void set_key(Type, const std::string &);
-        void set_key(Type, unsigned int ix);
+        std::optional<Type> type;
+        std::string key;
+        void set(Type t, const std::string &k) {type = t; key = k;}
 
-        std::string stem() const;
+        std::string title;
 
         DateTime deadline;
         std::optional<double> my_cost;
@@ -57,13 +56,9 @@ namespace proast { namespace model {
 
         std::optional<std::filesystem::path> content_fp;
 
-        const std::string &title() const;
         std::string key_as_title() const;
-        void set_title(const std::string &);
 
         std::vector<std::string> description;
-
-        Type type() const;
 
         //Indicates if this item is embedded in the content of its parent
         bool is_embedded() const;
@@ -81,7 +76,6 @@ namespace proast { namespace model {
 
     private:
         std::string key_;
-        Type type_ = Type::Free;
         std::string title_;
     };
 

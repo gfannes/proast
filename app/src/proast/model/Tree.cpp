@@ -44,7 +44,7 @@ namespace proast { namespace model {
     {
         Path path;
         if (!root_forest_.empty())
-            path.emplace_back(root_forest_.nodes[0].value.key());
+            path.emplace_back(root_forest_.nodes[0].value.key);
         return path;
     }
 
@@ -72,7 +72,7 @@ namespace proast { namespace model {
             //Search the my_forest for "segment"
             const auto nr_childs = my_forest->size();
             for (my_ix = 0; my_ix < nr_childs; ++my_ix)
-                if (my_forest->nodes[my_ix].value.key() == segment)
+                if (my_forest->nodes[my_ix].value.key == segment)
                     break;
             MSS_Q(my_ix < my_forest->size());
         }
@@ -106,7 +106,7 @@ namespace proast { namespace model {
             //Search the my_forest for "segment"
             const auto nr_childs = my_forest->size();
             for (my_ix = 0; my_ix < nr_childs; ++my_ix)
-                if (my_forest->nodes[my_ix].value.key() == segment)
+                if (my_forest->nodes[my_ix].value.key == segment)
                     break;
             MSS_Q(my_ix < my_forest->size());
         }
@@ -120,7 +120,7 @@ namespace proast { namespace model {
     {
         auto ftor = [](std::ostream &os, const Node &n)
         {
-            os << n.value.key() << std::endl;
+            os << n.value.key << std::endl;
         };
         gubg::tree::stream(os, root_forest_, ftor);
     }
@@ -130,7 +130,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        node.value.set_key(stem);
+        node.value.key = stem;
         node.value.directory = directory;
 
         std::list<Path> links;
@@ -222,7 +222,7 @@ namespace proast { namespace model {
             {
                 auto &link_node = node.childs.nodes[ix];
                 link_node.value.link = *link;
-                link_node.value.set_key(to_string(*link));
+                link_node.value.key = to_string(*link);
             }
         };
 

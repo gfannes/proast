@@ -40,6 +40,7 @@ Proast is a project assistant.
 ## Features
 
 * [external](key:file_format)
+* [external](key:schema)
 * [external](path:/@design)
 * Develop CLI application
 

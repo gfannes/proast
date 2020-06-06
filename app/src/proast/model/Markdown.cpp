@@ -30,11 +30,44 @@ namespace proast { namespace model { namespace markdown {
 
         MSS(read_string(node, content));
 
-        for (auto &child: node.childs.nodes)
+        std::map<std::string, std::optional<std::size_t>> key__ix;
+
+        for (auto ix = 0u; ix < node.childs.size(); ++ix)
+        {
+            auto &child = node.childs.nodes[ix];
             if (!child.value.is_embedded() && !child.value.link)
+                key__ix[child.value.key] = ix;
+        }
+
+        if (std::filesystem::exists(directory))
+            for (const auto &entry: std::filesystem::directory_iterator{directory})
             {
-                MSS(read_directory_(child, directory/child.value.key(), config));
+                const auto fp = entry.path();
+                const auto stem = fp.stem();
+                if (key__ix.count(stem) > 0)
+                    //This already exists
+                    continue;
+
+                std::optional<bool> file_dir;
+                if (false) {}
+                else if (std::filesystem::is_regular_file(fp))
+                {
+                    if (fp.filename() != config.index_filename())
+                        file_dir = true;
+                }
+                else if (std::filesystem::is_directory(fp))
+                    file_dir = false;
+                if (file_dir)
+                {
+                    auto &child = node.childs.append();
+                    child.value.key = fp.filename();
+                    child.value.type = *file_dir ? Type::File : Type::Directory;
+                }
             }
+
+        for (const auto &[key, ix]: key__ix)
+            if (ix)
+                MSS(read_directory_(node.childs.nodes[*ix], directory/key, config));
 
         MSS_END();
     }
@@ -42,7 +75,7 @@ namespace proast { namespace model { namespace markdown {
     {
         MSS_BEGIN(bool);
 
-        node.value.set_key(Type::Feature, directory.stem());
+        node.value.set(Type::Feature, directory.stem());
         MSS(read_directory_(node, directory, config));
 
         MSS_END();
@@ -61,7 +94,7 @@ namespace proast { namespace model { namespace markdown {
             if (!child.value.is_embedded())
                 is_leaf = false;
 
-        const auto directory = parent_directory/item.key();
+        const auto directory = parent_directory/item.key;
 
         const auto content_fp = is_leaf ? config.content_fp_leaf(directory) : config.content_fp_nonleaf(directory);
         std::filesystem::create_directories(content_fp.parent_path());
@@ -72,10 +105,23 @@ namespace proast { namespace model { namespace markdown {
         MSS(gubg::file::write(content, content_fp));
 
         for (const auto &child: node.childs.nodes)
-            if (!child.value.is_embedded() && !child.value.link)
+        {
+            if (!child.value.type)
+                continue;
+            switch (*child.value.type)
             {
-                MSS(write_directory(directory, child, config));
+                case Type::Requirement:
+                case Type::Design:
+                case Type::Feature:
+                    if (!child.value.is_embedded() && !child.value.link)
+                        MSS(write_directory(directory, child, config));
+                    break;
+                case Type::File:
+                case Type::Directory:
+                    continue;
+                    break;
             }
+        }
 
         MSS_END();
     }
@@ -141,8 +187,6 @@ namespace proast { namespace model { namespace markdown {
     {
         MSS_BEGIN(bool);
 
-        std::map<Type, unsigned int> type__count;
-
         std::optional<Type> type;
         std::optional<Priority> priority;
 
@@ -155,7 +199,7 @@ namespace proast { namespace model { namespace markdown {
             if (*type == Type::Free && node.childs.empty())
             {
                 //data is for node.value itself
-                node.value.set_title(data.title);
+                node.value.title = data.title;
                 node.value.style = data.style();
                 node.value.description = data.description;
             }
@@ -173,18 +217,18 @@ namespace proast { namespace model { namespace markdown {
                     if (false) {}
                     else if (has("key"))
                     {
-                        child.value.set_key(*type, it->second);
+                        child.value.set(*type, it->second);
                     }
                     else if (has("path"))
                     {
-                        child.value.set_key(*type, it->second);
+                        child.value.set(*type, it->second);
                         child.value.link = to_path(it->second);
                     }
                 }
                 else
                 {
-                    child.value.set_key(*type, type__count[*type]++);
-                    child.value.set_title(data.title);
+                    child.value.set(*type, std::string("#")+std::to_string(node.childs.size()-1));
+                    child.value.title = data.title;
                     child.value.style = data.style();
                     child.value.description = data.description;
                     if (priority)
@@ -193,15 +237,23 @@ namespace proast { namespace model { namespace markdown {
             }
         };
 
-        //Parse the markdown document line-by-line
-        gubg::Strange strange{markdown};
-        for (gubg::Strange line; strange.pop_line(line); )
+        gubg::Strange prev_line;
+
+        auto process_line = [&](gubg::Strange &line)
         {
+            MSS_BEGIN(bool);
+
             if (line.pop_if("# "))
             {
                 type = Type::Free;
                 data.emplace(Style::Section);
                 data.title = line.str();
+            }
+            else if (line.pop_if("==="))
+            {
+                type = Type::Free;
+                data.emplace(Style::Title);
+                data.title = prev_line.str();
             }
             else if (line.pop_if("## "))
             {
@@ -210,7 +262,6 @@ namespace proast { namespace model { namespace markdown {
                 if (false) {}
                 else if (line.str() == "Requirements") {type = Type::Requirement;}
                 else if (line.str() == "Design")       {type = Type::Design;}
-                else if (line.str() == "Deliverables") {type = Type::Deliverable;}
                 else if (line.str() == "Features")     {type = Type::Feature;}
                 else
                 {
@@ -255,7 +306,6 @@ namespace proast { namespace model { namespace markdown {
                         }
                         break;
                     case Type::Design:
-                    case Type::Deliverable:
                     case Type::Feature:
                         if (line.pop_if("### "))
                         {
@@ -308,7 +358,25 @@ namespace proast { namespace model { namespace markdown {
                         break;
                 }
             }
+
+            prev_line = line;
+
+            MSS_END();
+        };
+
+        //Parse the markdown document line-by-line
+        gubg::Strange strange{markdown};
+        for (gubg::Strange line; strange.pop_line(line); )
+        {
+            MSS(process_line(line));
         }
+
+        //Make sure the prev_line is processed as well
+        {
+            gubg::Strange line;
+            MSS(process_line(line));
+        }
+
 
         MSS_END();
     }
@@ -376,7 +444,7 @@ namespace proast { namespace model { namespace markdown {
         };
 
         {
-            const auto title = node.value.title();
+            const auto title = node.value.title;
             if (!title.empty())
                 stream_section(1, title, node.value.style);
         }
@@ -391,8 +459,10 @@ namespace proast { namespace model { namespace markdown {
         std::optional<Priority> current_prio;
         for (const auto &child: node.childs.nodes)
         {
-            const auto child_type = child.value.type();
+            const auto child_type = child.value.type.value_or(Type::File);
             const auto child_prio = child.value.priority;
+
+            bool skip_inclusion = false;
             switch (child_type)
             {
                 case Type::Requirement:
@@ -409,22 +479,25 @@ namespace proast { namespace model { namespace markdown {
                     if (child_type != current_section)
                         stream_section(2, "Design");
                     break;
-                case Type::Deliverable:
-                    if (child_type != current_section)
-                        stream_section(2, "Deliverables");
-                    break;
                 case Type::Feature:
                     if (child_type != current_section)
                         stream_section(2, "Features");
                     break;
                 case Type::Free:
                     break;
+                case Type::File:
+                case Type::Directory:
+                    skip_inclusion = true;
+                    break;
             }
             current_section = child_type;
 
-            if (child_type == Type::Free)
+            if (skip_inclusion)
+                continue;
+
+            else if (child_type == Type::Free)
             {
-                stream_section(2, child.value.title());
+                stream_section(2, child.value.title);
                 if (new_section())
                     oss << std::endl;
                 for (const auto &desc: child.value.description)
@@ -442,22 +515,22 @@ namespace proast { namespace model { namespace markdown {
                     switch (child.value.style.value_or(Style::Bullet))
                     {
                         case Style::Title:
-                            oss << child.value.title() << std::endl;
-                            oss << std::string(child.value.title().size(), '=') << std::endl;
+                            oss << child.value.title << std::endl;
+                            oss << std::string(child.value.title.size(), '=') << std::endl;
                             new_section.reset();
                             break;
                         case Style::Section:
-                            oss << std::string(section_level+1, '#') << ' ' << child.value.title() << std::endl;
+                            oss << std::string(section_level+1, '#') << ' ' << child.value.title << std::endl;
                             new_section.reset();
                             break;
                         case Style::Bullet:
-                            oss << "* " << child.value.title() << std::endl;
+                            oss << "* " << child.value.title << std::endl;
                             indent = "  ";
                             break;
                         case Style::Margin:
-                            if (!child.value.title().empty())
+                            if (!child.value.title.empty())
                             {
-                                oss << child.value.title() << std::endl;
+                                oss << child.value.title << std::endl;
                                 new_section.reset();
                             }
                             reset_new_section_after_description = true;
@@ -475,7 +548,7 @@ namespace proast { namespace model { namespace markdown {
                     if (child.value.link)
                         oss << "* [external](path:" << to_string(*child.value.link) << ")\n";
                     else
-                        oss << "* [external](key:" << child.value.key() << ")\n";
+                        oss << "* [external](key:" << child.value.key << ")\n";
                 }
             }
         }

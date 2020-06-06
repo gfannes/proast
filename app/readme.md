@@ -24,12 +24,11 @@ Text-UI application
 
 ## TODO
 
+* Support for changing the type: File to something else
+
 * Split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
 * Remove empty folders from time to time
-* Remove '@' indications: type is now driven from the markdown documents
 * Support for filtering on type
-* Type::File for items that are not part of the document
-* Support for changing the type: File to something else
 * Name embedded items using "#<ix>" as global ix in nodes
 * Introduce the concept of physical and embedded items
 * Update all links around a copy-paste
@@ -60,9 +59,6 @@ Text-UI application
 * Rework `.proast/metadata.naft` format
   * Use `[item]` for MD on nodes
   * Use `[path]` for MD on path
-* Annotate `@`-folders and files as requirements
-* Add to model how the different paths for a Node will be called
-  * `folder` and `index_fn`
 * Test if feature with subfeature can be shown
 * Support changing the order for nodes and links
 * Rework `g` into `gg`
