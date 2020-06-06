@@ -32,6 +32,12 @@ namespace proast { namespace model {
     };
     std::string hr(Type);
 
+    enum class Style
+    {
+        Title, Section, Bullet, Margin,
+    };
+    std::string hr(Style);
+
     class Item
     {
     public:
@@ -44,13 +50,15 @@ namespace proast { namespace model {
 
         DateTime deadline;
         std::optional<double> my_cost;
+        std::optional<Style> style;
         Status status = Status::Todo;
         std::optional<Path> link;
         std::optional<Priority> priority;
 
         std::optional<std::filesystem::path> content_fp;
 
-        std::string title() const;
+        const std::string &title() const;
+        std::string key_as_title() const;
         void set_title(const std::string &);
 
         std::vector<std::string> description;

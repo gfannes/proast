@@ -24,6 +24,21 @@ Text-UI application
 
 ## TODO
 
+* Introduce Style to indicate how to represent an item
+* Split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
+* Remove '@' indications: type is now driven from the markdown documents
+* Support for filtering on type
+* File type for items that are not part of the document
+* Support for changing the type: File to something else
+* Name embedded items using "#<ix>" as global ix in nodes
+* Update all links around a copy-paste
+* Support for "dd" and "da"
+* When reading a node from disk, check that when writing it out, it has the same letters, except for whitespace and '='
+* Support for markdown titles by adding a delayed processing
+  * std::optional<gubg::Strange> prev_line
+  * Lambda that uses "is_title"
+  * For-loop over all lines
+  * Process final empty line if there is something in the prev_line
 * Adjust links when renaming a node
 * Support removing a link
 * Support for showing the content of a link

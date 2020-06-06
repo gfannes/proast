@@ -86,40 +86,38 @@ namespace proast { namespace model { namespace markdown {
     public:
         std::string title;
         std::vector<std::string> description;
-        bool section = false;
-        bool bullet = false;
-        bool margin = false;
 
         std::function<void()> process;
 
         ~Data() {clear();}
 
-        operator bool () const {return valid_;}
+        bool valid() const {return !!style_;}
+        operator bool () const {return valid();}
+
+        std::optional<Style> style() const {return style_;}
 
         void clear()
         {
-            if (valid_)
+            if (valid())
             {
                 if (process)
                     process();
-                valid_ = false;
+                style_.reset();
             }
             title.clear();
             description.clear();
-            section = false;
-            bullet = false;
-            margin = false;
+            style_.reset();
             add_newline_ = false;
         }
-        void emplace()
+        void emplace(Style style)
         {
             clear();
-            valid_ = true;
+            style_ = style;
         }
 
         void add_description(const std::string &str)
         {
-            if (!valid_)
+            if (!valid())
                 return;
 
             if (add_newline_)
@@ -135,7 +133,7 @@ namespace proast { namespace model { namespace markdown {
         };
 
     private:
-        bool valid_ = false;
+        std::optional<Style> style_;
         bool add_newline_ = false;
     };
 
@@ -152,12 +150,13 @@ namespace proast { namespace model { namespace markdown {
         data.process = [&]()
         {
             assert(!!type);
-            std::cout << "Adding " << hr(*type) << ": \"" << data.title << "\"" << std::endl;
+            std::cout << "Adding " << hr(*type) << " as " << (data.style() ? hr(*data.style()) : "") << ": \"" << data.title << "\"" << std::endl;
 
             if (*type == Type::Free && node.childs.empty())
             {
                 //data is for node.value itself
                 node.value.set_title(data.title);
+                node.value.style = data.style();
                 node.value.description = data.description;
             }
             else
@@ -186,6 +185,7 @@ namespace proast { namespace model { namespace markdown {
                 {
                     child.value.set_key(*type, type__count[*type]++);
                     child.value.set_title(data.title);
+                    child.value.style = data.style();
                     child.value.description = data.description;
                     if (priority)
                         child.value.priority = *priority;
@@ -200,7 +200,7 @@ namespace proast { namespace model { namespace markdown {
             if (line.pop_if("# "))
             {
                 type = Type::Free;
-                data.emplace();
+                data.emplace(Style::Section);
                 data.title = line.str();
             }
             else if (line.pop_if("## "))
@@ -215,7 +215,7 @@ namespace proast { namespace model { namespace markdown {
                 else
                 {
                     type = Type::Free;
-                    data.emplace();
+                    data.emplace(Style::Section);
                     data.title = line.str();
                 }
             }
@@ -245,11 +245,10 @@ namespace proast { namespace model { namespace markdown {
                         }
                         else if (line.pop_if("* "))
                         {
-                            data.emplace();
-                            data.bullet = true;
+                            data.emplace(Style::Bullet);
                             data.title = line.str();
                         }
-                        else if (data.bullet)
+                        else if (data.style() == Style::Bullet)
                         {
                             if (line.pop_if("  "))
                                 data.add_description(line.str());
@@ -260,11 +259,10 @@ namespace proast { namespace model { namespace markdown {
                     case Type::Feature:
                         if (line.pop_if("### "))
                         {
-                            data.emplace();
-                            data.section = true;
+                            data.emplace(Style::Section);
                             data.title = line.str();
                         }
-                        else if (data.section)
+                        else if (data.style() == Style::Section)
                         {
                             //As long as we're in a section: collect description
                             data.add_description(line.str());
@@ -273,11 +271,10 @@ namespace proast { namespace model { namespace markdown {
                         {
                             if (line.pop_if("* "))
                             {
-                                data.emplace();
-                                data.bullet = true;
+                                data.emplace(Style::Bullet);
                                 data.title = line.str();
                             }
-                            else if (data.bullet)
+                            else if (data.style() == Style::Bullet)
                             {
                                 if (line.pop_if("  "))
                                     data.add_description(line.str());
@@ -287,12 +284,11 @@ namespace proast { namespace model { namespace markdown {
                                 }
                                 else if (!line.empty())
                                 {
-                                    data.emplace();
-                                    data.margin = true;
+                                    data.emplace(Style::Margin);
                                     data.add_description(line.str());
                                 }
                             }
-                            else if (data.margin)
+                            else if (data.style() == Style::Margin)
                             {
                                 if (line.empty())
                                     data.clear();
@@ -305,8 +301,7 @@ namespace proast { namespace model { namespace markdown {
                             }
                             else
                             {
-                                data.emplace();
-                                data.margin = true;
+                                data.emplace(Style::Margin);
                                 data.add_description(line.str());
                             }
                         }
@@ -332,18 +327,30 @@ namespace proast { namespace model { namespace markdown {
         oss << "-->" << std::endl;
 
         gubg::OnlyOnce new_section{false};
-        auto stream_section = [&](unsigned int level, const std::string &title)
+
+        unsigned int section_level = 0;
+        auto stream_section = [&](unsigned int level, const std::string &title, std::optional<Style> style = std::nullopt)
         {
-            if (level > 1)
+            section_level = level;
+            if (section_level > 1)
                 oss << '\n';
-            oss << std::string(level, '#') << ' ' << title << '\n';
+            if (style.value_or(Style::Section) == Style::Section)
+            {
+                oss << std::string(section_level, '#') << ' ' << title << '\n';
+            }
+            else
+            {
+                oss << title << '\n';
+                oss << std::string(title.size(), '=') << '\n';
+            }
+
             new_section.reset();
         };
 
         {
             const auto title = node.value.title();
             if (!title.empty())
-                stream_section(1, title);
+                stream_section(1, title, node.value.style);
         }
         for (const auto &desc: node.value.description)
         {
@@ -402,9 +409,38 @@ namespace proast { namespace model { namespace markdown {
 
                 if (child.value.is_embedded())
                 {
-                    oss << "* " << child.value.title() << std::endl;
+                    std::string indent;
+                    bool reset_new_section_after_description = false;
+                    switch (child.value.style.value_or(Style::Bullet))
+                    {
+                        case Style::Title:
+                            oss << child.value.title() << std::endl;
+                            oss << std::string(child.value.title().size(), '=') << std::endl;
+                            new_section.reset();
+                            break;
+                        case Style::Section:
+                            oss << std::string(section_level+1, '#') << ' ' << child.value.title() << std::endl;
+                            new_section.reset();
+                            break;
+                        case Style::Bullet:
+                            oss << "* " << child.value.title() << std::endl;
+                            indent = "  ";
+                            break;
+                        case Style::Margin:
+                            if (!child.value.title().empty())
+                            {
+                                oss << child.value.title() << std::endl;
+                                new_section.reset();
+                            }
+                            reset_new_section_after_description = true;
+                            break;
+                    }
+                    if (new_section())
+                        oss << std::endl;
                     for (const auto &desc: child.value.description)
-                        oss << "  " << desc << std::endl;
+                        oss << indent << desc << std::endl;
+                    if (reset_new_section_after_description)
+                        new_section.reset();
                 }
                 else
                 {

@@ -40,6 +40,17 @@ namespace proast { namespace model {
         }
         return "";
     }
+    std::string hr(Style style)
+    {
+        switch (style)
+        {
+            case Style::Title: return "Title";
+            case Style::Section: return "Section";
+            case Style::Bullet: return "Bullet";
+            case Style::Margin: return "Margin";
+        }
+        return "";
+    }
 
     namespace my { 
         void append(std::string &str, Type type)
@@ -106,11 +117,12 @@ namespace proast { namespace model {
         return key_;
     }
 
-    std::string Item::title() const
+    const std::string &Item::title() const
     {
-        if (!title_.empty())
-            return title_;
-
+        return title_;
+    }
+    std::string Item::key_as_title() const
+    {
         auto res = stem();
 
         //Replace '_' with ' '
