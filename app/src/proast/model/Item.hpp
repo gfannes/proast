@@ -47,7 +47,7 @@ namespace proast { namespace model {
 
         std::string title;
 
-        DateTime deadline;
+        std::optional<DateTime> deadline;
         std::optional<double> my_cost;
         std::optional<Style> style;
         Status status = Status::Todo;

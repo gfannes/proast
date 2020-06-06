@@ -315,7 +315,6 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            /* status_ = std::string("Loaded root path: ")+model_.root_filepath().string(); */
             status_ = "Starting";
 
             //Location
@@ -354,7 +353,8 @@ namespace proast { namespace presenter {
                 fill_lb(me_lb_, me_forest, me_ix);
 
                 const auto &me = me_forest->nodes[me_ix];
-                auto child_ix = me.find_child_ix([&](const auto &node){return node.value.key == me.value.active_child_key;});
+                const auto &item = me.value;
+                auto child_ix = me.find_child_ix([&](const auto &node){return node.value.key == item.active_child_key;});
                 if (!child_ix)
                     child_ix = me.find_child_ix([](const auto &node){return true;});
                 const auto childs_forest = (child_ix ? &me.childs : nullptr);
@@ -363,19 +363,25 @@ namespace proast { namespace presenter {
                 if (Clock::now() >= show_path_)
                 {
                     if (false) {}
-                    else if (me.value.directory)
-                        status_ = std::string("Current directory: ") + me.value.directory->string();
-                    else if (me.value.link)
-                        status_ = std::string("Current link: ") + model::to_string(*me.value.link);
+                    else if (item.directory)
+                        status_ = std::string("Current directory: ") + item.directory->string();
+                    else if (item.link)
+                        status_ = std::string("Current link: ") + model::to_string(*item.link);
                 }
 
-                preview_mu_ = me.value.preview;
+                preview_mu_ = item.preview;
 
                 details_kv_.clear();
-                if (me.value.my_cost)
-                {
-                    details_kv_["cost"] = std::to_string(*me.value.my_cost)+model_.current_config().cost_unit();
-                }
+                if (item.type)
+                    details_kv_["type"] = model::hr(*item.type);
+                details_kv_["title"] = item.title;
+                if (item.link)
+                    details_kv_["link"] = model::to_string(*item.link);
+                details_kv_["status"] = model::hr(item.status);
+                if (item.deadline)
+                    details_kv_["deadline"] = *item.deadline;
+                if (item.my_cost)
+                    details_kv_["cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
             }
 
             //Parent

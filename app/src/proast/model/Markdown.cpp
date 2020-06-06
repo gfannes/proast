@@ -194,7 +194,6 @@ namespace proast { namespace model { namespace markdown {
         data.process = [&]()
         {
             assert(!!type);
-            std::cout << "Adding " << hr(*type) << " as " << (data.style() ? hr(*data.style()) : "") << ": \"" << data.title << "\"" << std::endl;
 
             if (*type == Type::Free && node.childs.empty())
             {

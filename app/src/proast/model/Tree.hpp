@@ -33,8 +33,6 @@ namespace proast { namespace model {
         const Forest &root_forest() const {return root_forest_;}
 
     private:
-        bool load_(const Config &cfg, Node &node, const std::string &stem, std::filesystem::path path) const;
-
         std::map<std::string, Config> name__cfg_;
         std::map<std::string, std::filesystem::path> name__root_filepath_;
         Forest root_forest_;
