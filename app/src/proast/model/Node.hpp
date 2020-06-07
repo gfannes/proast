@@ -22,6 +22,17 @@ namespace proast { namespace model {
     };
     using NodeIXPath = std::vector<NodeIX>;
 
+    struct ConstNodeIX
+    {
+        const Node *node = nullptr;
+        std::size_t ix = 0;
+
+        ConstNodeIX() {}
+        ConstNodeIX(const Node *node): node(node) {}
+        ConstNodeIX(const Node *node, std::size_t ix): node(node), ix(ix) {}
+    };
+    using ConstNodeIXPath = std::vector<ConstNodeIX>;
+
 } } 
 
 #endif

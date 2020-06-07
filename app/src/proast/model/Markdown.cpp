@@ -71,6 +71,7 @@ namespace proast { namespace model { namespace markdown {
                 auto &child = node.childs.append();
                 child.value.key = fp.filename();
                 child.value.type = *file_dir ? Type::File : Type::Directory;
+                child.value.content_fp = fp;
             }
 
         for (const auto &[key, ix]: key__ix)
@@ -202,9 +203,7 @@ namespace proast { namespace model { namespace markdown {
         Data data;
         data.process = [&]()
         {
-            assert(!!type);
-
-            if (*type == Type::Free && node.childs.empty())
+            if (!type)
             {
                 //data is for node.value itself
                 node.value.title = data.title;
@@ -261,42 +260,39 @@ namespace proast { namespace model { namespace markdown {
             }
         };
 
-        gubg::Strange prev_line;
-
-        auto process_line = [&](gubg::Strange &line)
+        auto process_line = [&](const std::string &line, const std::string &prefix)
         {
             MSS_BEGIN(bool);
 
-            if (line.pop_if("# "))
+            if (prefix == "# ")
             {
-                type = Type::Free;
                 data.emplace(Style::Section);
-                data.title = line.str();
+                data.title = line;
             }
-            else if (line.pop_if("==="))
+            else if (prefix == "===")
             {
-                type = Type::Free;
                 data.emplace(Style::Title);
-                data.title = prev_line.str();
+                data.title = line;
             }
-            else if (line.pop_if("## "))
+            else if (prefix == "## ")
             {
                 data.clear();
 
                 if (false) {}
-                else if (line.str() == "Requirements") {type = Type::Requirement;}
-                else if (line.str() == "Design")       {type = Type::Design;}
-                else if (line.str() == "Features")     {type = Type::Feature;}
+                else if (line == "Requirements") {type = Type::Requirement;}
+                else if (line == "Design")       {type = Type::Design;}
+                else if (line == "Features")     {type = Type::Feature;}
                 else
                 {
                     type = Type::Free;
                     data.emplace(Style::Section);
-                    data.title = line.str();
+                    data.title = line;
                 }
             }
             else if (!type)
             {
-                //We are receiving data before the title: can be dropped for now
+                if (data)
+                    data.add_description(prefix+line);
             }
             else
             {
@@ -305,58 +301,58 @@ namespace proast { namespace model { namespace markdown {
                 switch (*type)
                 {
                     case Type::Free:
-                        data.add_description(line.str());
+                        data.add_description(prefix+line);
                         break;
                     case Type::Requirement:
-                        if (line.pop_if("### "))
+                        if (prefix == "### ")
                         {
                             data.clear();
                             if (false) {}
-                            else if (line.str() == "Must")   {priority = Priority::Must;}
-                            else if (line.str() == "Should") {priority = Priority::Should;}
-                            else if (line.str() == "Could")  {priority = Priority::Could;}
-                            else if (line.str() == "Wont")   {priority = Priority::Wont;}
+                            else if (line == "Must")   {priority = Priority::Must;}
+                            else if (line == "Should") {priority = Priority::Should;}
+                            else if (line == "Could")  {priority = Priority::Could;}
+                            else if (line == "Wont")   {priority = Priority::Wont;}
                             else
                             {
                                 priority.reset();
                                 data.emplace(Style::Section);
-                                data.title = line.str();
+                                data.title = line;
                             }
                         }
-                        else if (line.pop_if("* "))
+                        else if (prefix == "* ")
                         {
                             data.emplace(Style::Bullet);
-                            data.title = line.str();
+                            data.title = line;
                         }
                         else if (data.style() == Style::Bullet)
                         {
-                            if (line.pop_if("  "))
-                                data.add_description(line.str());
+                            if (prefix == "  ")
+                                data.add_description(line);
                         }
                         break;
                     case Type::Design:
                     case Type::Feature:
-                        if (line.pop_if("### "))
+                        if (prefix == "### ")
                         {
                             data.emplace(Style::Section);
-                            data.title = line.str();
+                            data.title = line;
                         }
                         else if (data.style() == Style::Section)
                         {
                             //As long as we're in a section: collect description
-                            data.add_description(line.str());
+                            data.add_description(prefix+line);
                         }
                         else
                         {
-                            if (line.pop_if("* "))
+                            if (prefix == "* ")
                             {
                                 data.emplace(Style::Bullet);
-                                data.title = line.str();
+                                data.title = line;
                             }
                             else if (data.style() == Style::Bullet)
                             {
-                                if (line.pop_if("  "))
-                                    data.add_description(line.str());
+                                if (prefix == "  ")
+                                    data.add_description(line);
                                 else if (line.empty())
                                 {
                                     data.clear();
@@ -364,7 +360,7 @@ namespace proast { namespace model { namespace markdown {
                                 else if (!line.empty())
                                 {
                                     data.emplace(Style::Margin);
-                                    data.add_description(line.str());
+                                    data.add_description(line);
                                 }
                             }
                             else if (data.style() == Style::Margin)
@@ -372,7 +368,7 @@ namespace proast { namespace model { namespace markdown {
                                 if (line.empty())
                                     data.clear();
                                 else
-                                    data.add_description(line.str());
+                                    data.add_description(line);
                             }
                             else if (line.empty())
                             {
@@ -381,14 +377,64 @@ namespace proast { namespace model { namespace markdown {
                             else
                             {
                                 data.emplace(Style::Margin);
-                                data.add_description(line.str());
+                                data.add_description(line);
                             }
                         }
                         break;
                 }
             }
 
-            prev_line = line;
+            MSS_END();
+        };
+
+        std::optional<gubg::Strange> prev_line;
+        auto process_prev_line = [&](const std::string &prefix)
+        {
+            MSS_BEGIN(bool);
+            if (prev_line)
+                MSS(process_line(prev_line->str(), prefix));
+            prev_line.reset();
+            MSS_END();
+        };
+
+        auto process_line_raw = [&](gubg::Strange &line)
+        {
+            MSS_BEGIN(bool);
+
+            if (line.pop_if("# "))
+            {
+                MSS(process_prev_line(""));
+                MSS(process_line(line.str(), "# "));
+            }
+            else if (line.pop_if("==="))
+            {
+                MSS(process_prev_line("==="));
+            }
+            else if (line.pop_if("## "))
+            {
+                MSS(process_prev_line(""));
+                process_line(line.str(), "## ");
+            }
+            else if (line.pop_if("### "))
+            {
+                MSS(process_prev_line(""));
+                MSS(process_line(line.str(), "### "));
+            }
+            else if (line.pop_if("* "))
+            {
+                MSS(process_prev_line(""));
+                MSS(process_line(line.str(), "* "));
+            }
+            else if (line.pop_if("  "))
+            {
+                MSS(process_prev_line(""));
+                MSS(process_line(line.str(), "  "));
+            }
+            else
+            {
+                MSS(process_prev_line(""));
+                prev_line = line;
+            }
 
             MSS_END();
         };
@@ -397,13 +443,13 @@ namespace proast { namespace model { namespace markdown {
         gubg::Strange strange{markdown};
         for (gubg::Strange line; strange.pop_line(line); )
         {
-            MSS(process_line(line));
+            MSS(process_line_raw(line));
         }
 
         //Make sure the prev_line is processed as well
         {
             gubg::Strange line;
-            MSS(process_line(line));
+            MSS(process_line_raw(line));
         }
 
 
@@ -524,10 +570,11 @@ namespace proast { namespace model { namespace markdown {
                     skip_inclusion = true;
                     break;
             }
-            current_section = child_type;
 
             if (skip_inclusion)
                 continue;
+
+            current_section = child_type;
 
             if (child_type == Type::Free)
             {

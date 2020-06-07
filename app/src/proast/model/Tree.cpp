@@ -156,6 +156,44 @@ namespace proast { namespace model {
 
         MSS_END();
     }
+    bool Tree::find(ConstNodeIXPath &cnixpath, const Path &path) const
+    {
+        MSS_BEGIN(bool);
+
+        const auto depth = path.size();
+
+        cnixpath.resize(depth);
+        cnixpath.resize(0);
+
+        MSS_Q(depth > 0);
+
+        const Forest *my_forest = nullptr;
+        std::size_t my_ix = 0;
+        for (const auto &segment: path)
+        {
+            //Set/update the my_forest where to look for "segment"
+            if (!my_forest)
+            {
+                my_forest = &root_forest_;
+            }
+            else
+            {
+                assert(my_ix < my_forest->size());
+                my_forest = &my_forest->nodes[my_ix].childs;
+            }
+
+            //Search the my_forest for "segment"
+            const auto nr_childs = my_forest->size();
+            for (my_ix = 0; my_ix < nr_childs; ++my_ix)
+                if (my_forest->nodes[my_ix].value.key == segment)
+                    break;
+            MSS_Q(my_ix < my_forest->size());
+
+            cnixpath.emplace_back(&my_forest->nodes[my_ix], my_ix);
+        }
+
+        MSS_END();
+    }
 
     void Tree::stream(std::ostream &os) const
     {

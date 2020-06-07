@@ -210,31 +210,40 @@ namespace proast { namespace presenter {
         {
             MSS_BEGIN(bool);
 
-            const model::Forest *forest;
-            std::size_t ix;
-            MSS(model_.get(forest, ix, model_.path()));
+            model::ConstNodeIXPath cnixpath;
+            MSS(model_.get(cnixpath, model_.path()));
 
-            const auto &me = forest->nodes[ix];
+            const auto me_node = cnixpath.back().node;
+            cnixpath.pop_back();
 
-            if (false) {}
-            else if (me.value.content_fp)
+            if (me_node->value.link)
             {
-                const auto content_fp = *me.value.content_fp;
-                view_.pause([&](){
-                        const auto orig_dir = std::filesystem::current_path();
-                        std::filesystem::current_path(content_fp.parent_path());
-
-                        std::ostringstream oss;
-                        oss << "nvim " << content_fp.filename();
-                        std::system(oss.str().c_str());
-
-                        std::filesystem::current_path(orig_dir);
-                        });
+                model_.set_path(*me_node->value.link);
+                return true;
             }
-            else if (me.value.link)
+
+            auto content_fp = me_node->value.content_fp;
             {
-                model_.set_path(*me.value.link);
+                if (!content_fp)
+                    if (!cnixpath.empty())
+                    {
+                        const auto parent_node = cnixpath.back().node;
+                        cnixpath.pop_back();
+                        content_fp = parent_node->value.content_fp;
+                    }
+                MSS(!!content_fp, log::stream() << "Me nor parent have a valid content_fp" << std::endl);
             }
+
+            view_.pause([&](){
+                    const auto orig_dir = std::filesystem::current_path();
+                    std::filesystem::current_path(content_fp->parent_path());
+
+                    std::ostringstream oss;
+                    oss << "nvim " << content_fp->filename();
+                    std::system(oss.str().c_str());
+
+                    std::filesystem::current_path(orig_dir);
+                    });
 
             MSS(repaint_());
 
@@ -385,6 +394,7 @@ namespace proast { namespace presenter {
                             case model::Type::Requirement: attention = 3; break;
                             case model::Type::Design: attention = 1; break;
                             case model::Type::Feature: attention = 2; break;
+                            case model::Type::Free: attention = 5; break;
                             default: break;
                         }
                     lb.entries.emplace_back(node.value.key, attention);

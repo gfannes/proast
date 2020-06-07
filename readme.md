@@ -37,7 +37,7 @@ Proast is a project assistant.
 
 * [external](key:file_format)
 * [external](key:schema)
-* [external](path:/@design)
+* [external](path:/proast/@design)
 * Develop CLI application
 * [external](key:app)
 

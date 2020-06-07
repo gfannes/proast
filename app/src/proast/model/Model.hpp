@@ -396,6 +396,13 @@ namespace proast { namespace model {
             std::size_t ix;
             return get_parent(parent, ix, path);
         }
+        bool get(ConstNodeIXPath &cnixpath, const Path &path)
+        {
+            MSS_BEGIN(bool);
+            MSS(!!tree_);
+            MSS(tree_->find(cnixpath, path));
+            MSS_END();
+        }
 
     private:
         std::filesystem::path user_dir_() const
