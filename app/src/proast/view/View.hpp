@@ -196,14 +196,14 @@ namespace proast { namespace view {
                 path_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 
-                const auto width = region.width()/5;
+                const auto width = region.width()/7;
                 {
                     const auto height = region.height()/7;
                     dialog_region_ = region;
                     dialog_region_.pop_border(height, width);
                 }
                 parent_region_ = region.pop_left(width);
-                me_region_ = region.pop_left(width);
+                me_region_ = region.pop_left(3*width);
                 child_region_ = region.pop_left(width);
 
                 {

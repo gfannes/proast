@@ -32,27 +32,17 @@ Text-UI application
 * Split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
 * Remove empty folders from time to time
 * Support for filtering on type
-* Name embedded items using "#<ix>" as global ix in nodes
 * Introduce the concept of physical and embedded items
 * Update all links around a copy-paste
   * Only paste in physical items
 * Support for "dd" and "da"
-* Support for markdown titles by adding a delayed processing
-  * std::optional<gubg::Strange> prev_line
-  * Lambda that uses "is_title"
-  * For-loop over all lines
-  * Process final empty line if there is something in the prev_line
 * Adjust links when renaming a node
 * Support removing a link
 * Support for showing the content of a link
-* Support changing the order for nodes and links
 * Compute aggregated cost
   * Convert different costs for different subtrees
 * Indication of completed items
 * Compute fraction complete
-* Support for showing/opening all files
-* Support removing a link
-* Support for showing the content of a link
 * Support for sprints
   * Defining a new sprint
   * Selecting a sprint
@@ -63,6 +53,5 @@ Text-UI application
   * Use `[item]` for MD on nodes
   * Use `[path]` for MD on path
 * Test if feature with subfeature can be shown
-* Support changing the order for nodes and links
 * Rework `g` into `gg`
 * Git hash header should not require "git checkout ." each time
