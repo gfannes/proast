@@ -10,27 +10,43 @@ namespace proast { namespace presenter {
     class ListBox
     {
     public:
+        struct Entry
+        {
+            std::string text;
+            unsigned int attention = 0;
+
+            Entry() {}
+            Entry(const std::string &text): text(text) {}
+            Entry(const std::string &text, unsigned int attention): text(text), attention(attention) {}
+        };
+
         ListBox() {}
-        ListBox(std::initializer_list<std::string> il): items(il) { }
+        ListBox(std::initializer_list<std::string> il): entries(il.size())
+        {
+            auto dst = entries.begin();
+            for (const std::string &str: il)
+                *dst++ = str;
+        }
 
         void clear() {*this = ListBox{};}
 
-        std::vector<std::string> items;
+        std::vector<Entry> entries;
         int active_ix = -1;
 
         template <typename Ftor>
         void each_item(Ftor &&ftor) const
         {
-            for (std::size_t ix = 0; ix < items.size(); ++ix)
+            for (std::size_t ix = 0; ix < entries.size(); ++ix)
             {
+                const auto &entry = entries[ix];
                 const bool is_active = (ix == active_ix);
-                ftor(items[ix], is_active);
+                ftor(entry.text, entry.attention, is_active);
             }
         }
 
         bool set_active(int ix)
         {
-            if (ix < 0 || ix >= items.size())
+            if (ix < 0 || ix >= entries.size())
             {
                 active_ix = -1;
                 return false;

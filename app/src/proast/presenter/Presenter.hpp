@@ -377,7 +377,18 @@ namespace proast { namespace presenter {
                 if (!forest)
                     return ;
                 for (const auto &node: forest->nodes)
-                    lb.items.push_back(node.value.key);
+                {
+                    unsigned int attention = 0;
+                    if (node.value.type)
+                        switch (*node.value.type)
+                        {
+                            case model::Type::Requirement: attention = 3; break;
+                            case model::Type::Design: attention = 1; break;
+                            case model::Type::Feature: attention = 2; break;
+                            default: break;
+                        }
+                    lb.entries.emplace_back(node.value.key, attention);
+                }
                 lb.active_ix = ix;
             };
 

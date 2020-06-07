@@ -68,12 +68,12 @@ namespace proast { namespace view {
         {
             MSS_BEGIN(bool);
 
-            Cursor cursor{parent_region_};
+            Cursor cursor{parent_region_, 1};
 
             gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, bool is_active)
+            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
             {
-                style.attention = is_active ? 1 : 0;
+                style.attention = attention;
                 cursor.write(item, style);
                 cursor.newline();
             };
@@ -85,12 +85,13 @@ namespace proast { namespace view {
         {
             MSS_BEGIN(bool);
 
-            Cursor cursor{me_region_};
+            Cursor cursor{me_region_, 1};
 
             gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, bool is_active)
+            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
             {
-                style.attention = is_active ? 1 : 0;
+                style.attention = attention;
+                style.italic = is_active;
                 cursor.write(item, style);
                 cursor.newline();
             };
@@ -102,12 +103,12 @@ namespace proast { namespace view {
         {
             MSS_BEGIN(bool);
 
-            Cursor cursor{child_region_};
+            Cursor cursor{child_region_, 1};
 
             gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, bool is_active)
+            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
             {
-                style.attention = is_active ? 1 : 0;
+                style.attention = attention;
                 cursor.write(item, style);
                 cursor.newline();
             };
@@ -195,7 +196,7 @@ namespace proast { namespace view {
                 path_region_ = region.pop_top(1);
                 status_region_ = region.pop_bottom(1);
 
-                const auto width = region.width()/7;
+                const auto width = region.width()/5;
                 {
                     const auto height = region.height()/7;
                     dialog_region_ = region;

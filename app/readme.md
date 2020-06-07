@@ -24,7 +24,7 @@ Text-UI application
 
 ## Features
 
-* Use a different color per Item Type
+* Support for deleting an item
 * Support for moving an item in
 * Support for filtering what is shown
   * Make sure that navigation still works correctly

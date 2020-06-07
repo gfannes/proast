@@ -12,7 +12,7 @@ namespace proast { namespace view {
     class Cursor
     {
     public:
-        Cursor(const Region &region): region_(region) {}
+        Cursor(const Region &region, int margin = 0): region_(region), margin_(margin) {}
 
         void fill(char ch)
         {
@@ -25,20 +25,29 @@ namespace proast { namespace view {
 
         void write(const std::string &str, const gubg::markup::Style style = gubg::markup::Style{})
         {
-            const int margin = 1;
-            if (row_abs_ >= region_.y_end()-margin)
+            if (row_abs_ >= region_.y_end()-margin_)
                 //Row is out-of-bound
                 return;
 
             tb_cell cell{};
             switch (style.attention)
             {
-                case 0: cell.fg = TB_BLUE; break;
-                case 1: cell.fg = TB_YELLOW; break;
+                case 0: cell.fg = TB_WHITE; break;
+                case 1: cell.fg = TB_BLUE; break;
+                case 2: cell.fg = TB_YELLOW; break;
+                case 3: cell.fg = TB_GREEN; break;
+                case 4: cell.fg = TB_MAGENTA; break;
+                case 5: cell.fg = TB_CYAN; break;
+                case 6: cell.fg = TB_RED; break;
+                default: cell.fg = TB_RED; break;
             }
+            if (style.bold)
+                cell.fg |= TB_BOLD;
+            if (style.italic)
+                cell.fg |= TB_REVERSE;
             for (auto ch: str)
             {
-                if (col_abs_ >= region_.x_end()-margin)
+                if (col_abs_ >= region_.x_end()-margin_)
                     //Col is out-of-bound
                     return;
                 cell.ch = ch;
@@ -62,6 +71,7 @@ namespace proast { namespace view {
 
     private:
         const Region &region_;
+        int margin_;
         unsigned int row_abs_ = region_.y_begin();
         unsigned int col_abs_ = region_.x_begin();
     };
