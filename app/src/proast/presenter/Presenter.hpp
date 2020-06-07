@@ -108,7 +108,7 @@ namespace proast { namespace presenter {
 
             MSS_END();
         }
-        bool commander_move(Movement movement) override
+        bool commander_move_cursor(Movement movement) override
         {
             MSS_BEGIN(bool);
 
@@ -181,6 +181,29 @@ namespace proast { namespace presenter {
 
             MSS(repaint_());
 
+            MSS_END();
+        }
+        bool commander_move_item(Movement movement)
+        {
+            MSS_BEGIN(bool);
+
+            const model::Forest *forest;
+            std::size_t ix;
+            MSS(model_.get(forest, ix, model_.path()));
+
+            switch (movement)
+            {
+                case Movement::Left:
+                    break;
+                case Movement::Up:
+                    if (ix > 0)
+                        MSS(model_.swap(ix, ix-1));
+                    break;
+                case Movement::Down:
+                    if (ix+1 < forest->size())
+                        MSS(model_.swap(ix, ix+1));
+                    break;
+            }
             MSS_END();
         }
         bool commander_open() override

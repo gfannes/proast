@@ -90,6 +90,8 @@ namespace proast { namespace model {
         os << "[Item](key:" << key << ")(title:" << title << ")";
         if (type)
             os << "(type:" << hr(*type) << ")";
+        if (priority)
+            os << "(priority:" << hr(*priority) << ")";
         os << "{" << std::endl;
         for (const auto &desc: description)
             os << "  " << desc << std::endl;

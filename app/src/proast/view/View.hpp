@@ -70,9 +70,11 @@ namespace proast { namespace view {
 
             Cursor cursor{parent_region_};
 
+            gubg::markup::Style style;
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(item, is_active);
+                style.attention = is_active ? 1 : 0;
+                cursor.write(item, style);
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -85,9 +87,11 @@ namespace proast { namespace view {
 
             Cursor cursor{me_region_};
 
+            gubg::markup::Style style;
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(item, is_active);
+                style.attention = is_active ? 1 : 0;
+                cursor.write(item, style);
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -100,9 +104,11 @@ namespace proast { namespace view {
 
             Cursor cursor{child_region_};
 
+            gubg::markup::Style style;
             auto show_item = [&](const std::string &item, bool is_active)
             {
-                cursor.write(item, is_active);
+                style.attention = is_active ? 1 : 0;
+                cursor.write(item, style);
                 cursor.newline();
             };
             list_box.each_item(show_item);
@@ -120,7 +126,7 @@ namespace proast { namespace view {
             {
                 for (; prev_line_ix < line_ix; ++prev_line_ix)
                     cursor.newline();
-                cursor.write(txt, style.attention > 0);
+                cursor.write(txt, style);
             };
             doc.each(show);
 
@@ -132,11 +138,14 @@ namespace proast { namespace view {
 
             Cursor cursor{details_region_};
 
+            gubg::markup::Style style;
             for (const auto &[k,v]: kv)
             {
-                cursor.write(k, true);
-                cursor.write(": ", false);
-                cursor.write(v, false);
+                style.attention = 1;
+                cursor.write(k, style);
+                style.attention = 0;
+                cursor.write(": ", style);
+                cursor.write(v, style);
                 cursor.newline();
             }
 
@@ -147,11 +156,14 @@ namespace proast { namespace view {
             MSS_BEGIN(bool);
 
             Cursor cursor{dialog_region_};
+            gubg::markup::Style style;
             cursor.fill('.');
-            cursor.write(dialog.caption(), true);
+            style.attention = 1;
+            cursor.write(dialog.caption(), style);
             cursor.newline();
             cursor.newline();
-            cursor.write(dialog.content(), false);
+            style.attention = 0;
+            cursor.write(dialog.content(), style);
 
             MSS_END();
         }

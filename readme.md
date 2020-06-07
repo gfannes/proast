@@ -7,7 +7,8 @@ Proast is a project assistant.
 
 ## Requirements
 
-* Requirement without prio
+### Requirement without prio
+
 
 ### Must
 
@@ -15,7 +16,6 @@ Proast is a project assistant.
   * Priorities
   *  Deadlines
 * support personal and professional projects
-* be extendible using commonly available tools
 
 ### Should
 
@@ -23,6 +23,10 @@ Proast is a project assistant.
   * Refactoring
   * Execution
   * Reporting
+
+### Must
+
+* be extendible using commonly available tools
 
 ## Design
 
@@ -35,6 +39,7 @@ Proast is a project assistant.
 * [external](key:schema)
 * [external](path:/@design)
 * Develop CLI application
+* [external](key:app)
 
 ## Deliverables
 

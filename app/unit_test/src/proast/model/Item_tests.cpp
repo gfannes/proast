@@ -7,7 +7,7 @@ TEST_CASE("model::Item tests", "[ut][model][Item]")
     model::Item item;
     SECTION("fresh")
     {
-        REQUIRE(item.type == model::Type::Feature);
+        REQUIRE(!item.type);
         REQUIRE(item.is_embedded() == true);
         REQUIRE(item.key == "");
     }

@@ -31,7 +31,8 @@ namespace proast { namespace presenter {
         public:
             virtual bool commander_quit() = 0;
             virtual bool commander_switch_mode(Mode from, Mode to) = 0;
-            virtual bool commander_move(Movement) = 0;
+            virtual bool commander_move_cursor(Movement) = 0;
+            virtual bool commander_move_item(Movement) = 0;
             virtual bool commander_open() = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
@@ -79,21 +80,29 @@ namespace proast { namespace presenter {
                     {
                         case 'q': MSS(events_->commander_quit()); break;
 
-                                  //Movement
+                                  //Movement of cursor
                         case 'h':
                         case 0x82:
-                                  MSS(events_->commander_move(Movement::Left)); break;
+                                  MSS(events_->commander_move_cursor(Movement::Left)); break;
                         case 'j':
                         case 0x81:
-                                  MSS(events_->commander_move(Movement::Down)); break;
+                                  MSS(events_->commander_move_cursor(Movement::Down)); break;
                         case 'k':
                         case 0x80:
-                                  MSS(events_->commander_move(Movement::Up)); break;
+                                  MSS(events_->commander_move_cursor(Movement::Up)); break;
                         case 'l':
                         case 0x83:
-                                  MSS(events_->commander_move(Movement::Right)); break;
-                        case 'g': MSS(events_->commander_move(Movement::Top)); break;
-                        case 'G': MSS(events_->commander_move(Movement::Bottom)); break;
+                                  MSS(events_->commander_move_cursor(Movement::Right)); break;
+                        case 'g': MSS(events_->commander_move_cursor(Movement::Top)); break;
+                        case 'G': MSS(events_->commander_move_cursor(Movement::Bottom)); break;
+
+                                  //Movement of item
+                        case 'H':
+                                  MSS(events_->commander_move_item(Movement::Left)); break;
+                        case 'J':
+                                  MSS(events_->commander_move_item(Movement::Down)); break;
+                        case 'K':
+                                  MSS(events_->commander_move_item(Movement::Up)); break;
 
                         case '\n':
                                   switch (mode_)

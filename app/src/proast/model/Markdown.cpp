@@ -197,9 +197,9 @@ namespace proast { namespace model { namespace markdown {
 
         std::optional<Type> type;
         std::optional<Priority> priority;
+        std::map<std::string, unsigned int> virtualkey__count;
 
         Data data;
-        unsigned int nr_free_nodes = 0;
         data.process = [&]()
         {
             assert(!!type);
@@ -235,7 +235,23 @@ namespace proast { namespace model { namespace markdown {
                 }
                 else
                 {
-                    child.value.set(*type, std::string("#")+std::to_string(nr_free_nodes++));
+                    std::string virtualkey = data.title;
+                    for (auto &ch: virtualkey)
+                    {
+                        ch = std::tolower(ch);
+                        switch (ch)
+                        {
+                            case ' ': ch = '_'; break;
+                            default: break;
+                        }
+                    }
+                    const auto count = virtualkey__count[virtualkey]++;
+                    if (count > 0)
+                    {
+                        virtualkey += "-";
+                        virtualkey += std::to_string(count);
+                    }
+                    child.value.set(*type, std::string("#")+virtualkey);
                     child.value.title = data.title;
                     child.value.style = data.style();
                     child.value.description = data.description;
@@ -300,7 +316,12 @@ namespace proast { namespace model { namespace markdown {
                             else if (line.str() == "Should") {priority = Priority::Should;}
                             else if (line.str() == "Could")  {priority = Priority::Could;}
                             else if (line.str() == "Wont")   {priority = Priority::Wont;}
-                            else { MSS(false, log::stream() << "Error: Unknown priority " << line << "\n"); }
+                            else
+                            {
+                                priority.reset();
+                                data.emplace(Style::Section);
+                                data.title = line.str();
+                            }
                         }
                         else if (line.pop_if("* "))
                         {
@@ -479,8 +500,13 @@ namespace proast { namespace model { namespace markdown {
                         stream_section(2, "Requirements");
                         current_prio.reset();
                     }
-                    if (child_prio && child_prio != current_prio)
-                        stream_section(3, hr(*child_prio));
+                    if (child_prio != current_prio)
+                    {
+                        if (child_prio)
+                            stream_section(3, hr(*child_prio));
+                        else
+                            section_level = 2;
+                    }
                     current_prio = child_prio;
                     break;
                 case Type::Design:
@@ -503,7 +529,7 @@ namespace proast { namespace model { namespace markdown {
             if (skip_inclusion)
                 continue;
 
-            else if (child_type == Type::Free)
+            if (child_type == Type::Free)
             {
                 stream_section(2, child.value.title);
                 if (new_section())

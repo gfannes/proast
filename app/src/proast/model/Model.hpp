@@ -44,6 +44,29 @@ namespace proast { namespace model {
                 events_->message("Events destination was set");
         }
 
+        bool swap(std::size_t a_ix, std::size_t b_ix)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            if (a_ix == b_ix)
+                return true;
+
+            Node *parent;
+            std::size_t ix;
+            MSS(get_parent(parent, ix, path_));
+
+            auto &nodes = parent->childs.nodes;
+            MSS(a_ix < nodes.size());
+            MSS(b_ix < nodes.size());
+
+            std::swap(nodes[a_ix].value, nodes[b_ix].value);
+
+            MSS(save_content_(*parent));
+
+            MSS_END();
+        }
         bool sort()
         {
             MSS_BEGIN(bool);
@@ -353,7 +376,7 @@ namespace proast { namespace model {
             node = &forest->nodes[ix];
             MSS_END();
         }
-        bool get_parent(Node *&parent, const Path &path)
+        bool get_parent(Node *&parent, std::size_t &ix, const Path &path)
         {
             MSS_BEGIN(bool);
 
@@ -362,7 +385,6 @@ namespace proast { namespace model {
             parent_path.pop_back();
 
             Forest *forest;
-            std::size_t ix;
             {
                 MSS(!!tree_);
                 MSS_Q(tree_->find(forest, ix, parent_path));
@@ -372,6 +394,11 @@ namespace proast { namespace model {
             parent = &forest->nodes[ix];
 
             MSS_END();
+        }
+        bool get_parent(Node *&parent, const Path &path)
+        {
+            std::size_t ix;
+            return get_parent(parent, ix, path);
         }
 
     private:

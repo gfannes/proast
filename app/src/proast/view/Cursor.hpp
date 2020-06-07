@@ -3,6 +3,7 @@
 
 #include <proast/view/Region.hpp>
 #include <proast/log.hpp>
+#include <gubg/markup/Style.hpp>
 #include <termbox.h>
 #include <string>
 
@@ -22,18 +23,22 @@ namespace proast { namespace view {
                     tb_put_cell(x, y, &cell);
         }
 
-        void write(const std::string &str, bool highlight = false)
+        void write(const std::string &str, const gubg::markup::Style style = gubg::markup::Style{})
         {
-            if (row_abs_ >= region_.y_end())
+            const int margin = 1;
+            if (row_abs_ >= region_.y_end()-margin)
                 //Row is out-of-bound
                 return;
 
             tb_cell cell{};
-            if (highlight)
-                cell.fg = TB_YELLOW;
+            switch (style.attention)
+            {
+                case 0: cell.fg = TB_BLUE; break;
+                case 1: cell.fg = TB_YELLOW; break;
+            }
             for (auto ch: str)
             {
-                if (col_abs_ >= region_.x_end())
+                if (col_abs_ >= region_.x_end()-margin)
                     //Col is out-of-bound
                     return;
                 cell.ch = ch;
