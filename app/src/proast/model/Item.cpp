@@ -92,6 +92,10 @@ namespace proast { namespace model {
             os << "(type:" << hr(*type) << ")";
         if (priority)
             os << "(priority:" << hr(*priority) << ")";
+        if (directory)
+            os << "(directory:" << *directory << ")";
+        if (content_fp)
+            os << "(content_fp:" << *content_fp << ")";
         os << "{" << std::endl;
         for (const auto &desc: description)
             os << "  " << desc << std::endl;

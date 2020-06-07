@@ -138,20 +138,40 @@ namespace proast { namespace model {
         {
             MSS_BEGIN(bool);
 
+            NodeIXPath nixpath;
+            MSS(!!tree_);
+            MSS(tree_->find(nixpath, path_));
             if (!insert)
+                if (!nixpath.empty())
+                    nixpath.pop_back();
+            MSS(!nixpath.empty());
+
+            auto parent_node = nixpath.back().node;
+            //Move index_filename to nonleaf, if needed
+            if (insert)
+                if (parent_node->value.content_fp && parent_node->value.directory)
+                {
+                    const auto content_fp_leaf = current_config().content_fp_leaf(*parent_node->value.directory);
+                    const auto content_fp_nonleaf = current_config().content_fp_nonleaf(*parent_node->value.directory);
+                    if (parent_node->value.content_fp == content_fp_leaf)
+                    {
+                        std::filesystem::create_directories(*parent_node->value.directory);
+                        std::filesystem::rename(content_fp_leaf, content_fp_nonleaf);
+                        parent_node->value.content_fp = content_fp_nonleaf;
+                    }
+                }
+
+            auto &new_item = parent_node->childs.append();
+            new_item.value.key = key;
+            new_item.value.type = Type::Feature;
+            if (parent_node->value.directory)
+                new_item.value.directory = *parent_node->value.directory/key;
+            if (new_item.value.directory)
             {
-                if (path_.size() > 1)
-                    path_.pop_back();
+                new_item.value.content_fp = current_config().content_fp_leaf(*new_item.value.directory);
+                std::ofstream fo{*new_item.value.content_fp};
             }
-
-            path_.push_back(key);
-            auto fp = local_filepath(path_);
-            log::stream() << "Note: Creating folder " << fp << std::endl;
-            fp += current_config().extension();
-            std::filesystem::create_directories(fp.parent_path());
-            std::ofstream fo{fp};
-
-            MSS(fo.good());
+            MSS(save_content_(*parent_node));
             MSS(reload_());
 
             MSS_END();

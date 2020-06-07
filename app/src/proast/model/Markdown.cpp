@@ -16,6 +16,8 @@ namespace proast { namespace model { namespace markdown {
     {
         MSS_BEGIN(bool);
 
+        node.value.directory = directory;
+
         const auto content_fp = [&]()
         {
             const auto content_fp_leaf = config.content_fp_leaf(directory);

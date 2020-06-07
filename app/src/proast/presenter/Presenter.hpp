@@ -445,6 +445,10 @@ namespace proast { namespace presenter {
                     details_kv_["deadline"] = *item.deadline;
                 if (item.my_cost)
                     details_kv_["cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
+                if (item.directory)
+                    details_kv_["directory"] = item.directory->string();
+                if (item.content_fp)
+                    details_kv_["content_fp"] = item.content_fp->string();
             }
 
             //Parent
