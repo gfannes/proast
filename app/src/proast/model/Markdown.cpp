@@ -23,10 +23,11 @@ namespace proast { namespace model { namespace markdown {
             return std::filesystem::exists(content_fp_nonleaf) ? content_fp_nonleaf : content_fp_leaf;
         }();
 
-        MSS(std::filesystem::exists(content_fp));
+        MSS(std::filesystem::exists(content_fp), log::stream() << "Error: content file " << content_fp << " does not exist for " << directory << std::endl);
 
         std::string content;
         MSS(gubg::file::read(content, content_fp));
+        node.value.content_fp = content_fp;
 
         MSS(read_string(node, content));
 
@@ -43,26 +44,33 @@ namespace proast { namespace model { namespace markdown {
             for (const auto &entry: std::filesystem::directory_iterator{directory})
             {
                 const auto fp = entry.path();
-                const auto stem = fp.stem();
+                const auto stem = fp.stem().string();
+                const auto extension = fp.extension().string();
                 if (key__ix.count(stem) > 0)
                     //This already exists
+                    continue;
+                if (stem.empty())
+                    continue;
+                if (stem[0] == '.')
                     continue;
 
                 std::optional<bool> file_dir;
                 if (false) {}
                 else if (std::filesystem::is_regular_file(fp))
                 {
-                    if (fp.filename() != config.index_filename())
-                        file_dir = true;
+                    if (extension != config.extension())
+                        continue;
+                    if (fp.filename() == config.index_filename())
+                        continue;
+                    file_dir = true;
                 }
                 else if (std::filesystem::is_directory(fp))
                     file_dir = false;
-                if (file_dir)
-                {
-                    auto &child = node.childs.append();
-                    child.value.key = fp.filename();
-                    child.value.type = *file_dir ? Type::File : Type::Directory;
-                }
+
+                MSS(!!file_dir);
+                auto &child = node.childs.append();
+                child.value.key = fp.filename();
+                child.value.type = *file_dir ? Type::File : Type::Directory;
             }
 
         for (const auto &[key, ix]: key__ix)
@@ -191,6 +199,7 @@ namespace proast { namespace model { namespace markdown {
         std::optional<Priority> priority;
 
         Data data;
+        unsigned int nr_free_nodes = 0;
         data.process = [&]()
         {
             assert(!!type);
@@ -226,7 +235,7 @@ namespace proast { namespace model { namespace markdown {
                 }
                 else
                 {
-                    child.value.set(*type, std::string("#")+std::to_string(node.childs.size()-1));
+                    child.value.set(*type, std::string("#")+std::to_string(nr_free_nodes++));
                     child.value.title = data.title;
                     child.value.style = data.style();
                     child.value.description = data.description;

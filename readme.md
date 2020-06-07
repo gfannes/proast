@@ -1,9 +1,5 @@
 <!--
-[proast]
-{
-[link](path:proast/file_format/markdown)
-[link](path:proast/@design)
-}
+[proast](status:todo)
 -->
 # Proast title
 
@@ -33,16 +29,16 @@ Proast is a project assistant.
 * Create CLI application, no GUI
 * Store all data in markdown files with limited amount of metadata
 
-## Deliverables
-
-* CLI application
-
 ## Features
 
 * [external](key:file_format)
 * [external](key:schema)
 * [external](path:/@design)
 * Develop CLI application
+
+## Deliverables
+
+* CLI application
 
 ## Questions
 

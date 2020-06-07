@@ -24,7 +24,12 @@ Text-UI application
 
 ## TODO
 
-* Support for changing the type: File to something else
+* Support for filtering what is shown
+  * Make sure that navigation still works correctly
+* Support for changing from embedded to non-embedded: maybe with renaming it?
+
+* Find a way to store a requirement without a priority after one with a prio in a markdown file
+* Check if it is a good idea to have both File and Directory: this gives problems with changing Item Type
 
 * Split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
 * Remove empty folders from time to time

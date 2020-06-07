@@ -194,22 +194,9 @@ namespace proast { namespace presenter {
             const auto &me = forest->nodes[ix];
 
             if (false) {}
-            else if (me.value.directory)
+            else if (me.value.content_fp)
             {
-                std::filesystem::path content_fp;
-                if (me.value.content_fp)
-                    content_fp = *me.value.content_fp;
-                else
-                {
-                    //Create content file, if it does not already exist
-                    const auto directory = *me.value.directory;
-                    if (std::filesystem::exists(directory))
-                        content_fp = model_.current_config().content_fp_nonleaf(directory);
-                    else
-                        content_fp = model_.current_config().content_fp_leaf(directory);
-                    std::ofstream fo{content_fp};
-                }
-
+                const auto content_fp = *me.value.content_fp;
                 view_.pause([&](){
                         const auto orig_dir = std::filesystem::current_path();
                         std::filesystem::current_path(content_fp.parent_path());
@@ -309,6 +296,33 @@ namespace proast { namespace presenter {
             MSS_Q(model_.load_bookmark(ch));
             MSS_END();
         }
+        bool commander_set_type(char32_t ch) override
+        {
+            MSS_BEGIN(bool);
+            std::optional<model::Type> type;
+            switch (ch)
+            {
+                case 'r': type = model::Type::Requirement; break;
+                case 'd': type = model::Type::Design; break;
+                case 'f': type = model::Type::Feature; break;
+            }
+            if (type)
+                MSS(model_.set_type(*type));
+            MSS_END();
+        }
+        bool commander_sort() override
+        {
+            MSS_BEGIN(bool);
+            if (model_.path().size() <= 1)
+            {
+                //TODO: Indicate to the user that sorting the first level cannot be done
+            }
+            else
+            {
+                MSS(model_.sort());
+            }
+            MSS_END();
+        }
 
     private:
         bool repaint_()
@@ -362,14 +376,19 @@ namespace proast { namespace presenter {
 
                 if (Clock::now() >= show_path_)
                 {
-                    if (false) {}
-                    else if (item.directory)
-                        status_ = std::string("Current directory: ") + item.directory->string();
-                    else if (item.link)
-                        status_ = std::string("Current link: ") + model::to_string(*item.link);
+                    status_ = std::string("Commander state: ")+hr(commander_.state());
                 }
 
-                preview_mu_ = item.preview;
+                {
+                    preview_mu_.clear();
+                    gubg::markup::Style style;
+                    style.attention = 1;
+                    preview_mu_.add_line([&](auto &line){line.add(item.title, style);});
+                    style.attention = 0;
+                    preview_mu_.add_line([&](auto &line){line.add("", style);});
+                    for (const auto &desc: item.description)
+                        preview_mu_.add_line([&](auto &line){line.add(desc, style);});
+                }
 
                 details_kv_.clear();
                 if (item.type)

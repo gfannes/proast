@@ -5,6 +5,8 @@
 #include <proast/model/Tree.hpp>
 #include <proast/model/Config.hpp>
 #include <proast/model/Bookmarks.hpp>
+#include <proast/model/Markdown.hpp>
+#include <proast/log.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/naft/Range.hpp>
 #include <gubg/OnlyOnce.hpp>
@@ -40,6 +42,71 @@ namespace proast { namespace model {
             events_ = events;
             if (events_)
                 events_->message("Events destination was set");
+        }
+
+        bool sort()
+        {
+            MSS_BEGIN(bool);
+
+            Node *parent;
+            MSS(get_parent(parent, path_));
+
+            auto to_int = [](std::optional<Type> type)
+            {
+                int v = 0;
+                if (type)
+                {
+                    if (*type == Type::Requirement) return v; ++v;
+                    if (*type == Type::Design) return v; ++v;
+                    if (*type == Type::Feature) return v; ++v;
+                    if (*type == Type::Free) return v; ++v;
+                    if (*type == Type::File) return v; ++v;
+                    if (*type == Type::Directory) return v; ++v;
+                }
+                return v;
+            };
+
+            std::stable_sort(RANGE(parent->childs.nodes), [&](const auto &lhs, const auto &rhs){
+                    return to_int(lhs.value.type) < to_int(rhs.value.type);
+                    });
+
+            MSS(save_content_(*parent));
+
+            MSS_END();
+        }
+        bool set_type(Type type)
+        {
+            MSS_BEGIN(bool);
+            log::stream() << "Setting " << to_string(path_) << " to " << hr(type) << std::endl;
+
+            Node *node;
+            MSS(tree_->find(node, path_));
+
+            if (node->value.type)
+            {
+                switch (*node->value.type)
+                {
+                    case Type::File:
+                        {
+                            //TODO: check that this key does not already exist
+                            const std::string key = std::filesystem::path{node->value.key}.stem().string();
+                            node->value.key = key;
+                            if (!path_.empty())
+                            {
+                                path_.pop_back();
+                                path_.push_back(key);
+                            }
+                        }
+                        break;
+                }
+            }
+            node->value.type = type;
+
+            Node *parent;
+            MSS(get_parent(parent, path_));
+            MSS(save_content_(*parent));
+
+            MSS_END();
         }
 
         //insert==true: nest new item _under_ path_
@@ -340,30 +407,12 @@ namespace proast { namespace model {
             {
                 std::ofstream fo{*node.value.content_fp};
 
-                fo << "<!--" << std::endl;
-                fo << "[proast]";
-                if (node.value.my_cost)
-                    fo << "(my_cost:" << *node.value.my_cost << ")";
-                fo << std::endl;
-                fo << "{" << std::endl;
-                for (const auto &child: node.childs.nodes)
-                {
-                    if (child.value.link)
-                    {
-                        fo << "  [link](path:" << to_string(*child.value.link) << ")" << std::endl;
-                    }
-                }
-                fo << "}" << std::endl;
-                fo << "-->" << std::endl;
+                std::string markdown;
+                MSS(markdown::write_string(markdown, node));
 
-                std::size_t ix = 0;
-                auto ftor = [&](std::size_t line_ix, const std::string &txt, auto style)
-                {
-                    for (; ix < line_ix; ++ix)
-                        fo << std::endl;
-                    fo << txt;
-                };
-                node.value.preview.each(ftor);
+                log::stream() << "Saving markdown to " << *node.value.content_fp << std::endl;
+                log::stream() << markdown << std::endl;
+                MSS(gubg::file::write(markdown, *node.value.content_fp));
             }
             MSS_END();
         }

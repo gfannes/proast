@@ -28,7 +28,7 @@ namespace proast { namespace model {
 
     enum class Type
     {
-        Feature, Requirement, Design, Deliverable, Free, File, Directory, 
+        Requirement, Design, Feature, Free, File, Directory, 
     };
     std::string hr(Type);
 

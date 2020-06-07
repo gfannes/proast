@@ -14,6 +14,11 @@ namespace proast { namespace presenter {
     {
         Init, Normal, SelectLink,
     };
+    enum class State
+    {
+        Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, SetType,
+    };
+    std::string hr(State state);
 
     //Translates key-presses into commands
 
@@ -34,6 +39,8 @@ namespace proast { namespace presenter {
             virtual bool commander_remove() = 0;
             virtual bool commander_register_bookmark(char32_t) = 0;
             virtual bool commander_load_bookmark(char32_t) = 0;
+            virtual bool commander_set_type(char32_t) = 0;
+            virtual bool commander_sort() = 0;
         };
 
         //Set the events listener
@@ -42,6 +49,8 @@ namespace proast { namespace presenter {
             events_ = events;
             switch_mode_(Mode::Normal);
         }
+
+        State state() const {return state_;}
 
         bool waits_for_input() const
         {
@@ -58,8 +67,6 @@ namespace proast { namespace presenter {
         }
 
     private:
-        enum class State {Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, };
-
         bool process_(const char32_t ch)
         {
             MSS_BEGIN(bool);
@@ -119,6 +126,12 @@ namespace proast { namespace presenter {
                                   //Bookmarks
                         case 'm': change_state_(State::RegisterBookmark); break;
                         case '\'': change_state_(State::LoadBookmark); break;
+
+                                  //Type
+                        case 't': change_state_(State::SetType); break;
+
+                                  //Sort
+                        case 's': MSS(events_->commander_sort()); break;
                     }
                     break;
                 case State::Add:
@@ -171,6 +184,18 @@ namespace proast { namespace presenter {
                         default:
                             bookmark_cb_(ch);
                             change_state_(State::Idle);
+                            break;
+                    }
+                    break;
+                case State::SetType:
+                    switch (ch)
+                    {
+                        case 0x1B://Escape
+                            change_state_(State::Idle);
+                            break;
+                        default:
+                            if (events_ && events_->commander_set_type(ch))
+                                change_state_(State::Idle);
                             break;
                     }
                     break;
