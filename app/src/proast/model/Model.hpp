@@ -243,29 +243,25 @@ namespace proast { namespace model {
         {
             MSS_BEGIN(bool);
 
-            const Forest *forest;
-            std::size_t ix;
-            MSS(get(forest, ix, path_));
+            MSS(!!tree_);
 
-            {
-                auto current_fp = current_filepath();
-                auto trash_fp = trash_filepath(path_);
-                log::stream() << "Note: Moving " << current_fp << " to " << trash_fp << std::endl;
-                std::filesystem::remove_all(trash_fp);
-                std::filesystem::create_directories(trash_fp);
-                std::filesystem::rename(current_fp, trash_fp);
+            NodeIXPath nixpath;
+            MSS(tree_->find(nixpath, path_));
+            MSS(nixpath.size() >= 2);
 
-                current_fp += ".md";
-                trash_fp += ".md";
-                if (std::filesystem::exists(current_fp))
-                    std::filesystem::rename(current_fp, trash_fp);
-            }
+            auto me_node = nixpath.back().node;
+            auto me_ix = nixpath.back().ix;
+            nixpath.pop_back();
+            auto parent_node = nixpath.back().node;
+
+            parent_node->childs.remove_if([&](const auto &node){return &node == me_node;});
+            MSS(save_content_(*parent_node));
 
             path_.pop_back();
-            if (ix+1 < forest->size())
-                path_.push_back(forest->nodes[ix+1].value.key);
-            else if (forest->size() > 1)
-                path_.push_back(forest->nodes[ix-1].value.key);
+            if (me_ix < parent_node->childs.size())
+                path_.push_back(parent_node->childs.nodes[me_ix].value.key);
+            else if (parent_node->childs.size() > 1)
+                path_.push_back(parent_node->childs.nodes[me_ix-1].value.key);
 
             MSS(reload_());
 

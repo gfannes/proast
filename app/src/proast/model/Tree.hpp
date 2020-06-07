@@ -28,6 +28,7 @@ namespace proast { namespace model {
 
         bool find(Forest *&forest, std::size_t &ix, const Path &path);
         bool find(Node *&node, const Path &path);
+        bool find(NodeIXPath &nixpath, const Path &path);
 
         Forest &root_forest() {return root_forest_;}
         const Forest &root_forest() const {return root_forest_;}
