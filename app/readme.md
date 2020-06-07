@@ -24,6 +24,7 @@ Text-UI application
 
 ## Features
 
+* Support for more than one Config.index_name()
 * Support for moving an item in
 * Support for filtering what is shown
   * Make sure that navigation still works correctly

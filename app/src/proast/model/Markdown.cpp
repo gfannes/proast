@@ -44,8 +44,10 @@ namespace proast { namespace model { namespace markdown {
             for (const auto &entry: std::filesystem::directory_iterator{directory})
             {
                 const auto fp = entry.path();
-                const auto stem = fp.stem().string();
-                const auto extension = fp.extension().string();
+                const bool file_dir = std::filesystem::is_regular_file(fp);
+                const auto stem = file_dir ? fp.stem().string() : fp.filename().string();
+                const auto extension = file_dir ? fp.extension().string() : std::string();
+
                 if (key__ix.count(stem) > 0)
                     //This already exists
                     continue;
@@ -54,23 +56,17 @@ namespace proast { namespace model { namespace markdown {
                 if (stem[0] == '.')
                     continue;
 
-                std::optional<bool> file_dir;
-                if (false) {}
-                else if (std::filesystem::is_regular_file(fp))
+                if (file_dir)
                 {
                     if (extension != config.extension())
                         continue;
                     if (fp.filename() == config.index_filename())
                         continue;
-                    file_dir = true;
                 }
-                else if (std::filesystem::is_directory(fp))
-                    file_dir = false;
 
-                MSS(!!file_dir);
                 auto &child = node.childs.append();
                 child.value.key = fp.filename();
-                child.value.type = *file_dir ? Type::File : Type::Directory;
+                child.value.type = file_dir ? Type::File : Type::Directory;
                 child.value.content_fp = fp;
             }
 
@@ -266,12 +262,18 @@ namespace proast { namespace model { namespace markdown {
 
             if (prefix == "# ")
             {
+                const bool is_first_title = !data;
                 data.emplace(Style::Section);
+                if (!is_first_title)
+                    type = Type::Free;
                 data.title = line;
             }
             else if (prefix == "===")
             {
-                data.emplace(Style::Title);
+                const bool is_first_title = !data;
+                data.emplace(is_first_title ? Style::Title : Style::Section);
+                if (!is_first_title)
+                    type = Type::Free;
                 data.title = line;
             }
             else if (prefix == "## ")
@@ -666,6 +668,7 @@ namespace proast { namespace model { namespace markdown {
                     case '\t':
                     case ' ':
                     case '=':
+                    case '#':
                         //These characters are skipped
                         break;
 

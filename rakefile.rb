@@ -60,7 +60,7 @@ end
 
 desc "Run proast"
 task :test => :build do
-    sh "./proast.app -r ./ -r #{ENV["HOME"]}/nontech"
+    sh "./proast.app -r ./ -r #{ENV["HOME"]}/nontech -r #{ENV["gubg"]}"
 end
 
 desc "Clear cached binaries"
