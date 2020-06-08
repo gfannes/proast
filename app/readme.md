@@ -24,6 +24,7 @@ Text-UI application
 
 ## Features
 
+* Add Type::Info to state information
 * Support for more than one Config.index_name()
 * Support for moving an item in
 * Support for filtering what is shown
