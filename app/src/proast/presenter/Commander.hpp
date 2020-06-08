@@ -42,6 +42,7 @@ namespace proast { namespace presenter {
             virtual bool commander_load_bookmark(char32_t) = 0;
             virtual bool commander_set_type(char32_t) = 0;
             virtual bool commander_sort() = 0;
+            virtual bool commander_open_shell() = 0;
         };
 
         //Set the events listener
@@ -141,6 +142,9 @@ namespace proast { namespace presenter {
 
                                   //Sort
                         case 's': MSS(events_->commander_sort()); break;
+
+                                  //Open shell
+                        case 'S': MSS(events_->commander_open_shell()); break;
                     }
                     break;
                 case State::Add:

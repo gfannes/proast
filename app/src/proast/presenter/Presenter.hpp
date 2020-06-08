@@ -355,6 +355,41 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
+        bool commander_open_shell() override
+        {
+            MSS_BEGIN(bool);
+
+            model::ConstNodeIXPath cnixpath;
+            MSS(model_.get(cnixpath, model_.path()));
+
+            const auto me_node = cnixpath.back().node;
+            cnixpath.pop_back();
+
+            auto directory = me_node->value.directory;
+            {
+                if (!directory)
+                    if (!cnixpath.empty())
+                    {
+                        const auto parent_node = cnixpath.back().node;
+                        cnixpath.pop_back();
+                        directory = parent_node->value.directory;
+                    }
+                MSS(!!directory, log::stream() << "Me nor parent have a valid directory" << std::endl);
+            }
+
+            view_.pause([&](){
+                    const auto orig_dir = std::filesystem::current_path();
+                    std::filesystem::current_path(*directory);
+
+                    std::ostringstream oss;
+                    oss << "bash";
+                    std::system(oss.str().c_str());
+
+                    std::filesystem::current_path(orig_dir);
+                    });
+
+            MSS_END();
+        }
 
     private:
         bool repaint_()
