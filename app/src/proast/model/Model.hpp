@@ -206,6 +206,45 @@ namespace proast { namespace model {
 
             MSS(path_.size() > 1, log::stream() << "Error: Cannot rename the root, you have to do this manually" << std::endl);
 
+            NodeIXPath nixpath;
+            MSS(!!tree_);
+            MSS(tree_->find(nixpath, path_));
+
+            auto me_node = nixpath.back().node;
+            nixpath.pop_back();
+            auto parent_node = nixpath.back().node;
+            nixpath.pop_back();
+
+            if (new_key == me_node->value.key)
+                //Nothing to rename
+                return true;
+
+            me_node->value.key = new_key;
+
+            if (me_node->value.content_fp)
+            {
+                MSS(!!me_node->value.directory);
+
+                const auto orig_content_fp = *me_node->value.content_fp;
+                const bool is_leaf_fp = (orig_content_fp == current_config().content_fp_leaf(*me_node->value.directory));
+
+                //Update directory
+                me_node->value.directory = me_node->value.directory->parent_path()/new_key;
+
+                //Update content_fp
+                if (is_leaf_fp)
+                    me_node->value.content_fp = current_config().content_fp_leaf(*me_node->value.directory);
+                else
+                    me_node->value.content_fp = current_config().content_fp_nonleaf(*me_node->value.directory);
+
+                std::filesystem::rename(orig_content_fp, *me_node->value.content_fp);
+            }
+            MSS(save_content_(*parent_node));
+
+            path_.pop_back();
+            path_.push_back(new_key);
+            MSS(reload_());
+#if 0
             const Node *me;
             MSS(get(me, path_));
 
@@ -237,6 +276,7 @@ namespace proast { namespace model {
 
             path_ = new_path;
             MSS(reload_());
+#endif
 
             MSS_END();
         }
