@@ -138,13 +138,15 @@ namespace proast { namespace model {
         {
             MSS_BEGIN(bool);
 
+            if (!insert)
+                if (!path_.empty())
+                    path_.pop_back();
+            MSS(!path_.empty());
+
             NodeIXPath nixpath;
             MSS(!!tree_);
             MSS(tree_->find(nixpath, path_));
-            if (!insert)
-                if (!nixpath.empty())
-                    nixpath.pop_back();
-            MSS(!nixpath.empty());
+            assert(nixpath.size() == path_.size());
 
             auto parent_node = nixpath.back().node;
             //Move index_filename to nonleaf, if needed
@@ -171,7 +173,10 @@ namespace proast { namespace model {
                 new_item.value.content_fp = current_config().content_fp_leaf(*new_item.value.directory);
                 std::ofstream fo{*new_item.value.content_fp};
             }
+
             MSS(save_content_(*parent_node));
+
+            path_.push_back(new_item.value.key);
             MSS(reload_());
 
             MSS_END();
