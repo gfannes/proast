@@ -203,7 +203,7 @@ namespace proast { namespace view {
                     dialog_region_.pop_border(height, width);
                 }
                 parent_region_ = region.pop_left(width);
-                me_region_ = region.pop_left(3*width);
+                me_region_ = region.pop_left(2*width);
                 child_region_ = region.pop_left(width);
 
                 {
@@ -225,6 +225,7 @@ namespace proast { namespace view {
                         switch (event.key)
                         {
                             case TB_KEY_ENTER:        ch = '\n'; break;
+                            case TB_KEY_SPACE:        ch = ' '; break;
                             case TB_KEY_ESC:          ch = 0x1B; break;
                             case 0x7F:                ch = 0x7F; break;//Backspace
                             case TB_KEY_ARROW_UP:     ch = 0x80; break;

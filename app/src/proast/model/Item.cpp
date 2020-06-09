@@ -4,19 +4,31 @@
 
 namespace proast { namespace model { 
 
-    std::string hr(Status status)
+    std::string hr(State state)
     {
-        switch (status)
+        switch (state)
         {
-            case Status::Todo: return "todo";
-            case Status::InDesign: return "design";
-            case Status::Designed: return "designed";
-            case Status::Implementing: return "implementing";
-            case Status::Implemented: return "implemented";
-            case Status::Done: return "done";
+            case State::Unclear: return "Unclear";
+            case State::Clear: return "Clear";
+            case State::Thinking: return "Thinking";
+            case State::Designed: return "Designed";
+            case State::Implementing: return "Implementing";
+            case State::Done: return "Done";
         }
         return "";
     }
+    std::optional<State> to_status(const std::string &str)
+    {
+        if (false) {}
+        else if (str == "Unclear") {return State::Unclear;}
+        else if (str == "Clear") {return State::Clear;}
+        else if (str == "Thinking") {return State::Thinking;}
+        else if (str == "Designed") {return State::Designed;}
+        else if (str == "Implementing") {return State::Implementing;}
+        else if (str == "Done") {return State::Done;}
+        return std::nullopt;
+    }
+
     std::string hr(Priority prio)
     {
         switch (prio)
@@ -28,6 +40,16 @@ namespace proast { namespace model {
         }
         return "";
     }
+    std::optional<Priority> to_priority(const std::string &str)
+    {
+        if (false) {}
+        else if (str == "Must") {return Priority::Must;}
+        else if (str == "Should") {return Priority::Should;}
+        else if (str == "Could") {return Priority::Could;}
+        else if (str == "Wont") {return Priority::Wont;}
+        return std::nullopt;
+    }
+
     std::string hr(Type type)
     {
         switch (type)
@@ -53,9 +75,9 @@ namespace proast { namespace model {
         return "";
     }
 
-    std::string Item::key_as_title() const
+    std::string key_as_title(const std::string &str)
     {
-        auto res = key;
+        auto res = str;
 
         //Replace '_' with ' '
         for (auto &ch: res)
@@ -68,6 +90,26 @@ namespace proast { namespace model {
         //Capitalize
         if (!res.empty())
             res[0] = std::toupper(res[0]);
+
+        return res;
+    }
+    std::string title_as_key(const std::string &str)
+    {
+        auto res = str;
+
+        for (auto &ch: res)
+        {
+            //Replace ' ' with '_'
+            switch (ch)
+            {
+                case ' ': ch = '_'; break;
+                default: break;
+            }
+
+            //Decapitalize
+            /* if ('A' <= ch && ch <= 'Z') */
+                /* ch = std::tolower(ch); */
+        }
 
         return res;
     }

@@ -14,6 +14,7 @@ namespace proast { namespace presenter {
             case State::RegisterBookmark: return "RegisterBookmark";
             case State::LoadBookmark: return "LoadBookmark";
             case State::SetType: return "SetType";
+            case State::SetState: return "SetState";
             default: break;
         }
         return "<Unknown State>";

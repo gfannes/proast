@@ -16,7 +16,7 @@ namespace proast { namespace presenter {
     };
     enum class State
     {
-        Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, SetType,
+        Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, SetType, SetState, Command,
     };
     std::string hr(State state);
 
@@ -37,12 +37,14 @@ namespace proast { namespace presenter {
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool is_final) = 0;
-            virtual bool commander_remove() = 0;
+            virtual bool commander_remove(model::Removable) = 0;
             virtual bool commander_register_bookmark(char32_t) = 0;
             virtual bool commander_load_bookmark(char32_t) = 0;
             virtual bool commander_set_type(char32_t) = 0;
+            virtual bool commander_set_state(char32_t) = 0;
             virtual bool commander_sort() = 0;
-            virtual bool commander_open_shell() = 0;
+            virtual bool commander_open_directory(bool with_shell) = 0;
+            virtual bool commander_paste(bool insert) = 0;
         };
 
         //Set the events listener
@@ -118,7 +120,7 @@ namespace proast { namespace presenter {
                                   break;
 
                                    //Add item
-                        case 'i': add_insert_ = true;  change_state_(State::Add); break;
+                        case 'O': add_insert_ = true;  change_state_(State::Add); break;
                         case 'o': add_insert_ = false; change_state_(State::Add); break;
 
                                   //Add link
@@ -130,6 +132,10 @@ namespace proast { namespace presenter {
                                   //Remove item
                         case 'd': change_state_(State::Remove); break;
 
+                                  //Paste
+                        case 'P': MSS(events_->commander_paste(true)); break;
+                        case 'p': MSS(events_->commander_paste(false)); break;
+
                                   //Cost
                         case 'c': change_state_(State::Cost); break;
 
@@ -137,19 +143,24 @@ namespace proast { namespace presenter {
                         case 'm': change_state_(State::RegisterBookmark); break;
                         case '\'': change_state_(State::LoadBookmark); break;
 
+                                  //State
+                        case 't': change_state_(State::SetState); break;
+
                                   //Type
-                        case 't': change_state_(State::SetType); break;
+                        case 'T': change_state_(State::SetType); break;
 
-                                  //Sort
-                        case 's': MSS(events_->commander_sort()); break;
+                                  //Open shell/browser
+                        case 's': MSS(events_->commander_open_directory(false)); break;
+                        case 'S': MSS(events_->commander_open_directory(true)); break;
 
-                                  //Open shell
-                        case 'S': MSS(events_->commander_open_shell()); break;
+                                  //Command
+                        case ':': change_state_(State::Command); break;
                     }
                     break;
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::Command:
                     switch (ch)
                     {
                         case '\n':    
@@ -180,9 +191,11 @@ namespace proast { namespace presenter {
                 case State::Remove:
                     switch (ch)
                     {
-                        case 'd': change_state_(State::Idle); break;
+                        case 'd': removable_ = model::Removable::Node; change_state_(State::Idle); break;
+                        case 'D': removable_ = model::Removable::File;  change_state_(State::Idle); break;
+                        case '!': removable_ = model::Removable::Folder;  change_state_(State::Idle); break;
                         default:
-                                  remove_ = false;
+                                  removable_.reset();
                                   change_state_(State::Idle);
                                   break;
                     }
@@ -212,6 +225,18 @@ namespace proast { namespace presenter {
                             break;
                     }
                     break;
+                case State::SetState:
+                    switch (ch)
+                    {
+                        case 0x1B://Escape
+                            change_state_(State::Idle);
+                            break;
+                        default:
+                            if (events_ && events_->commander_set_state(ch))
+                                change_state_(State::Idle);
+                            break;
+                    }
+                    break;
             }
             MSS_END();
         }
@@ -235,12 +260,13 @@ namespace proast { namespace presenter {
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::Command:
                     user_input_cb_(true);
                     user_input_cb_ = nullptr;
                     break;
                 case State::Remove:
-                    if (remove_ && events_)
-                        events_->commander_remove();
+                    if (removable_ && events_)
+                        events_->commander_remove(*removable_);
                     break;
                 default:
                     break;
@@ -254,6 +280,7 @@ namespace proast { namespace presenter {
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::Command:
                     user_input_.clear();
                     switch (state_)
                     {
@@ -278,11 +305,23 @@ namespace proast { namespace presenter {
                                     events_->commander_cost(user_input_, is_final);
                             };
                             break;
+                        case State::Command:
+                            user_input_cb_ = [&](bool is_final)
+                            {
+                                if (!is_final)
+                                    return;
+                                if (!events_)
+                                    return;
+                                if (false) {}
+                                else if (user_input_ == "sort") events_->commander_sort();
+                                //TODO: mention this is an unknown command
+                            };
+                            break;
                     }
                     user_input_cb_(false);
                     break;
                 case State::Remove:
-                    remove_ = true;
+                    removable_.reset();
                     break;
                 case State::RegisterBookmark:
                     bookmark_cb_ = [&](char32_t ch)
@@ -309,7 +348,7 @@ namespace proast { namespace presenter {
         std::string user_input_;
         bool add_insert_ = false;
         std::function<void(bool)> user_input_cb_;
-        bool remove_ = false;
+        std::optional<model::Removable> removable_;
 
         std::function<void(char32_t)> bookmark_cb_;
     };

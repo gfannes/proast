@@ -27,7 +27,7 @@ namespace proast { namespace model {
     private:
         std::string index_name_ = "readme";
         std::string extension_ = ".md";
-        std::string cost_unit_ = "hours";
+        std::string cost_unit_ = "days";
     };
 
 } } 

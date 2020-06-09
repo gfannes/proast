@@ -310,10 +310,10 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
-        bool commander_remove() override
+        bool commander_remove(model::Removable removable) override
         {
             MSS_BEGIN(bool);
-            MSS(model_.remove_current());
+            MSS(model_.remove_current(removable));
             MSS_END();
         }
         bool commander_register_bookmark(char32_t ch) override
@@ -337,9 +337,28 @@ namespace proast { namespace presenter {
                 case 'r': type = model::Type::Requirement; break;
                 case 'd': type = model::Type::Design; break;
                 case 'f': type = model::Type::Feature; break;
+                case '?': break;
+                default: return true; break;
             }
-            if (type)
-                MSS(model_.set_type(*type));
+            MSS(model_.set_type(type));
+            MSS_END();
+        }
+        bool commander_set_state(char32_t ch) override
+        {
+            MSS_BEGIN(bool);
+            std::optional<model::State> state;
+            switch (ch)
+            {
+                case 'u': state = model::State::Unclear; break;
+                case 'c': state = model::State::Clear; break;
+                case 't': state = model::State::Thinking; break;
+                case 'd': state = model::State::Designed; break;
+                case 'i': state = model::State::Implementing; break;
+                case 'D': state = model::State::Done; break;
+                case '?': break;
+                default: return true; break;
+            }
+            MSS(model_.set_state(state));
             MSS_END();
         }
         bool commander_sort() override
@@ -355,7 +374,7 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
-        bool commander_open_shell() override
+        bool commander_open_directory(bool with_shell) override
         {
             MSS_BEGIN(bool);
 
@@ -367,27 +386,31 @@ namespace proast { namespace presenter {
 
             auto directory = me_node->value.directory;
             {
-                if (!directory)
+                if (!directory || !std::filesystem::exists(*directory))
                     if (!cnixpath.empty())
                     {
                         const auto parent_node = cnixpath.back().node;
                         cnixpath.pop_back();
                         directory = parent_node->value.directory;
                     }
-                MSS(!!directory, log::stream() << "Me nor parent have a valid directory" << std::endl);
+                MSS(!!directory && std::filesystem::exists(*directory), log::stream() << "Me nor parent have a valid directory" << std::endl);
             }
 
             view_.pause([&](){
                     const auto orig_dir = std::filesystem::current_path();
                     std::filesystem::current_path(*directory);
 
-                    std::ostringstream oss;
-                    oss << "bash";
-                    std::system(oss.str().c_str());
+                    std::system(with_shell ? "bash" : "ranger");
 
                     std::filesystem::current_path(orig_dir);
                     });
 
+            MSS_END();
+        }
+        bool commander_paste(bool insert) override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.paste(insert));
             MSS_END();
         }
 
@@ -475,11 +498,12 @@ namespace proast { namespace presenter {
                 details_kv_["title"] = item.title;
                 if (item.link)
                     details_kv_["link"] = model::to_string(*item.link);
-                details_kv_["status"] = model::hr(item.status);
+                if (item.state)
+                    details_kv_["state"] = model::hr(*item.state);
                 if (item.deadline)
                     details_kv_["deadline"] = *item.deadline;
                 if (item.my_cost)
-                    details_kv_["cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
+                    details_kv_["my_cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
                 if (item.directory)
                     details_kv_["directory"] = item.directory->string();
                 if (item.content_fp)

@@ -14,29 +14,36 @@ namespace proast { namespace model {
     //For now, std::string was chosen because this can be compared when using the format YYYYMMDD
     using DateTime = std::string;
 
-    enum class Status
+    enum class State
     {
-        Todo, InDesign, Designed, Implementing, Implemented, Done,
+        Unclear, Clear, Thinking, Designed, Implementing, Done,
     };
-    std::string hr(Status);
+    std::string hr(State);
+    inline std::string hr(std::optional<State> state) {if (state) return hr(*state); return "nullopt";}
+    std::optional<State> to_status(const std::string &str);
 
     enum class Priority
     {
         Must, Should, Could, Wont,
     };
     std::string hr(Priority);
+    std::optional<Priority> to_priority(const std::string &str);
 
     enum class Type
     {
         Requirement, Design, Feature, Free, File, Directory, 
     };
     std::string hr(Type);
+    inline std::string hr(std::optional<Type> type) {if (type) return hr(*type); return "nullopt";}
 
     enum class Style
     {
         Title, Section, Bullet, Margin,
     };
     std::string hr(Style);
+
+    std::string key_as_title(const std::string &str);
+    std::string title_as_key(const std::string &str);
 
     class Item
     {
@@ -50,13 +57,11 @@ namespace proast { namespace model {
         std::optional<DateTime> deadline;
         std::optional<double> my_cost;
         std::optional<Style> style;
-        Status status = Status::Todo;
+        std::optional<State> state;
         std::optional<Path> link;
         std::optional<Priority> priority;
 
         std::optional<std::filesystem::path> content_fp;
-
-        std::string key_as_title() const;
 
         std::vector<std::string> description;
 

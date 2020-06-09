@@ -4,6 +4,7 @@
 #include <gubg/naft/Range.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/OnlyOnce.hpp>
+#include <gubg/map.hpp>
 #include <gubg/mss.hpp>
 #include <sstream>
 #include <optional>
@@ -401,43 +402,81 @@ namespace proast { namespace model { namespace markdown {
             MSS_END();
         };
 
+        std::optional<std::string> metadata;
+        auto process_metadata = [&]()
+        {
+            std::optional<std::string> str;
+            str.swap(metadata);
+
+            if (!str)
+                return;
+
+            gubg::naft::Range range0{*str};
+            if (range0.pop_tag("proast"))
+            {
+                auto attrs = range0.pop_attrs();
+                gubg::with_value(attrs, "state", [&](const std::string &str){node.value.state = to_status(str);});
+                gubg::with_value(attrs, "priority", [&](const std::string &str){node.value.priority = to_priority(str);});
+                gubg::with_value(attrs, "my_cost", [&](const std::string &str){node.value.my_cost = std::stod(str);});
+            }
+        };
+
         auto process_line_raw = [&](gubg::Strange &line)
         {
             MSS_BEGIN(bool);
 
-            if (line.pop_if("# "))
+            if (metadata)
             {
-                MSS(process_prev_line(""));
-                MSS(process_line(line.str(), "# "));
-            }
-            else if (line.pop_if("==="))
-            {
-                MSS(process_prev_line("==="));
-            }
-            else if (line.pop_if("## "))
-            {
-                MSS(process_prev_line(""));
-                process_line(line.str(), "## ");
-            }
-            else if (line.pop_if("### "))
-            {
-                MSS(process_prev_line(""));
-                MSS(process_line(line.str(), "### "));
-            }
-            else if (line.pop_if("* "))
-            {
-                MSS(process_prev_line(""));
-                MSS(process_line(line.str(), "* "));
-            }
-            else if (line.pop_if("  "))
-            {
-                MSS(process_prev_line(""));
-                MSS(process_line(line.str(), "  "));
+                if (line.pop_if("-->"))
+                {
+                    process_metadata();
+                }
+                else
+                {
+                *metadata += line.str();
+                }
             }
             else
             {
-                MSS(process_prev_line(""));
-                prev_line = line;
+                if (line.pop_if("<!--"))
+                {
+                    MSS(process_prev_line(""));
+                    metadata.emplace();
+                }
+                else if (line.pop_if("# "))
+                {
+                    MSS(process_prev_line(""));
+                    MSS(process_line(line.str(), "# "));
+                }
+                else if (line.pop_if("==="))
+                {
+                    MSS(process_prev_line("==="));
+                }
+                else if (line.pop_if("## "))
+                {
+                    MSS(process_prev_line(""));
+                    process_line(line.str(), "## ");
+                }
+                else if (line.pop_if("### "))
+                {
+                    MSS(process_prev_line(""));
+                    MSS(process_line(line.str(), "### "));
+                }
+                else if (line.pop_if("* "))
+                {
+                    MSS(process_prev_line(""));
+                    MSS(process_line(line.str(), "* "));
+                }
+                else if (line.pop_if("  "))
+                {
+                    MSS(process_prev_line(""));
+                    MSS(process_line(line.str(), "  "));
+                }
+                else
+                {
+                    MSS(process_prev_line(""));
+                    prev_line = line;
+                }
             }
 
             MSS_END();
@@ -495,9 +534,12 @@ namespace proast { namespace model { namespace markdown {
 
         oss << "<!--" << std::endl;
         oss << "[proast]";
-        oss << "(status:" << hr(node.value.status) << ")";
+        if (node.value.state)
+            oss << "(state:" << hr(*node.value.state) << ")";
         if (node.value.priority)
-            oss << "(prio:" << hr(*node.value.priority) << ")";
+            oss << "(priority:" << hr(*node.value.priority) << ")";
+        if (node.value.my_cost)
+            oss << "(my_cost:" << *node.value.my_cost << ")";
         oss << std::endl;
         oss << "-->" << std::endl;
 

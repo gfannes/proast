@@ -22,6 +22,11 @@
 
 namespace proast { namespace model { 
 
+    enum class Removable
+    {
+        Node, File, Folder,
+    };
+
     class Model
     {
     public:
@@ -97,12 +102,13 @@ namespace proast { namespace model {
 
             MSS_END();
         }
-        bool set_type(Type type)
+        bool set_type(std::optional<Type> type)
         {
             MSS_BEGIN(bool);
             log::stream() << "Setting " << to_string(path_) << " to " << hr(type) << std::endl;
 
             Node *node;
+            MSS(!!tree_);
             MSS(tree_->find(node, path_));
 
             if (node->value.type)
@@ -131,10 +137,36 @@ namespace proast { namespace model {
 
             MSS_END();
         }
+        bool set_state(std::optional<State> state)
+        {
+            MSS_BEGIN(bool);
+
+            NodeIXPath nixpath;
+            MSS(!!tree_);
+            MSS(tree_->find(nixpath, path_));
+
+            auto me_node = nixpath.back().node;
+            nixpath.pop_back();
+
+            me_node->value.state = state;
+
+            if (!me_node->value.is_embedded())
+            {
+                MSS(save_content_(*me_node));
+            }
+            else
+            {
+                auto parent_node = nixpath.back().node;
+                nixpath.pop_back();
+                MSS(save_content_(*parent_node));
+            }
+
+            MSS_END();
+        }
 
         //insert==true: nest new item _under_ path_
         //insert==false: add new item _next to_ path_
-        bool add_item(const std::string &key, bool insert)
+        bool add_item(const std::string &str, bool insert)
         {
             MSS_BEGIN(bool);
 
@@ -164,16 +196,18 @@ namespace proast { namespace model {
                 }
 
             auto &new_item = parent_node->childs.append();
-            new_item.value.key = key;
+            new_item.value.key = title_as_key(str);
+            new_item.value.title = key_as_title(str);
             new_item.value.type = Type::Feature;
             if (parent_node->value.directory)
-                new_item.value.directory = *parent_node->value.directory/key;
+                new_item.value.directory = *parent_node->value.directory/new_item.value.key;
             if (new_item.value.directory)
             {
                 new_item.value.content_fp = current_config().content_fp_leaf(*new_item.value.directory);
                 std::ofstream fo{*new_item.value.content_fp};
             }
 
+            MSS(save_content_(new_item));
             MSS(save_content_(*parent_node));
 
             path_.push_back(new_item.value.key);
@@ -200,7 +234,7 @@ namespace proast { namespace model {
 
             MSS_END();
         }
-        bool rename_item(const std::string &new_key)
+        bool rename_item(const std::string &new_str)
         {
             MSS_BEGIN(bool);
 
@@ -215,17 +249,25 @@ namespace proast { namespace model {
             auto parent_node = nixpath.back().node;
             nixpath.pop_back();
 
+            const auto new_key = title_as_key(new_str);
             if (new_key == me_node->value.key)
                 //Nothing to rename
                 return true;
 
             me_node->value.key = new_key;
+            bool save_me = false;
+            if (me_node->value.title.empty())
+            {
+                me_node->value.title = key_as_title(new_str);
+                save_me = true;
+            }
 
             if (me_node->value.content_fp)
             {
                 MSS(!!me_node->value.directory);
 
                 const auto orig_content_fp = *me_node->value.content_fp;
+                const auto orig_directory = *me_node->value.directory;
                 const bool is_leaf_fp = (orig_content_fp == current_config().content_fp_leaf(*me_node->value.directory));
 
                 //Update directory
@@ -233,50 +275,28 @@ namespace proast { namespace model {
 
                 //Update content_fp
                 if (is_leaf_fp)
+                {
                     me_node->value.content_fp = current_config().content_fp_leaf(*me_node->value.directory);
+
+                    std::filesystem::create_directories(me_node->value.content_fp->parent_path());
+                    std::filesystem::rename(orig_content_fp, *me_node->value.content_fp);
+                }
                 else
+                {
                     me_node->value.content_fp = current_config().content_fp_nonleaf(*me_node->value.directory);
 
-                std::filesystem::rename(orig_content_fp, *me_node->value.content_fp);
+                    std::filesystem::create_directories(*me_node->value.directory);
+                    std::filesystem::rename(orig_directory, *me_node->value.directory);
+                }
             }
+
+            if (save_me)
+                MSS(save_content_(*me_node));
             MSS(save_content_(*parent_node));
 
             path_.pop_back();
             path_.push_back(new_key);
             MSS(reload_());
-#if 0
-            const Node *me;
-            MSS(get(me, path_));
-
-            auto new_path = path_;
-            {
-                MSS(!new_path.empty());
-                new_path.pop_back();
-                new_path.push_back(new_key);
-            }
-
-            MSS(!!me->value.directory);
-            const auto &directory = *me->value.directory;
-            const auto new_directory = local_filepath(new_path);
-
-            MSS(!std::filesystem::exists(new_directory), log::stream() << "Error: When renaming " << directory << " into " << new_directory << ": target directory already exists" << std::endl);
-
-            const auto new_content_fp_nonleaf = current_config().content_fp_leaf(new_directory);
-            MSS(!std::filesystem::exists(new_content_fp_nonleaf), log::stream() << "Error: When renaming " << directory << " into " << new_content_fp_nonleaf << ": target file already exists" << std::endl);
-
-            if (std::filesystem::exists(directory))
-            {
-                std::filesystem::rename(directory, new_directory);
-            }
-            else
-            {
-                MSS(!!me->value.content_fp);
-                std::filesystem::rename(*me->value.content_fp, new_content_fp_nonleaf);
-            }
-
-            path_ = new_path;
-            MSS(reload_());
-#endif
 
             MSS_END();
         }
@@ -304,7 +324,7 @@ namespace proast { namespace model {
             MSS_END();
         }
 
-        bool remove_current()
+        bool remove_current(Removable removable)
         {
             MSS_BEGIN(bool);
 
@@ -319,7 +339,11 @@ namespace proast { namespace model {
             nixpath.pop_back();
             auto parent_node = nixpath.back().node;
 
-            parent_node->childs.remove_if([&](const auto &node){return &node == me_node;});
+            parent_node->childs.remove_if([&](const auto &node){
+                    const bool do_remove = &node == me_node;
+                    if (do_remove) cut_item_ = node;
+                    return do_remove;
+                    });
             MSS(save_content_(*parent_node));
 
             path_.pop_back();
@@ -328,7 +352,97 @@ namespace proast { namespace model {
             else if (parent_node->childs.size() > 1)
                 path_.push_back(parent_node->childs.nodes[me_ix-1].value.key);
 
+            if (cut_item_)
+                switch (removable)
+                {
+                    case Removable::Node:
+                        break;
+                    case Removable::File:
+                        if (cut_item_->value.content_fp)
+                            std::filesystem::remove(*cut_item_->value.content_fp);
+                        cut_item_.reset();
+                        break;
+                    case Removable::Folder:
+                        if (cut_item_->value.content_fp)
+                            std::filesystem::remove(*cut_item_->value.content_fp);
+                        if (cut_item_->value.directory && std::filesystem::exists(*cut_item_->value.directory))
+                            std::filesystem::remove_all(*cut_item_->value.directory);
+                        cut_item_.reset();
+                        break;
+                }
+
             MSS(reload_());
+
+            MSS_END();
+        }
+        bool paste(bool insert)
+        {
+            MSS_BEGIN(bool);
+
+            if (!cut_item_)
+            {
+                log::stream() << "Warning: there is no node to paste" << std::endl;
+                return true;
+            }
+
+            std::optional<std::size_t> child_ix;
+
+            NodeIXPath nixpath;
+            MSS(!!tree_);
+            MSS(tree_->find(nixpath, path_));
+            assert(nixpath.size() == path_.size());
+
+            if (!insert)
+                if (!nixpath.empty())
+                {
+                    child_ix = nixpath.back().ix;
+                    nixpath.pop_back();
+                    path_.pop_back();
+                }
+
+            auto parent_node = nixpath.back().node;
+            if (!child_ix)
+                child_ix = parent_node->childs.size();
+
+            auto &child = parent_node->childs.insert(*child_ix);
+            child = *cut_item_;
+
+            std::vector<const Node *> pp;
+            pp.push_back(parent_node);
+            auto update_node = [&](auto &node, const auto &path, unsigned int visit_count)
+            {
+                if (visit_count == 0)
+                {
+                    if (node.value.content_fp)
+                    {
+                        assert(!!node.value.directory);
+                        const auto orig_content_fp = *node.value.content_fp;
+                        const bool is_leaf = (orig_content_fp == current_config().content_fp_leaf(*node.value.directory));
+                        node.value.directory = *pp.back()->value.directory/node.value.key;
+                        if (is_leaf)
+                            node.value.content_fp = current_config().content_fp_leaf(*node.value.directory);
+                        else
+                            node.value.content_fp = current_config().content_fp_nonleaf(*node.value.directory);
+
+                        std::filesystem::create_directories(node.value.content_fp->parent_path());
+                        std::filesystem::rename(orig_content_fp, *node.value.content_fp);
+                    }
+
+                    pp.push_back(&node);
+                }
+                else
+                {
+                    pp.pop_back();
+                }
+            };
+            gubg::tree::Path p;
+            child.dfs(update_node, p);
+
+            cut_item_.reset();
+
+            MSS(save_content_(*parent_node));
+
+            path_.push_back(child.value.key);
 
             MSS_END();
         }
@@ -414,7 +528,7 @@ namespace proast { namespace model {
             path_ = path;
         }
 
-        bool get(const Forest *&forest, std::size_t &ix, const Path &path)
+        bool get(const Forest *&forest, std::size_t &ix, const Path &path) const
         {
             MSS_BEGIN(bool);
 
@@ -428,7 +542,7 @@ namespace proast { namespace model {
 
             MSS_END();
         }
-        bool get(const Node *&node, const Path &path)
+        bool get(const Node *&node, const Path &path) const
         {
             MSS_BEGIN(bool);
             const Forest *forest;
@@ -505,8 +619,11 @@ namespace proast { namespace model {
                 std::string markdown;
                 MSS(markdown::write_string(markdown, node));
 
-                log::stream() << "Saving markdown to " << *node.value.content_fp << std::endl;
-                log::stream() << markdown << std::endl;
+                if (false)
+                {
+                    log::stream() << "Saving markdown to " << *node.value.content_fp << std::endl;
+                    log::stream() << markdown << std::endl;
+                }
                 MSS(gubg::file::write(markdown, *node.value.content_fp));
             }
             MSS_END();
@@ -528,6 +645,9 @@ namespace proast { namespace model {
 
             std::ofstream fo{metadata_fn};
             MSS(fo.good());
+
+            const Node *active_node;
+            MSS(get(active_node, path_));
 
             Path path;
             auto ftor = [&](auto &node, const auto &int_path, auto visit_count)
@@ -559,6 +679,8 @@ namespace proast { namespace model {
                     fo << ']';
                     if (!node.value.active_child_key.empty())
                         fo << "(active_child_key:" << node.value.active_child_key << ")";
+                    if (&node == active_node)
+                        fo << "(active)";
                     fo << std::endl;
                 }
                 MSS_END();
@@ -599,6 +721,10 @@ namespace proast { namespace model {
                     if (tree_->find(node, path))
                         node->value.active_child_key = it->second;
                 }
+                it = attrs.find("active");
+                if (it != attrs.end())
+                    if (path_.empty())
+                        path_ = path;
             }
 
             if (std::filesystem::exists(bookmarks_fn_()))
@@ -615,6 +741,7 @@ namespace proast { namespace model {
 
             for (const auto &root: roots_)
             {
+                L(C(root));
                 Config::create_default(root);
 
                 const std::string name = root.stem().string();
@@ -624,15 +751,18 @@ namespace proast { namespace model {
                 MSS(config.reload(config_fp), log::stream() << "Error: Could not load the configuration from " << config_fp << std::endl);
 
                 MSS(tree->load(root, config));
-
-                if (path_.empty())
-                    path_ = tree->first_root_path();
             }
 
             tree_.swap(tree);
 
             if (!load_metadata_())
                 log::stream() << "Warning: Could not load metadata" << std::endl;
+
+            if (path_.empty())
+            {
+                MSS(!!tree_);
+                path_ = tree_->first_root_path();
+            }
 
             MSS_END();
         }
@@ -646,6 +776,8 @@ namespace proast { namespace model {
         Path path_;
 
         Bookmarks bookmarks_;
+
+        std::optional<Node> cut_item_;
 
         using Clock = std::chrono::high_resolution_clock;
         std::optional<Clock::time_point> save_tp_ = Clock::now();
