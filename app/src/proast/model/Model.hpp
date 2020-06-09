@@ -724,7 +724,11 @@ namespace proast { namespace model {
                 it = attrs.find("active");
                 if (it != attrs.end())
                     if (path_.empty())
-                        path_ = path;
+                    {
+                        const Node *n;
+                        if (get(n, path))
+                            path_ = path;
+                    }
             }
 
             if (std::filesystem::exists(bookmarks_fn_()))
