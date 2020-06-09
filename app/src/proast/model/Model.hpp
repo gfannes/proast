@@ -163,6 +163,29 @@ namespace proast { namespace model {
 
             MSS_END();
         }
+        bool set_cost(const std::string &cost_str)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            Node *node;
+            MSS(tree_->find(node, path_));
+
+            try
+            {
+                if (cost_str.empty())
+                    node->value.my_cost.reset();
+                else
+                    node->value.my_cost = std::stod(cost_str);
+            }
+            catch (const std::invalid_argument &exc) { return false; }
+
+            MSS(save_content_(*node));
+            MSS(reload_());
+
+            MSS_END();
+        }
 
         //insert==true: nest new item _under_ path_
         //insert==false: add new item _next to_ path_
@@ -255,6 +278,8 @@ namespace proast { namespace model {
                 return true;
 
             me_node->value.key = new_key;
+
+            //Set the title, if not already done so
             bool save_me = false;
             if (me_node->value.title.empty())
             {
@@ -262,33 +287,7 @@ namespace proast { namespace model {
                 save_me = true;
             }
 
-            if (me_node->value.content_fp)
-            {
-                MSS(!!me_node->value.directory);
-
-                const auto orig_content_fp = *me_node->value.content_fp;
-                const auto orig_directory = *me_node->value.directory;
-                const bool is_leaf_fp = (orig_content_fp == current_config().content_fp_leaf(*me_node->value.directory));
-
-                //Update directory
-                me_node->value.directory = me_node->value.directory->parent_path()/new_key;
-
-                //Update content_fp
-                if (is_leaf_fp)
-                {
-                    me_node->value.content_fp = current_config().content_fp_leaf(*me_node->value.directory);
-
-                    std::filesystem::create_directories(me_node->value.content_fp->parent_path());
-                    std::filesystem::rename(orig_content_fp, *me_node->value.content_fp);
-                }
-                else
-                {
-                    me_node->value.content_fp = current_config().content_fp_nonleaf(*me_node->value.directory);
-
-                    std::filesystem::create_directories(*me_node->value.directory);
-                    std::filesystem::rename(orig_directory, *me_node->value.directory);
-                }
-            }
+            MSS(update_node_(*me_node, *parent_node));
 
             if (save_me)
                 MSS(save_content_(*me_node));
@@ -296,29 +295,6 @@ namespace proast { namespace model {
 
             path_.pop_back();
             path_.push_back(new_key);
-            MSS(reload_());
-
-            MSS_END();
-        }
-        bool set_cost(const std::string &cost_str)
-        {
-            MSS_BEGIN(bool);
-
-            MSS(!!tree_);
-
-            Node *node;
-            MSS(tree_->find(node, path_));
-
-            try
-            {
-                if (cost_str.empty())
-                    node->value.my_cost.reset();
-                else
-                    node->value.my_cost = std::stod(cost_str);
-            }
-            catch (const std::invalid_argument &exc) { return false; }
-
-            MSS(save_content_(*node));
             MSS(reload_());
 
             MSS_END();
@@ -364,7 +340,12 @@ namespace proast { namespace model {
                         break;
                     case Removable::Folder:
                         if (cut_item_->value.content_fp)
-                            std::filesystem::remove(*cut_item_->value.content_fp);
+                        {
+                            if (std::filesystem::is_regular_file(*cut_item_->value.content_fp))
+                                std::filesystem::remove(*cut_item_->value.content_fp);
+                            else
+                                std::filesystem::remove_all(*cut_item_->value.content_fp);
+                        }
                         if (cut_item_->value.directory && std::filesystem::exists(*cut_item_->value.directory))
                             std::filesystem::remove_all(*cut_item_->value.directory);
                         cut_item_.reset();
@@ -407,36 +388,7 @@ namespace proast { namespace model {
             auto &child = parent_node->childs.insert(*child_ix);
             child = *cut_item_;
 
-            std::vector<const Node *> pp;
-            pp.push_back(parent_node);
-            auto update_node = [&](auto &node, const auto &path, unsigned int visit_count)
-            {
-                if (visit_count == 0)
-                {
-                    if (node.value.content_fp)
-                    {
-                        assert(!!node.value.directory);
-                        const auto orig_content_fp = *node.value.content_fp;
-                        const bool is_leaf = (orig_content_fp == current_config().content_fp_leaf(*node.value.directory));
-                        node.value.directory = *pp.back()->value.directory/node.value.key;
-                        if (is_leaf)
-                            node.value.content_fp = current_config().content_fp_leaf(*node.value.directory);
-                        else
-                            node.value.content_fp = current_config().content_fp_nonleaf(*node.value.directory);
-
-                        std::filesystem::create_directories(node.value.content_fp->parent_path());
-                        std::filesystem::rename(orig_content_fp, *node.value.content_fp);
-                    }
-
-                    pp.push_back(&node);
-                }
-                else
-                {
-                    pp.pop_back();
-                }
-            };
-            gubg::tree::Path p;
-            child.dfs(update_node, p);
+            MSS(update_node_(child, *parent_node));
 
             cut_item_.reset();
 
@@ -607,6 +559,45 @@ namespace proast { namespace model {
             if (!fn.empty())
                 fn /= "bookmarks.naft";
             return fn;
+        }
+
+        bool update_node_(Node &node, const Node &new_parent) const
+        {
+            MSS_BEGIN(bool);
+
+            std::vector<const Node *> parent_stack;
+            parent_stack.push_back(&new_parent);
+            auto my_update_node = [&](auto &node, const auto &path, unsigned int visit_count)
+            {
+                if (visit_count == 0)
+                {
+                    if (node.value.content_fp)
+                    {
+                        assert(!!node.value.directory);
+                        const auto orig_content_fp = *node.value.content_fp;
+                        const bool is_leaf = (orig_content_fp == current_config().content_fp_leaf(*node.value.directory));
+                        node.value.directory = *parent_stack.back()->value.directory/node.value.key;
+                        if (is_leaf)
+                            node.value.content_fp = current_config().content_fp_leaf(*node.value.directory);
+                        else
+                            node.value.content_fp = current_config().content_fp_nonleaf(*node.value.directory);
+
+                        std::filesystem::create_directories(node.value.content_fp->parent_path());
+                        std::filesystem::rename(orig_content_fp, *node.value.content_fp);
+                    }
+
+                    parent_stack.push_back(&node);
+                }
+                else
+                {
+                    parent_stack.pop_back();
+                }
+            };
+
+            gubg::tree::Path p;
+            node.dfs(my_update_node, p);
+
+            MSS_END();
         }
 
         bool save_content_(const Node &node) const

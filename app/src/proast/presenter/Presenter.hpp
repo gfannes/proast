@@ -465,7 +465,14 @@ namespace proast { namespace presenter {
             {
                 const model::Forest *me_forest = nullptr;
                 std::size_t me_ix;
-                MSS(model_.get(me_forest, me_ix, path), log::stream() << "Error: could not get me and childs for path " << model::to_string(path) << "\n");
+                for (; !path.empty(); path.pop_back())
+                {
+                    const auto ok = model_.get(me_forest, me_ix, path);
+                    if (ok)
+                        break;
+                    log::stream() << "Warning: could not get me and childs for path " << model::to_string(path) << std::endl;
+                }
+                MSS(!path.empty(), log::stream() << "Error: the complete path is invalid" << std::endl);
                 fill_lb(me_lb_, me_forest, me_ix);
 
                 const auto &me = me_forest->nodes[me_ix];
