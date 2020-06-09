@@ -287,7 +287,12 @@ namespace proast { namespace model {
                 save_me = true;
             }
 
+            const auto orig_directory = me_node->value.directory;
+
             MSS(update_node_(*me_node, *parent_node));
+
+            if (orig_directory && std::filesystem::exists(*orig_directory))
+                std::filesystem::remove_all(*orig_directory);
 
             if (save_me)
                 MSS(save_content_(*me_node));
