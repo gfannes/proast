@@ -7,6 +7,7 @@
 #include <gubg/naft/Range.hpp>
 #include <map>
 #include <list>
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -191,6 +192,54 @@ namespace proast { namespace model {
 
             cnixpath.emplace_back(&my_forest->nodes[my_ix], my_ix);
         }
+
+        MSS_END();
+    }
+
+    bool Tree::compute_aggregates()
+    {
+        MSS_BEGIN(bool);
+
+        std::vector<double> total_stack;
+        std::vector<double> done_stack;
+        auto ftor = [&](auto &node, const auto &path, unsigned int visit_count)
+        {
+            double fraction_done = 0;
+            if (node.value.state)
+                switch (*node.value.state)
+                {
+                    case State::Unclear:      fraction_done = 0.0; break;
+                    case State::Clear:        fraction_done = 0.1; break;
+                    case State::Thinking:     fraction_done = 0.1; break;
+                    case State::Designed:     fraction_done = 0.3; break;
+                    case State::Implementing: fraction_done = 0.3; break;
+                    case State::Done:         fraction_done = 1.0; break;
+                }
+            if (visit_count == 0)
+            {
+                const auto my_cost = node.value.my_cost.value_or(0);
+                total_stack.push_back(my_cost);
+                done_stack.push_back(fraction_done*my_cost);
+                node.value.total_cost = total_stack.back();
+                node.value.done_cost = done_stack.back();
+            }
+            else
+            {
+                {
+                    const auto child_cost = total_stack.back();
+                    node.value.total_cost += child_cost;
+                    total_stack.pop_back();
+                    total_stack.back() = node.value.total_cost;
+                }
+                {
+                    const auto child_cost = done_stack.back();
+                    node.value.done_cost += child_cost;
+                    done_stack.pop_back();
+                    done_stack.back() = node.value.done_cost;
+                }
+            }
+        };
+        root_forest_.dfs(ftor);
 
         MSS_END();
     }

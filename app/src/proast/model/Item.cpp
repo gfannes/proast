@@ -107,8 +107,8 @@ namespace proast { namespace model {
             }
 
             //Decapitalize
-            /* if ('A' <= ch && ch <= 'Z') */
-                /* ch = std::tolower(ch); */
+            if ('A' <= ch && ch <= 'Z')
+                ch = std::tolower(ch);
         }
 
         return res;

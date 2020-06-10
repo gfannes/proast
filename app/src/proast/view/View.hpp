@@ -70,9 +70,17 @@ namespace proast { namespace view {
 
             Cursor cursor{parent_region_, 1};
 
-            gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
+            const auto meta_size = list_box.meta_size();
+            auto show_item = [&](const std::string &item, const std::string &meta, unsigned int attention, bool done, bool is_active)
             {
+                gubg::markup::Style style;
+                if (meta_size > 0)
+                {
+                    style.done = done;
+                    cursor.write(meta, style);
+                    style.done = false;
+                    cursor.write(std::string(meta_size-meta.size()+1, ' '), style);
+                }
                 style.attention = attention;
                 cursor.write(item, style);
                 cursor.newline();
@@ -87,11 +95,19 @@ namespace proast { namespace view {
 
             Cursor cursor{me_region_, 1};
 
-            gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
+            const auto meta_size = list_box.meta_size();
+            auto show_item = [&](const std::string &item, const std::string &meta, unsigned int attention, bool done, bool is_active)
             {
-                style.attention = attention;
+                gubg::markup::Style style;
                 style.italic = is_active;
+                if (meta_size > 0)
+                {
+                    style.done = done;
+                    cursor.write(meta, style);
+                    style.done = false;
+                    cursor.write(std::string(meta_size-meta.size()+1, ' '), style);
+                }
+                style.attention = attention;
                 cursor.write(item, style);
                 cursor.newline();
             };
@@ -105,9 +121,17 @@ namespace proast { namespace view {
 
             Cursor cursor{child_region_, 1};
 
-            gubg::markup::Style style;
-            auto show_item = [&](const std::string &item, unsigned int attention, bool is_active)
+            const auto meta_size = list_box.meta_size();
+            auto show_item = [&](const std::string &item, const std::string &meta, unsigned int attention, bool done, bool is_active)
             {
+                gubg::markup::Style style;
+                if (meta_size > 0)
+                {
+                    style.done = done;
+                    cursor.write(meta, style);
+                    style.done = false;
+                    cursor.write(std::string(meta_size-meta.size()+1, ' '), style);
+                }
                 style.attention = attention;
                 cursor.write(item, style);
                 cursor.newline();

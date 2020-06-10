@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <initializer_list>
+#include <algorithm>
 
 namespace proast { namespace presenter { 
 
@@ -13,11 +14,14 @@ namespace proast { namespace presenter {
         struct Entry
         {
             std::string text;
+            std::string meta;
             unsigned int attention = 0;
+            bool done = false;
 
             Entry() {}
             Entry(const std::string &text): text(text) {}
             Entry(const std::string &text, unsigned int attention): text(text), attention(attention) {}
+            Entry(const std::string &text, const std::string &meta, unsigned int attention): text(text), meta(meta), attention(attention) {}
         };
 
         ListBox() {}
@@ -40,7 +44,7 @@ namespace proast { namespace presenter {
             {
                 const auto &entry = entries[ix];
                 const bool is_active = (ix == active_ix);
-                ftor(entry.text, entry.attention, is_active);
+                ftor(entry.text, entry.meta, entry.attention, entry.done, is_active);
             }
         }
 
@@ -53,6 +57,14 @@ namespace proast { namespace presenter {
             }
             active_ix = ix;
             return true;
+        }
+
+        std::size_t meta_size() const
+        {
+            std::size_t size = 0;
+            for (const auto &entry: entries)
+                size = std::max(size, entry.meta.size());
+            return size;
         }
 
     private:

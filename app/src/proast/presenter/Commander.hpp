@@ -36,13 +36,13 @@ namespace proast { namespace presenter {
             virtual bool commander_open() = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
-            virtual bool commander_cost(const std::string &str, bool is_final) = 0;
+            virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
             virtual bool commander_remove(model::Removable) = 0;
             virtual bool commander_register_bookmark(char32_t) = 0;
             virtual bool commander_load_bookmark(char32_t) = 0;
             virtual bool commander_set_type(char32_t) = 0;
             virtual bool commander_set_state(char32_t) = 0;
-            virtual bool commander_sort() = 0;
+            virtual bool commander_command(const std::string &) = 0;
             virtual bool commander_open_directory(bool with_shell) = 0;
             virtual bool commander_paste(bool insert) = 0;
         };
@@ -137,7 +137,8 @@ namespace proast { namespace presenter {
                         case 'p': MSS(events_->commander_paste(false)); break;
 
                                   //Cost
-                        case 'c': change_state_(State::Cost); break;
+                        case 'c': new_cost_ = true;  change_state_(State::Cost); break;
+                        case 'C': new_cost_ = false; change_state_(State::Cost); break;
 
                                   //Bookmarks
                         case 'm': change_state_(State::RegisterBookmark); break;
@@ -302,7 +303,7 @@ namespace proast { namespace presenter {
                             user_input_cb_ = [&](bool is_final)
                             {
                                 if (events_)
-                                    events_->commander_cost(user_input_, is_final);
+                                    events_->commander_cost(user_input_, new_cost_, is_final);
                             };
                             break;
                         case State::Command:
@@ -312,9 +313,7 @@ namespace proast { namespace presenter {
                                     return;
                                 if (!events_)
                                     return;
-                                if (false) {}
-                                else if (user_input_ == "sort") events_->commander_sort();
-                                //TODO: mention this is an unknown command
+                                events_->commander_command(user_input_);
                             };
                             break;
                     }
@@ -349,6 +348,7 @@ namespace proast { namespace presenter {
         bool add_insert_ = false;
         std::function<void(bool)> user_input_cb_;
         std::optional<model::Removable> removable_;
+        bool new_cost_ = false;
 
         std::function<void(char32_t)> bookmark_cb_;
     };

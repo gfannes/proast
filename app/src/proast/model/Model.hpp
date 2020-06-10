@@ -292,7 +292,7 @@ namespace proast { namespace model {
             MSS(update_node_(*me_node, *parent_node));
 
             if (orig_directory && std::filesystem::exists(*orig_directory))
-                std::filesystem::remove_all(*orig_directory);
+                gubg::file::remove_empty_directories(*orig_directory);
 
             if (save_me)
                 MSS(save_content_(*me_node));
@@ -393,13 +393,63 @@ namespace proast { namespace model {
             auto &child = parent_node->childs.insert(*child_ix);
             child = *cut_item_;
 
+            const auto orig_directory = child.value.directory;
+
             MSS(update_node_(child, *parent_node));
+
+            if (orig_directory && std::filesystem::exists(*orig_directory))
+                gubg::file::remove_empty_directories(*orig_directory);
 
             cut_item_.reset();
 
             MSS(save_content_(*parent_node));
 
             path_.push_back(child.value.key);
+
+            MSS_END();
+        }
+
+        bool export_nodes(const std::filesystem::path &fp)
+        {
+            MSS_BEGIN(bool);
+
+            const Node *node;
+            MSS(get(node, path_));
+
+            std::ofstream fo{fp};
+            fo << "Key\tMy\tTotal\tDone" << std::endl;
+            Path local_path;
+            std::vector<bool> p;
+            auto writer = [&](const auto &node, const auto &path, unsigned int visit_count)
+            {
+                if (visit_count == 0 && path.size() == 1)
+                {
+                    local_path.clear();
+                    p.clear(); p.push_back(false);
+                }
+
+                double child_cost = 0;
+                for (const auto &child: node.childs.nodes)
+                    child_cost += child.value.my_cost.value_or(0);
+
+                if (visit_count == 0)
+                {
+                    const auto &item = node.value;
+                    const auto my_cost = item.my_cost.value_or(0);
+                    local_path.push_back(item.key);
+                    const bool parent_did_export = p.back();
+                    const bool do_export = (!parent_did_export && (my_cost > 20 || item.total_cost < 101));
+                    if (do_export)
+                        fo << to_string(local_path) << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+                    p.push_back(do_export || parent_did_export);
+                }
+                else
+                {
+                    local_path.pop_back();
+                    p.pop_back();
+                }
+            };
+            node->childs.dfs(writer);
 
             MSS_END();
         }
@@ -752,6 +802,9 @@ namespace proast { namespace model {
 
                 MSS(tree->load(root, config));
             }
+
+            //Compute aggregates
+            MSS(tree->compute_aggregates());
 
             tree_.swap(tree);
 

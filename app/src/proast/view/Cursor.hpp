@@ -45,6 +45,8 @@ namespace proast { namespace view {
                 cell.fg |= TB_BOLD;
             if (style.italic)
                 cell.fg |= TB_REVERSE;
+            if (style.done)
+                cell.bg = TB_GREEN;
             for (auto ch: str)
             {
                 if (col_abs_ >= region_.x_end()-margin_)

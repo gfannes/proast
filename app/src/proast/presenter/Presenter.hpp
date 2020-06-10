@@ -12,6 +12,12 @@
 
 namespace proast { namespace presenter { 
 
+    enum class DisplayCost
+    {
+        My, Total, Todo, Done,
+    };
+    std::string hr(DisplayCost);
+
     class Presenter: public model::Events, public view::Events, public Commander::Events
     {
     public:
@@ -291,20 +297,33 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
-        bool commander_cost(const std::string &str, bool is_final) override
+        bool commander_cost(const std::string &str, bool new_cost, bool is_final) override
         {
             MSS_BEGIN(bool);
             if (is_final)
             {
                 dialog_.reset();
-                MSS(model_.set_cost(str), log::stream() << "Warning: Could not set cost" << std::endl);
+                if (new_cost)
+                    MSS(model_.set_cost(str), log::stream() << "Warning: Could not set cost" << std::endl);
+                else
+                {
+                    if (false) {}
+                    else if (str == "my") {display_cost_ = DisplayCost::My;}
+                    else if (str == "total") {display_cost_ = DisplayCost::Total;}
+                    else if (str == "done") {display_cost_ = DisplayCost::Done;}
+                    else if (str == "todo") {display_cost_ = DisplayCost::Todo;}
+                    else if (str == "") {display_cost_.reset();}
+                }
             }
             else
             {
                 if (!dialog_)
                 {
                     dialog_.emplace();
-                    dialog_->set_caption(std::string("Provide cost of item in ")+model_.current_config().cost_unit());
+                    if (new_cost)
+                        dialog_->set_caption(std::string("Provide cost of item in ")+model_.current_config().cost_unit());
+                    else
+                        dialog_->set_caption("Specify the cost to display");
                 }
                 dialog_->set_content(str);
             }
@@ -361,16 +380,24 @@ namespace proast { namespace presenter {
             MSS(model_.set_state(state));
             MSS_END();
         }
-        bool commander_sort() override
+        bool commander_command(const std::string &command) override
         {
             MSS_BEGIN(bool);
-            if (model_.path().size() <= 1)
+            if (false) {}
+            else if (command == "sort")
             {
-                //TODO: Indicate to the user that sorting the first level cannot be done
+                if (model_.path().size() <= 1)
+                {
+                    //TODO: Indicate to the user that sorting the first level cannot be done
+                }
+                else
+                {
+                    MSS(model_.sort());
+                }
             }
-            else
+            else if ("export")
             {
-                MSS(model_.sort());
+                MSS(model_.export_nodes("/tmp/proast-nodes.tsv"));
             }
             MSS_END();
         }
@@ -445,9 +472,10 @@ namespace proast { namespace presenter {
                     return ;
                 for (const auto &node: forest->nodes)
                 {
+                    const auto &item = node.value;
                     unsigned int attention = 0;
-                    if (node.value.type)
-                        switch (*node.value.type)
+                    if (item.type)
+                        switch (*item.type)
                         {
                             case model::Type::Requirement: attention = 3; break;
                             case model::Type::Design: attention = 1; break;
@@ -455,7 +483,27 @@ namespace proast { namespace presenter {
                             case model::Type::Free: attention = 5; break;
                             default: break;
                         }
-                    lb.entries.emplace_back(node.value.key, attention);
+                    std::string cost;
+                    if (display_cost_)
+                    {
+                        const int my_cost = item.my_cost.value_or(0);
+                        const int total_cost = item.total_cost;
+                        const int done_cost = item.done_cost;
+                        switch (*display_cost_)
+                        {
+                            case DisplayCost::My:    cost = std::to_string(my_cost); break;
+                            case DisplayCost::Total: cost = std::to_string(total_cost); break;
+                            case DisplayCost::Done:  cost = std::to_string(done_cost)+"/"+std::to_string(total_cost); break;
+                            case DisplayCost::Todo:  cost = std::to_string(total_cost-done_cost)+"/"+std::to_string(total_cost); break;
+                        }
+                    }
+
+                    lb.entries.emplace_back(item.key, cost, attention);
+                    {
+                        const int total_cost = item.total_cost*10;
+                        const int done_cost = item.done_cost*10;
+                        lb.entries.back().done = (total_cost > 0 && total_cost == done_cost);
+                    }
                 }
                 lb.active_ix = ix;
             };
@@ -485,7 +533,15 @@ namespace proast { namespace presenter {
 
                 if (Clock::now() >= show_path_)
                 {
-                    status_ = std::string("Commander state: ")+hr(commander_.state());
+                    status_.clear();
+                    status_ += "Commander state: ";
+                    status_ += hr(commander_.state());
+                    if (display_cost_)
+                    {
+                        status_ += ", ";
+                        status_ += "Display cost: ";
+                        status_ += hr(*display_cost_);
+                    }
                 }
 
                 {
@@ -511,6 +567,9 @@ namespace proast { namespace presenter {
                     details_kv_["deadline"] = *item.deadline;
                 if (item.my_cost)
                     details_kv_["my_cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
+                details_kv_["total_cost"] = std::to_string(item.total_cost)+model_.current_config().cost_unit();
+                details_kv_["done_cost"] = std::to_string(item.done_cost)+model_.current_config().cost_unit();
+                details_kv_["todo_cost"] = std::to_string(item.total_cost-item.done_cost)+model_.current_config().cost_unit();
                 if (item.directory)
                     details_kv_["directory"] = item.directory->string();
                 if (item.content_fp)
@@ -565,6 +624,7 @@ namespace proast { namespace presenter {
         Commander commander_;
         Mode mode_ = Mode::Init;
         model::Path normal_path_;
+        std::optional<DisplayCost> display_cost_;
 
         std::string location_;
         std::string status_;
