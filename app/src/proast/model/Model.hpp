@@ -438,9 +438,10 @@ namespace proast { namespace model {
                     const auto my_cost = item.my_cost.value_or(0);
                     local_path.push_back(item.key);
                     const bool parent_did_export = p.back();
-                    const bool do_export = (!parent_did_export && (my_cost > 20 || item.total_cost < 101));
+                    /* const bool do_export = (!parent_did_export && (my_cost > 20 || item.total_cost < 101)); */
+                    const bool do_export = (!parent_did_export && path.size() == 2);
                     if (do_export)
-                        fo << to_string(local_path) << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+                        fo << to_string(local_path)<<"%"<<item.done_cost<<"/"<<item.total_cost << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
                     p.push_back(do_export || parent_did_export);
                 }
                 else
