@@ -33,7 +33,7 @@ namespace proast { namespace presenter {
             virtual bool commander_switch_mode(Mode from, Mode to) = 0;
             virtual bool commander_move_cursor(Movement) = 0;
             virtual bool commander_move_item(Movement) = 0;
-            virtual bool commander_open() = 0;
+            virtual bool commander_open(bool edit) = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
@@ -111,13 +111,14 @@ namespace proast { namespace presenter {
                                   switch (mode_)
                                   {
                                       case Mode::Normal:
-                                          MSS(events_->commander_open());
+                                          MSS(events_->commander_open(true));
                                           break;
                                       case Mode::SelectLink:
                                           MSS(switch_mode_(Mode::Normal));
                                           break;
                                   }
                                   break;
+                        case ' ': MSS(events_->commander_open(false)); break;
 
                                    //Add item
                         case 'O': add_insert_ = true;  change_state_(State::Add); break;

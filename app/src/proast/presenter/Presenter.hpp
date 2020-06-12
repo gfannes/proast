@@ -148,7 +148,7 @@ namespace proast { namespace presenter {
                         if (childs.empty())
                         {
                             if (me.value.content_fp || me.value.link)
-                                return commander_open();
+                                return commander_open(true);
                         }
                         else
                         {
@@ -212,7 +212,7 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
-        bool commander_open() override
+        bool commander_open(bool edit) override
         {
             MSS_BEGIN(bool);
 
@@ -245,7 +245,7 @@ namespace proast { namespace presenter {
                     std::filesystem::current_path(content_fp->parent_path());
 
                     std::ostringstream oss;
-                    oss << "nvim " << content_fp->filename();
+                    oss << (edit ? "nvim " : "gedit ") << content_fp->filename();
                     std::system(oss.str().c_str());
 
                     std::filesystem::current_path(orig_dir);
@@ -368,13 +368,27 @@ namespace proast { namespace presenter {
             std::optional<model::State> state;
             switch (ch)
             {
-                case 'u': state = model::State::Unclear; break;
-                case 'c': state = model::State::Clear; break;
-                case 't': state = model::State::Thinking; break;
-                case 'd': state = model::State::Designed; break;
-                case 'i': state = model::State::Implementing; break;
-                case 'D': state = model::State::Done; break;
-                case '?': break;
+                case 'u':
+                case '?':
+                    state = model::State::Unclear; break;
+                case 'c':
+                case '#':
+                    state = model::State::Clear; break;
+                case 't':
+                case '~':
+                    state = model::State::Thinking; break;
+                case 'D':
+                case '$':
+                    state = model::State::Designed; break;
+                case 'i':
+                case '@':
+                    state = model::State::Implementing; break;
+                case 'd':
+                case '.':
+                    state = model::State::Done; break;
+                case 'n':
+                case ' ':
+                    break;
                 default: return true; break;
             }
             MSS(model_.set_state(state));
@@ -483,6 +497,7 @@ namespace proast { namespace presenter {
                             case model::Type::Free: attention = 5; break;
                             default: break;
                         }
+
                     std::string cost;
                     if (display_cost_)
                     {
@@ -498,7 +513,19 @@ namespace proast { namespace presenter {
                         }
                     }
 
-                    lb.entries.emplace_back(item.key, cost, attention);
+                    std::string prefix = "  ";
+                    if (item.state)
+                        switch (*item.state)
+                        {
+                            case model::State::Unclear: prefix = "? "; break;
+                            case model::State::Clear: prefix = "# "; break;
+                            case model::State::Thinking: prefix = "~ "; break;
+                            case model::State::Designed: prefix = "$ "; break;
+                            case model::State::Implementing: prefix = "@ "; break;
+                            case model::State::Done: prefix = ". "; break;
+                        }
+
+                    lb.entries.emplace_back(prefix+item.key, cost, attention);
                     {
                         const int total_cost = item.total_cost*10;
                         const int done_cost = item.done_cost*10;

@@ -1,5 +1,5 @@
 <!--
-[proast](status:todo)
+[proast]
 -->
 # Proast title
 
