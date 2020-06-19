@@ -37,12 +37,12 @@ namespace proast { namespace presenter {
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
+            virtual bool commander_command(const std::string &, bool is_final) = 0;
             virtual bool commander_remove(model::Removable) = 0;
             virtual bool commander_register_bookmark(char32_t) = 0;
             virtual bool commander_load_bookmark(char32_t) = 0;
             virtual bool commander_set_type(char32_t) = 0;
             virtual bool commander_set_state(char32_t) = 0;
-            virtual bool commander_command(const std::string &) = 0;
             virtual bool commander_open_directory(bool with_shell) = 0;
             virtual bool commander_paste(bool insert) = 0;
         };
@@ -310,11 +310,8 @@ namespace proast { namespace presenter {
                         case State::Command:
                             user_input_cb_ = [&](bool is_final)
                             {
-                                if (!is_final)
-                                    return;
-                                if (!events_)
-                                    return;
-                                events_->commander_command(user_input_);
+                                if (events_)
+                                    events_->commander_command(user_input_, is_final);
                             };
                             break;
                     }

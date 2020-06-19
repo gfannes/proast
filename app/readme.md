@@ -24,6 +24,8 @@ Text-UI application
 
 ## Features
 
+* Add help command
+  * Support for showing formatted text in a dialog
 * [external](key:support_sorting_based_on_state)
 * [external](key:when_adding_an_item,_add_it_right_behind_the_current_location)
 * [external](key:do_not_fail_on_unfound_not_after_opening_a_document)

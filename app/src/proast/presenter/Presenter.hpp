@@ -329,6 +329,47 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
+        bool commander_command(const std::string &str, bool is_final) override
+        {
+            MSS_BEGIN(bool);
+            if (is_final)
+            {
+                dialog_.reset();
+
+                auto is = [&](const std::string &needle){return str == needle;};
+                if (is("sort"))
+                {
+                    if (model_.path().size() <= 1)
+                    {
+                        //TODO: Indicate to the user that sorting the first level cannot be done
+                    }
+                    else
+                    {
+                        MSS(model_.sort());
+                    }
+                }
+                else if (is("export"))
+                {
+                    MSS(model_.export_nodes("/tmp/proast-nodes.tsv"));
+                }
+                else if (is("help"))
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption("Help");
+                    dialog_->set_content("me");
+                }
+            }
+            else
+            {
+                if (!dialog_)
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption("Command:");
+                }
+                dialog_->set_content(str);
+            }
+            MSS_END();
+        }
         bool commander_remove(model::Removable removable) override
         {
             MSS_BEGIN(bool);
@@ -392,27 +433,6 @@ namespace proast { namespace presenter {
                 default: return true; break;
             }
             MSS(model_.set_state(state));
-            MSS_END();
-        }
-        bool commander_command(const std::string &command) override
-        {
-            MSS_BEGIN(bool);
-            if (false) {}
-            else if (command == "sort")
-            {
-                if (model_.path().size() <= 1)
-                {
-                    //TODO: Indicate to the user that sorting the first level cannot be done
-                }
-                else
-                {
-                    MSS(model_.sort());
-                }
-            }
-            else if ("export")
-            {
-                MSS(model_.export_nodes("/tmp/proast-nodes.tsv"));
-            }
             MSS_END();
         }
         bool commander_open_directory(bool with_shell) override
