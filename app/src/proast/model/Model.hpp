@@ -249,6 +249,7 @@ namespace proast { namespace model {
 
             auto &child = node->childs.append();
             //TODO: Make this consistent with how a link node is added in Tree
+            child.value.type = Type::Feature;
             child.value.link = link_path;
             child.value.key = to_string(link_path);
 
