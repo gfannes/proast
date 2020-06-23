@@ -64,3 +64,4 @@ Text-UI application
 * Test if feature with subfeature can be shown
 * Rework `g` into `gg`
 * Git hash header should not require "git checkout ." each time
+* [external](key:help)

@@ -9,14 +9,15 @@
 #include <gubg/Range.hpp>
 #include <chrono>
 #include <sstream>
+#include <cmath>
 
 namespace proast { namespace presenter { 
 
-    enum class DisplayCost
+    enum class DisplayAttribute
     {
-        My, Total, Todo, Done,
+        My, Total, Todo, Done, Deadline, ETA,
     };
-    std::string hr(DisplayCost);
+    std::string hr(DisplayAttribute);
 
     class Presenter: public model::Events, public view::Events, public Commander::Events
     {
@@ -308,11 +309,13 @@ namespace proast { namespace presenter {
                 else
                 {
                     if (false) {}
-                    else if (str == "my") {display_cost_ = DisplayCost::My;}
-                    else if (str == "total") {display_cost_ = DisplayCost::Total;}
-                    else if (str == "done") {display_cost_ = DisplayCost::Done;}
-                    else if (str == "todo") {display_cost_ = DisplayCost::Todo;}
-                    else if (str == "") {display_cost_.reset();}
+                    else if (str == "my") {display_attribute_ = DisplayAttribute::My;}
+                    else if (str == "total") {display_attribute_ = DisplayAttribute::Total;}
+                    else if (str == "done") {display_attribute_ = DisplayAttribute::Done;}
+                    else if (str == "todo") {display_attribute_ = DisplayAttribute::Todo;}
+                    else if (str == "deadline") {display_attribute_ = DisplayAttribute::Deadline;}
+                    else if (str == "eta") {display_attribute_ = DisplayAttribute::ETA;}
+                    else if (str == "") {display_attribute_.reset();}
                 }
             }
             else
@@ -323,7 +326,26 @@ namespace proast { namespace presenter {
                     if (new_cost)
                         dialog_->set_caption(std::string("Provide cost of item in ")+model_.current_config().cost_unit());
                     else
-                        dialog_->set_caption("Specify the cost to display");
+                        dialog_->set_caption("Specify the attribute to display");
+                }
+                dialog_->set_content(str);
+            }
+            MSS_END();
+        }
+        bool commander_when(const std::string &str, bool is_final) override
+        {
+            MSS_BEGIN(bool);
+            if (is_final)
+            {
+                dialog_.reset();
+                MSS(model_.set_deadline(str), log::stream() << "Warning: Could not set deadline" << std::endl);
+            }
+            else
+            {
+                if (!dialog_)
+                {
+                    dialog_.emplace();
+                    dialog_->set_caption("Set deadline for item");
                 }
                 dialog_->set_content(str);
             }
@@ -518,32 +540,52 @@ namespace proast { namespace presenter {
                             default: break;
                         }
 
-                    std::string cost;
-                    if (display_cost_)
+                    std::string attribute;
+                    if (display_attribute_)
                     {
-                        int my_cost = 0, total_cost = 0, done_cost = 0;
+                        const model::Item *itemptr = nullptr;
                         if (item.link)
                         {
                             const model::Node *node;
                             if (model_.get(node, *item.link))
-                            {
-                                my_cost = node->value.my_cost.value_or(0);
-                                total_cost = node->value.total_cost;
-                                done_cost = node->value.done_cost;
-                            }
+                                itemptr = &node->value;
                         }
                         else
                         {
-                            my_cost = item.my_cost.value_or(0);
-                            total_cost = item.total_cost;
-                            done_cost = item.done_cost;
+                            itemptr = &item;
                         }
-                        switch (*display_cost_)
+
+                        std::string my_cost, total_cost, done_cost, todo_cost, deadline, eta;
+                        if (itemptr)
                         {
-                            case DisplayCost::My:    cost = std::to_string(my_cost); break;
-                            case DisplayCost::Total: cost = std::to_string(total_cost); break;
-                            case DisplayCost::Done:  cost = std::to_string(done_cost)+"/"+std::to_string(total_cost); break;
-                            case DisplayCost::Todo:  cost = std::to_string(total_cost-done_cost)+"/"+std::to_string(total_cost); break;
+                            auto format_cost = [](double cost)
+                            {
+                                const int cost_deci = std::round(cost*10.0);
+                                if (cost_deci == 0)
+                                    return std::string("0");
+                                if (cost_deci < 10)
+                                    return std::string(".")+std::to_string(cost_deci);
+                                return std::to_string(std::lround(cost_deci/10.0));
+                            };
+                            if (itemptr->my_cost)
+                                my_cost = format_cost(*itemptr->my_cost);
+                            total_cost = format_cost(itemptr->total_cost);
+                            done_cost = format_cost(itemptr->done_cost);
+                            todo_cost = format_cost(itemptr->total_cost-itemptr->done_cost);
+                            if (itemptr->deadline)
+                                deadline = *itemptr->deadline;
+                            if (itemptr->eta)
+                                eta = *itemptr->eta;
+                        }
+
+                        switch (*display_attribute_)
+                        {
+                            case DisplayAttribute::My:       attribute = my_cost;                  break;
+                            case DisplayAttribute::Total:    attribute = total_cost;               break;
+                            case DisplayAttribute::Done:     attribute = done_cost+"/"+total_cost; break;
+                            case DisplayAttribute::Todo:     attribute = todo_cost+"/"+total_cost; break;
+                            case DisplayAttribute::Deadline: attribute = deadline; break;
+                            case DisplayAttribute::ETA:      attribute = eta; break;
                         }
                     }
 
@@ -559,7 +601,7 @@ namespace proast { namespace presenter {
                             case model::State::Done: prefix = ". "; break;
                         }
 
-                    lb.entries.emplace_back(prefix+item.key, cost, attention);
+                    lb.entries.emplace_back(prefix+item.key, attribute, attention);
                     {
                         const int total_cost = item.total_cost*10;
                         const int done_cost = item.done_cost*10;
@@ -597,11 +639,11 @@ namespace proast { namespace presenter {
                     status_.clear();
                     status_ += "Commander state: ";
                     status_ += hr(commander_.state());
-                    if (display_cost_)
+                    if (display_attribute_)
                     {
                         status_ += ", ";
-                        status_ += "Display cost: ";
-                        status_ += hr(*display_cost_);
+                        status_ += "Display attribute: ";
+                        status_ += hr(*display_attribute_);
                     }
                 }
 
@@ -626,6 +668,8 @@ namespace proast { namespace presenter {
                     details_kv_["state"] = model::hr(*item.state);
                 if (item.deadline)
                     details_kv_["deadline"] = *item.deadline;
+                if (item.eta)
+                    details_kv_["eta"] = *item.eta;
                 if (item.my_cost)
                     details_kv_["my_cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
                 details_kv_["total_cost"] = std::to_string(item.total_cost)+model_.current_config().cost_unit();
@@ -685,7 +729,7 @@ namespace proast { namespace presenter {
         Commander commander_;
         Mode mode_ = Mode::Init;
         model::Path normal_path_;
-        std::optional<DisplayCost> display_cost_;
+        std::optional<DisplayAttribute> display_attribute_;
 
         std::string location_;
         std::string status_;

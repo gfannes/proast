@@ -16,7 +16,7 @@ namespace proast { namespace presenter {
     };
     enum class State
     {
-        Idle, Add, Rename, Remove, Cost, RegisterBookmark, LoadBookmark, SetType, SetState, Command,
+        Idle, Add, Rename, Remove, Cost, When, RegisterBookmark, LoadBookmark, SetType, SetState, Command,
     };
     std::string hr(State state);
 
@@ -37,6 +37,7 @@ namespace proast { namespace presenter {
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
             virtual bool commander_rename(const std::string &str, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
+            virtual bool commander_when(const std::string &str, bool is_final) = 0;
             virtual bool commander_command(const std::string &, bool is_final) = 0;
             virtual bool commander_remove(model::Removable) = 0;
             virtual bool commander_register_bookmark(char32_t) = 0;
@@ -141,6 +142,9 @@ namespace proast { namespace presenter {
                         case 'c': new_cost_ = true;  change_state_(State::Cost); break;
                         case 'C': new_cost_ = false; change_state_(State::Cost); break;
 
+                                  //When
+                        case 'w': change_state_(State::When); break;
+
                                   //Bookmarks
                         case 'm': change_state_(State::RegisterBookmark); break;
                         case '\'': change_state_(State::LoadBookmark); break;
@@ -162,6 +166,7 @@ namespace proast { namespace presenter {
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::When:
                 case State::Command:
                     switch (ch)
                     {
@@ -262,6 +267,7 @@ namespace proast { namespace presenter {
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::When:
                 case State::Command:
                     user_input_cb_(true);
                     user_input_cb_ = nullptr;
@@ -282,6 +288,7 @@ namespace proast { namespace presenter {
                 case State::Add:
                 case State::Rename:
                 case State::Cost:
+                case State::When:
                 case State::Command:
                     user_input_.clear();
                     switch (state_)
@@ -305,6 +312,13 @@ namespace proast { namespace presenter {
                             {
                                 if (events_)
                                     events_->commander_cost(user_input_, new_cost_, is_final);
+                            };
+                            break;
+                        case State::When:
+                            user_input_cb_ = [&](bool is_final)
+                            {
+                                if (events_)
+                                    events_->commander_when(user_input_, is_final);
                             };
                             break;
                         case State::Command:

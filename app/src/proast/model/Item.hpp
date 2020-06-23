@@ -55,6 +55,7 @@ namespace proast { namespace model {
         std::string title;
 
         std::optional<DateTime> deadline;
+        std::optional<DateTime> eta;
         std::optional<double> my_cost;
         double total_cost = 0;
         double done_cost = 0;

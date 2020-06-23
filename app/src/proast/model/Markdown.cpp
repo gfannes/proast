@@ -418,6 +418,7 @@ namespace proast { namespace model { namespace markdown {
                 gubg::with_value(attrs, "state", [&](const std::string &str){node.value.state = to_status(str);});
                 gubg::with_value(attrs, "priority", [&](const std::string &str){node.value.priority = to_priority(str);});
                 gubg::with_value(attrs, "my_cost", [&](const std::string &str){node.value.my_cost = std::stod(str);});
+                gubg::with_value(attrs, "deadline", [&](const std::string &str){node.value.deadline = str;});
             }
         };
 
@@ -540,6 +541,8 @@ namespace proast { namespace model { namespace markdown {
             oss << "(priority:" << hr(*node.value.priority) << ")";
         if (node.value.my_cost)
             oss << "(my_cost:" << *node.value.my_cost << ")";
+        if (node.value.deadline)
+            oss << "(deadline:" << *node.value.deadline << ")";
         oss << std::endl;
         oss << "-->" << std::endl;
 

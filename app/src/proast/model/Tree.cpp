@@ -199,7 +199,6 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    //TODO: this is a heavy operation, execute it in parallel or so
     bool Tree::compute_aggregates()
     {
         MSS_BEGIN(bool);
@@ -233,6 +232,8 @@ namespace proast { namespace model {
                 MSS(false);
             }
 
+        //TODO: this is a heavy structure, it can be optimised though. Currently, this grows quadratic wrt node count.
+        //With some care, it should be possible to forget reachables once they are not necessary anymore.
         std::map<Node*, std::set<Node*>> node__reachables;
         for (auto nodeptr: topo.order)
         {
@@ -272,6 +273,13 @@ namespace proast { namespace model {
                         case State::Done:         fraction_done = 1.0; break;
                     }
                 node.value.done_cost += fraction_done*rcost;
+
+                if (nodeptr->value.deadline)
+                {
+                    nodeptr->value.eta = nodeptr->value.deadline;
+                    if (!rnode->value.eta || nodeptr->value.eta < rnode->value.eta)
+                        rnode->value.eta = nodeptr->value.eta;
+                }
             }
         }
 

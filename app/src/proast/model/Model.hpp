@@ -186,6 +186,29 @@ namespace proast { namespace model {
 
             MSS_END();
         }
+        bool set_deadline(const std::string &when_str)
+        {
+            MSS_BEGIN(bool);
+
+            MSS(!!tree_);
+
+            Node *node;
+            MSS(tree_->find(node, path_));
+
+            try
+            {
+                if (when_str.empty())
+                    node->value.deadline.reset();
+                else
+                    node->value.deadline = when_str;
+            }
+            catch (const std::invalid_argument &exc) { return false; }
+
+            MSS(save_content_(*node));
+            MSS(reload_());
+
+            MSS_END();
+        }
 
         //insert==true: nest new item _under_ path_
         //insert==false: add new item _next to_ path_
