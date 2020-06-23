@@ -521,9 +521,23 @@ namespace proast { namespace presenter {
                     std::string cost;
                     if (display_cost_)
                     {
-                        const int my_cost = item.my_cost.value_or(0);
-                        const int total_cost = item.total_cost;
-                        const int done_cost = item.done_cost;
+                        int my_cost = 0, total_cost = 0, done_cost = 0;
+                        if (item.link)
+                        {
+                            const model::Node *node;
+                            if (model_.get(node, *item.link))
+                            {
+                                my_cost = node->value.my_cost.value_or(0);
+                                total_cost = node->value.total_cost;
+                                done_cost = node->value.done_cost;
+                            }
+                        }
+                        else
+                        {
+                            my_cost = item.my_cost.value_or(0);
+                            total_cost = item.total_cost;
+                            done_cost = item.done_cost;
+                        }
                         switch (*display_cost_)
                         {
                             case DisplayCost::My:    cost = std::to_string(my_cost); break;

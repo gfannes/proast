@@ -5,9 +5,12 @@
 #include <gubg/tree/stream.hpp>
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/naft/Range.hpp>
+#include <gubg/graph/TopologicalOrder.hpp>
 #include <map>
 #include <list>
 #include <vector>
+#include <map>
+#include <set>
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -196,50 +199,81 @@ namespace proast { namespace model {
         MSS_END();
     }
 
+    //TODO: this is a heavy operation, execute it in parallel or so
     bool Tree::compute_aggregates()
     {
         MSS_BEGIN(bool);
 
-        std::vector<double> total_stack;
-        std::vector<double> done_stack;
-        auto ftor = [&](auto &node, const auto &path, unsigned int visit_count)
+        auto each_out_edge = [&](auto nodeptr, auto &&recurse)
         {
-            double fraction_done = 0;
-            if (node.value.state)
-                switch (*node.value.state)
-                {
-                    case State::Unclear:      fraction_done = 0.0; break;
-                    case State::Clear:        fraction_done = 0.1; break;
-                    case State::Thinking:     fraction_done = 0.1; break;
-                    case State::Designed:     fraction_done = 0.3; break;
-                    case State::Implementing: fraction_done = 0.3; break;
-                    case State::Done:         fraction_done = 1.0; break;
-                }
-            if (visit_count == 0)
+            MSS_BEGIN(bool);
+            for (auto &child: nodeptr->childs.nodes)
             {
-                const auto my_cost = node.value.my_cost.value_or(0);
-                total_stack.push_back(my_cost);
-                done_stack.push_back(fraction_done*my_cost);
-                node.value.total_cost = total_stack.back();
-                node.value.done_cost = done_stack.back();
-            }
-            else
-            {
+                if (child.value.link)
                 {
-                    const auto child_cost = total_stack.back();
-                    node.value.total_cost += child_cost;
-                    total_stack.pop_back();
-                    total_stack.back() = node.value.total_cost;
+                    Node *my_node;
+                    MSS(find(my_node, *child.value.link));
+                    MSS(recurse(my_node));
                 }
+                else
                 {
-                    const auto child_cost = done_stack.back();
-                    node.value.done_cost += child_cost;
-                    done_stack.pop_back();
-                    done_stack.back() = node.value.done_cost;
+                    MSS(recurse(&child));
                 }
             }
+            MSS_END();
         };
-        root_forest_.dfs(ftor);
+
+        gubg::graph::TopologicalOrder<Node *> topo;
+        for (auto &root: root_forest().nodes)
+            if (!topo.process(&root, each_out_edge, false))
+            {
+                log::stream() << "Error: Links and Tree are not a DAG:" << std::endl;
+                for (auto nodeptr: topo.cycle)
+                    log::stream() << "  " << nodeptr->value.key << std::endl;
+                MSS(false);
+            }
+
+        std::map<Node*, std::set<Node*>> node__reachables;
+        for (auto nodeptr: topo.order)
+        {
+            auto &my_reachables = node__reachables[nodeptr];
+
+            //Add myself
+            my_reachables.insert(nodeptr);
+
+            //Add all subs
+            auto aggregate_reachables = [&](auto subnode)
+            {
+                auto it = node__reachables.find(subnode);
+                if (it != node__reachables.end())
+                    for (auto subsubptr: it->second)
+                        my_reachables.insert(subsubptr);
+                return true;
+            };
+            MSS(each_out_edge(nodeptr, aggregate_reachables));
+
+            auto &node = *nodeptr;
+            node.value.total_cost = 0;
+            node.value.done_cost = 0;
+            for (auto rnode: my_reachables)
+            {
+                const auto rcost = rnode->value.my_cost.value_or(0);
+                node.value.total_cost += rcost;
+
+                double fraction_done = 0;
+                if (rnode->value.state)
+                    switch (*rnode->value.state)
+                    {
+                        case State::Unclear:      fraction_done = 0.0; break;
+                        case State::Clear:        fraction_done = 0.1; break;
+                        case State::Thinking:     fraction_done = 0.1; break;
+                        case State::Designed:     fraction_done = 0.3; break;
+                        case State::Implementing: fraction_done = 0.3; break;
+                        case State::Done:         fraction_done = 1.0; break;
+                    }
+                node.value.done_cost += fraction_done*rcost;
+            }
+        }
 
         MSS_END();
     }
