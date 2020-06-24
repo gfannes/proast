@@ -30,7 +30,7 @@ namespace proast { namespace model {
 
     enum class ExportType
     {
-        All, Level2,
+        All, Level1, Level2,
     };
 
     class Model
@@ -547,13 +547,18 @@ namespace proast { namespace model {
                     const bool parent_did_export = p.back();
 
                     bool do_export = true;
-                    const auto export_type = ExportType::All;
+                    const auto export_type = ExportType::Level2;
                     switch (export_type)
                     {
                         case ExportType::All:
                             do_export = true;
                             if (do_export)
                                 fo << to_string(local_path) << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+                            break;
+                        case ExportType::Level1:
+                            do_export = (!parent_did_export && path.size() == 1);
+                            if (do_export)
+                                fo << to_string(local_path)<<"%"<<item.done_cost<<"/"<<item.total_cost << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
                             break;
                         case ExportType::Level2:
                             do_export = (!parent_did_export && path.size() == 2);
