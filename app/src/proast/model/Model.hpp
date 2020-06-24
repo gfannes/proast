@@ -14,6 +14,7 @@
 #include <gubg/mss.hpp>
 #include <optional>
 #include <vector>
+#include <list>
 #include <chrono>
 #include <fstream>
 #include <cassert>
@@ -25,6 +26,11 @@ namespace proast { namespace model {
     enum class Removable
     {
         Node, File, Folder,
+    };
+
+    enum class ExportType
+    {
+        All, Level2,
     };
 
     class Model
@@ -47,6 +53,36 @@ namespace proast { namespace model {
             events_ = events;
             if (events_)
                 events_->message("Events destination was set");
+        }
+
+        //Selection
+        unsigned int nr_selected() const {return selection_.size();}
+        bool is_selected(const Path &path) const
+        {
+            for (const auto &p: selection_)
+                if (p == path)
+                    return true;
+            return false;
+        }
+        bool select()
+        {
+            MSS_BEGIN(bool);
+            for (auto it = selection_.begin(); it != selection_.end(); ++it)
+            {
+                if (*it == path_)
+                {
+                    selection_.erase(it);
+                    return true;
+                }
+            }
+            selection_.push_back(path_);
+            MSS_END();
+        }
+        bool unselect_all()
+        {
+            MSS_BEGIN(bool);
+            selection_.clear();
+            MSS_END();
         }
 
         bool swap(std::size_t a_ix, std::size_t b_ix)
@@ -261,7 +297,7 @@ namespace proast { namespace model {
 
             MSS_END();
         }
-        bool add_link(const Path &link_path)
+        bool add_selected_links()
         {
             MSS_BEGIN(bool);
 
@@ -270,14 +306,32 @@ namespace proast { namespace model {
             Node *node;
             MSS(tree_->find(node, path_));
 
-            auto &child = node->childs.append();
-            //TODO: Make this consistent with how a link node is added in Tree
-            child.value.type = Type::Feature;
-            child.value.link = link_path;
-            child.value.key = to_string(link_path);
+            for (const auto &link_path: selection_)
+            {
+                bool already_present = false;
+                for (const auto &child: node->childs.nodes)
+                {
+                    if (child.value.link && link_path == *child.value.link)
+                    {
+                        already_present = true;
+                        break;
+                    }
+                }
+                
+                if (already_present)
+                    continue;
+
+                auto &child = node->childs.append();
+                //TODO: Make this consistent with how a link node is added in Tree
+                child.value.type = Type::Feature;
+                child.value.link = link_path;
+                child.value.key = to_string(link_path);
+            }
 
             MSS(save_content_(*node));
             MSS(reload_());
+
+            selection_.clear();
 
             MSS_END();
         }
@@ -462,10 +516,22 @@ namespace proast { namespace model {
                     const auto my_cost = item.my_cost.value_or(0);
                     local_path.push_back(item.key);
                     const bool parent_did_export = p.back();
-                    /* const bool do_export = (!parent_did_export && (my_cost > 20 || item.total_cost < 101)); */
-                    const bool do_export = (!parent_did_export && path.size() == 2);
-                    if (do_export)
-                        fo << to_string(local_path)<<"%"<<item.done_cost<<"/"<<item.total_cost << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+
+                    bool do_export = true;
+                    const auto export_type = ExportType::All;
+                    switch (export_type)
+                    {
+                        case ExportType::All:
+                            do_export = true;
+                            if (do_export)
+                                fo << to_string(local_path) << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+                            break;
+                        case ExportType::Level2:
+                            do_export = (!parent_did_export && path.size() == 2);
+                            if (do_export)
+                                fo << to_string(local_path)<<"%"<<item.done_cost<<"/"<<item.total_cost << "\t" << my_cost << "\t" << item.total_cost << "\t" << item.done_cost << std::endl;
+                            break;
+                    }
                     p.push_back(do_export || parent_did_export);
                 }
                 else
@@ -830,6 +896,7 @@ namespace proast { namespace model {
 
             //Compute aggregates
             MSS(tree->compute_aggregates());
+            MSS(tree->set_paths());
 
             tree_.swap(tree);
 
@@ -856,6 +923,8 @@ namespace proast { namespace model {
         Bookmarks bookmarks_;
 
         std::optional<Node> cut_item_;
+
+        std::list<Path> selection_;
 
         using Clock = std::chrono::high_resolution_clock;
         std::optional<Clock::time_point> save_tp_ = Clock::now();

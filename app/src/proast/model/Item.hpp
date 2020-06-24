@@ -50,6 +50,7 @@ namespace proast { namespace model {
     public:
         std::optional<Type> type;
         std::string key;
+        Path path;
         void set(Type t, const std::string &k) {type = t; key = k;}
 
         std::string title;

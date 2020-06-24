@@ -24,8 +24,8 @@
 
 ## Item interaction
 
-* Open(editor a): `<CR>` when in _Normal_ mode
-* Open(editor b): ` `
+* Open(for editing): `e` or `<CR>`
+* Open(for viewing): `E`
 * Open(shell): `S`
 * Open(ranger): `s`
 * AddNode(inside): `O`
@@ -44,9 +44,10 @@
 * Paste(inside): `P`
 * Paste(under): `p`
 
-### SelectLink mode
+## Item selection
 
-* Complete selection: `<CR>`
+* Select: ` `
+* UnselectAll: `u`
 
 ## Item attributes
 

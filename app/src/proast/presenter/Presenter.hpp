@@ -85,36 +85,6 @@ namespace proast { namespace presenter {
             quit = true;
             MSS_END();
         }
-        bool commander_switch_mode(Mode from, Mode to) override
-        {
-            MSS_BEGIN(bool);
-
-            switch (to)
-            {
-                case Mode::Normal:
-                    switch (from)
-                    {
-                        case Mode::Init:
-                            break;
-                        case Mode::SelectLink:
-                            {
-                                const auto link_path = model_.path();
-                                model_.set_path(normal_path_);
-                                MSS(model_.add_link(link_path));
-                            }
-                            break;
-                    }
-                    break;
-
-                case Mode::SelectLink:
-                    normal_path_ = model_.path();
-                    break;
-            }
-
-            mode_ = to;
-
-            MSS_END();
-        }
         bool commander_move_cursor(Movement movement) override
         {
             MSS_BEGIN(bool);
@@ -496,6 +466,24 @@ namespace proast { namespace presenter {
             MSS(model_.paste(insert));
             MSS_END();
         }
+        bool commander_select() override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.select());
+            MSS_END();
+        }
+        bool commander_unselect_all() override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.unselect_all());
+            MSS_END();
+        }
+        bool commander_add_links() override
+        {
+            MSS_BEGIN(bool);
+            MSS(model_.add_selected_links());
+            MSS_END();
+        }
 
     private:
         bool repaint_()
@@ -507,18 +495,10 @@ namespace proast { namespace presenter {
             //Location
             {
                 location_.clear();
-                switch (mode_)
-                {
-                    case Mode::Normal:
-                        location_ += model::to_string(model_.path());
-                        break;
-                    case Mode::SelectLink:
-                        location_ += "Selecting link for ";
-                        location_ += model::to_string(normal_path_);
-                        location_ += ": ";
-                        location_ += model::to_string(model_.path());
-                        break;
-                }
+                location_ += model::to_string(model_.path());
+                const auto nr_selected = model_.nr_selected();
+                if (nr_selected)
+                    location_ += ", nr_selected: " + std::to_string(nr_selected);
             }
 
             auto fill_lb = [&](auto &lb, auto forest, std::size_t ix)
@@ -589,6 +569,10 @@ namespace proast { namespace presenter {
                         }
                     }
 
+                    std::string selected = "";
+                    if (model_.is_selected(item.path))
+                        selected = "*";
+
                     std::string prefix = "  ";
                     if (item.state)
                         switch (*item.state)
@@ -601,7 +585,7 @@ namespace proast { namespace presenter {
                             case model::State::Done: prefix = ". "; break;
                         }
 
-                    lb.entries.emplace_back(prefix+item.key, attribute, attention);
+                    lb.entries.emplace_back(selected+prefix+item.key, attribute, attention);
                     {
                         const int total_cost = item.total_cost*10;
                         const int done_cost = item.done_cost*10;
@@ -727,7 +711,6 @@ namespace proast { namespace presenter {
         view::View &view_;
 
         Commander commander_;
-        Mode mode_ = Mode::Init;
         model::Path normal_path_;
         std::optional<DisplayAttribute> display_attribute_;
 

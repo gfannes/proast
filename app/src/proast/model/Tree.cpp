@@ -286,6 +286,28 @@ namespace proast { namespace model {
         MSS_END();
     }
 
+    bool Tree::set_paths()
+    {
+        MSS_BEGIN(bool);
+        for (auto &root: root_forest().nodes)
+        {
+            Path path;
+            auto ftor = [&](auto &node, const auto &gpath, unsigned int visit_count)
+            {
+                if (visit_count == 0)
+                {
+                    path.push_back(node.value.key);
+                    node.value.path = path;
+                }
+                else
+                    path = node.value.path;
+            };
+            gubg::tree::Path gpath;
+            root.dfs(ftor, gpath);
+        }
+        MSS_END();
+    }
+
     void Tree::stream(std::ostream &os) const
     {
         auto ftor = [](std::ostream &os, const Node &n)

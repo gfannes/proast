@@ -10,10 +10,6 @@ namespace proast { namespace presenter {
     {
         Left, Down, Up, Right, Top, Bottom,
     };
-    enum class Mode
-    {
-        Init, Normal, SelectLink,
-    };
     enum class State
     {
         Idle, Add, Rename, Remove, Cost, When, RegisterBookmark, LoadBookmark, SetType, SetState, Command,
@@ -30,7 +26,6 @@ namespace proast { namespace presenter {
         {
         public:
             virtual bool commander_quit() = 0;
-            virtual bool commander_switch_mode(Mode from, Mode to) = 0;
             virtual bool commander_move_cursor(Movement) = 0;
             virtual bool commander_move_item(Movement) = 0;
             virtual bool commander_open(bool edit) = 0;
@@ -46,13 +41,15 @@ namespace proast { namespace presenter {
             virtual bool commander_set_state(char32_t) = 0;
             virtual bool commander_open_directory(bool with_shell) = 0;
             virtual bool commander_paste(bool insert) = 0;
+            virtual bool commander_select() = 0;
+            virtual bool commander_unselect_all() = 0;
+            virtual bool commander_add_links() = 0;
         };
 
         //Set the events listener
         void set_events_dst(Events *events)
         {
             events_ = events;
-            switch_mode_(Mode::Normal);
         }
 
         State state() const {return state_;}
@@ -108,25 +105,22 @@ namespace proast { namespace presenter {
                         case 'K':
                                   MSS(events_->commander_move_item(Movement::Up)); break;
 
+                                  //Open file
                         case '\n':
-                                  switch (mode_)
-                                  {
-                                      case Mode::Normal:
-                                          MSS(events_->commander_open(true));
-                                          break;
-                                      case Mode::SelectLink:
-                                          MSS(switch_mode_(Mode::Normal));
-                                          break;
-                                  }
-                                  break;
-                        case ' ': MSS(events_->commander_open(false)); break;
+                        case 'e':
+                                  MSS(events_->commander_open(true)); break;
+                        case 'E': MSS(events_->commander_open(false)); break;
+
+                                  //Selecting items
+                        case ' ': MSS(events_->commander_select()); break;
+                        case 'u': MSS(events_->commander_unselect_all()); break;
 
                                    //Add item
                         case 'O': add_insert_ = true;  change_state_(State::Add); break;
                         case 'o': add_insert_ = false; change_state_(State::Add); break;
 
                                   //Add link
-                        case 'a': MSS(switch_mode_(Mode::SelectLink)); break;
+                        case 'a': MSS(events_->commander_add_links()); break;
 
                                   //Rename item
                         case 'r': change_state_(State::Rename); break;
@@ -248,14 +242,6 @@ namespace proast { namespace presenter {
             MSS_END();
         }
 
-        bool switch_mode_(Mode mode)
-        {
-            MSS_BEGIN(bool);
-            if (events_)
-                MSS(events_->commander_switch_mode(mode_, mode));
-            mode_ = mode;
-            MSS_END();
-        }
         void change_state_(State new_state)
         {
             if (new_state == state_)
@@ -355,7 +341,6 @@ namespace proast { namespace presenter {
 
         Events *events_ = nullptr;
         State state_ = State::Idle;
-        Mode mode_ = Mode::Init;
         std::string user_input_;
         bool add_insert_ = false;
         std::function<void(bool)> user_input_cb_;

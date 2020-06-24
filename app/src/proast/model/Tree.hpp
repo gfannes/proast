@@ -35,6 +35,7 @@ namespace proast { namespace model {
         const Forest &root_forest() const {return root_forest_;}
 
         bool compute_aggregates();
+        bool set_paths();
 
     private:
         std::map<std::string, Config> name__cfg_;
