@@ -64,18 +64,47 @@ namespace proast { namespace model {
                     return true;
             return false;
         }
-        bool select()
+        bool select_current()
         {
             MSS_BEGIN(bool);
-            for (auto it = selection_.begin(); it != selection_.end(); ++it)
+
+            //Add/remove path_ from selection
             {
-                if (*it == path_)
+                bool do_add = true;
+                for (auto it = selection_.begin(); it != selection_.end(); ++it)
                 {
-                    selection_.erase(it);
-                    return true;
+                    if (*it == path_)
+                    {
+                        selection_.erase(it);
+                        do_add = false;
+                        break;
+                    }
+                }
+                if (do_add)
+                    selection_.push_back(path_);
+            }
+
+            //Move cursor one down
+            {
+                NodeIXPath nixpath;
+                MSS(!!tree_);
+                MSS(tree_->find(nixpath, path_));
+
+                if (!path_.empty())
+                {
+                    auto me_ix = nixpath.back().ix;
+
+                    nixpath.pop_back();
+                    auto parent_node = nixpath.back().node;
+
+                    if (me_ix+1 < parent_node->childs.size())
+                    {
+                        path_.pop_back();
+                        path_.push_back(parent_node->childs.nodes[me_ix+1].value.key);
+                    }
                 }
             }
-            selection_.push_back(path_);
+
             MSS_END();
         }
         bool unselect_all()

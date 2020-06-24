@@ -469,7 +469,7 @@ namespace proast { namespace presenter {
         bool commander_select() override
         {
             MSS_BEGIN(bool);
-            MSS(model_.select());
+            MSS(model_.select_current());
             MSS_END();
         }
         bool commander_unselect_all() override
