@@ -73,7 +73,7 @@ namespace proast {
             //* No CPU burning when nothing happens
             //* Fast scrolling when cursor is moving
             //Brute-force manner to reduce CPU burning
-            /* std::this_thread::sleep_for(std::chrono::milliseconds(50)); */
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
             MSS_END();
         }
