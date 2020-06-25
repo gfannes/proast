@@ -19,6 +19,18 @@ namespace proast { namespace presenter {
     };
     std::string hr(DisplayAttribute);
 
+    inline std::string format_cost(double cost, bool show_details = false)
+    {
+        const int cost_deci = std::round(cost*10.0);
+        if (cost_deci == 0)
+            return std::string("0");
+        if (show_details)
+            return std::to_string(cost_deci/10)+"."+std::to_string(cost_deci%10);
+        if (cost_deci < 10)
+            return std::string(".")+std::to_string(cost_deci);
+        return std::to_string(std::lround(cost_deci/10.0));
+    }
+
     class Presenter: public model::Events, public view::Events, public Commander::Events
     {
     public:
@@ -538,15 +550,6 @@ namespace proast { namespace presenter {
                         std::string my_cost, total_cost, done_cost, todo_cost, deadline, eta;
                         if (itemptr)
                         {
-                            auto format_cost = [](double cost)
-                            {
-                                const int cost_deci = std::round(cost*10.0);
-                                if (cost_deci == 0)
-                                    return std::string("0");
-                                if (cost_deci < 10)
-                                    return std::string(".")+std::to_string(cost_deci);
-                                return std::to_string(std::lround(cost_deci/10.0));
-                            };
                             if (itemptr->my_cost)
                                 my_cost = format_cost(*itemptr->my_cost);
                             total_cost = format_cost(itemptr->total_cost);
@@ -656,9 +659,9 @@ namespace proast { namespace presenter {
                     details_kv_["eta"] = *item.eta;
                 if (item.my_cost)
                     details_kv_["my_cost"] = std::to_string(*item.my_cost)+model_.current_config().cost_unit();
-                details_kv_["total_cost"] = std::to_string(item.total_cost)+model_.current_config().cost_unit();
-                details_kv_["done_cost"] = std::to_string(item.done_cost)+model_.current_config().cost_unit();
-                details_kv_["todo_cost"] = std::to_string(item.total_cost-item.done_cost)+model_.current_config().cost_unit();
+                details_kv_["total_cost"] = format_cost(item.total_cost, true)+model_.current_config().cost_unit();
+                details_kv_["done_cost"] = format_cost(item.done_cost, true)+model_.current_config().cost_unit();
+                details_kv_["todo_cost"] = format_cost(item.total_cost-item.done_cost, true)+model_.current_config().cost_unit();
                 if (item.directory)
                     details_kv_["directory"] = item.directory->string();
                 if (item.content_fp)

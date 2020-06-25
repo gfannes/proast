@@ -65,3 +65,4 @@ Text-UI application
 * Rework `g` into `gg`
 * Git hash header should not require "git checkout ." each time
 * [external](key:help)
+* [external](key:bugs)
