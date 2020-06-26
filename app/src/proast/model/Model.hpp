@@ -23,15 +23,8 @@
 
 namespace proast { namespace model { 
 
-    enum class Removable
-    {
-        Node, File, Folder,
-    };
-
-    enum class ExportType
-    {
-        All, Level1, Level2,
-    };
+    enum class Removable { Node, File, Folder, };
+    enum class ExportType { All, Level1, Level2, };
 
     class Model
     {
@@ -94,6 +87,8 @@ namespace proast { namespace model {
         bool get_parent(Node *&parent, const Path &path);
         bool get(ConstNodeIXPath &cnixpath, const Path &path);
 
+        void stream(std::ostream &os) const;
+
     private:
         std::filesystem::path user_dir_() const;
         std::filesystem::path metadata_fn_() const;
@@ -125,6 +120,12 @@ namespace proast { namespace model {
         std::optional<Clock::time_point> save_tp_ = Clock::now();
         Clock::time_point reload_tp_ = Clock::now();
     };
+
+    inline std::ostream &operator<<(std::ostream &os, const Model &model)
+    {
+        model.stream(os);
+        return os;
+    }
 
 } } 
 

@@ -689,6 +689,16 @@ namespace proast { namespace model {
         MSS_END();
     }
 
+    void Model::stream(std::ostream &os) const
+    {
+        os << C(events_) << std::endl;
+        os << "[path](" << model::to_string(path_) << ")" << std::endl;
+        if (tree_)
+            tree_->stream(os);
+        else
+            std::cout << "No tree present" << std::endl;
+    }
+
     //Privates
     std::filesystem::path Model::user_dir_() const
     {
