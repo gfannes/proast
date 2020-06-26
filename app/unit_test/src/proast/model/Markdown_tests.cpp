@@ -105,7 +105,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
         //Requirements
         {
             auto &child = node.childs.append();
-            child.value.set(model::Type::Requirement, 0);
+            child.value.set(model::Type::Requirement, "#what");
             child.value.title = "Embedded requirement";
             child.value.description.push_back("Explain here what should be achieved");
         }
@@ -117,7 +117,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
         //Design
         {
             auto &child = node.childs.append();
-            child.value.set(model::Type::Design, 0);
+            child.value.set(model::Type::Design, "#principle");
             child.value.title = "Embedded design";
             child.value.description.push_back("Make some decisions to narrow-down the solution space");
         }
@@ -129,7 +129,7 @@ TEST_CASE("model::Node write tests", "[ut][model][Node][write]")
         //Features
         {
             auto &child = node.childs.append();
-            child.value.set(model::Type::Feature, 0);
+            child.value.set(model::Type::Feature, "#feature");
             child.value.title = "Embedded feature";
             child.value.description.push_back("Breakdown this feature in client-valued subfeatures");
         }
