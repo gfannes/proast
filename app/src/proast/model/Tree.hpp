@@ -37,6 +37,17 @@ namespace proast { namespace model {
         bool compute_aggregates();
         bool set_paths();
 
+        template <typename Ftor>
+        void each_node(Ftor &&ftor)
+        {
+            auto my_ftor = [&](Node &n, const auto &path, unsigned int visit_count)
+            {
+                if (visit_count == 0)
+                    ftor(n);
+            };
+            root_forest_.dfs(my_ftor);
+        }
+
     private:
         std::map<std::string, Config> name__cfg_;
         std::map<std::string, std::filesystem::path> name__root_filepath_;

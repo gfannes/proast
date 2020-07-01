@@ -129,7 +129,7 @@ namespace proast { namespace model {
 
     void Item::stream(std::ostream &os) const
     {
-        os << "[Item](key:" << key << ")(title:" << title << ")";
+        os << "[Item](key:" << key << ")(title:" << title << ")(path:" << to_string(path) << ")";
         if (type)
             os << "(type:" << hr(*type) << ")";
         if (priority)
@@ -138,6 +138,8 @@ namespace proast { namespace model {
             os << "(directory:" << *directory << ")";
         if (content_fp)
             os << "(content_fp:" << *content_fp << ")";
+        if (link)
+            os << "(link:" << to_string(*link) << ")";
         os << "{" << std::endl;
         for (const auto &desc: description)
             os << "  " << desc << std::endl;

@@ -11,6 +11,8 @@ namespace proast { namespace model {
     std::string to_string(const Path &);
     Path to_path(const std::string &);
 
+    bool pop_if(Path &path, const Path &needle);
+
 } } 
 
 #endif

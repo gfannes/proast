@@ -90,13 +90,17 @@ namespace proast { namespace model {
         void stream(std::ostream &os) const;
 
     private:
+        using NodeSet = std::set<const Node *>;
+
         std::filesystem::path user_dir_() const;
         std::filesystem::path metadata_fn_() const;
         std::filesystem::path bookmarks_fn_() const;
 
-        bool update_node_(Node &node, const Node &new_parent) const;
+        bool update_content_path_after_move_(Node &node, const Node &new_parent) const;
+        bool update_links_(const Path &orig_path, const Path &new_path, NodeSet &nodes_to_save);
 
         bool save_content_(const Node &node) const;
+        bool save_content_(const NodeSet &nodes) const;
 
         bool save_metadata_() const;
         bool load_metadata_();
@@ -112,7 +116,7 @@ namespace proast { namespace model {
 
         Bookmarks bookmarks_;
 
-        std::optional<Node> cut_item_;
+        std::optional<Node> cut_node_;
 
         std::list<Path> selection_;
 

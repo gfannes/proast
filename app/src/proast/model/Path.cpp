@@ -21,4 +21,20 @@ namespace proast { namespace model {
         return path;
     }
 
+    bool pop_if(Path &path, const Path &needle)
+    {
+        const auto needle_size = needle.size();
+
+        if (needle_size > path.size())
+            return false;
+
+        for (auto ix = 0u; ix < needle_size; ++ix)
+            if (needle[ix] != path[ix])
+                return false;
+
+        path.erase(path.begin(), path.begin()+needle_size);
+
+        return true;
+    }
+
 } } 
