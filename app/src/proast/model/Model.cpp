@@ -756,7 +756,6 @@ namespace proast { namespace model {
 
                 if (node.value.content_fp)
                 {
-                    std::cout << to_string(node.value.path) << std::endl;
                     const auto orig_content_fp = *node.value.content_fp;
 
                     assert(!!node.value.type);
