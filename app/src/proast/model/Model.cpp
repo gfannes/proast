@@ -361,7 +361,15 @@ namespace proast { namespace model {
             //Nothing to rename
             return true;
 
+        const auto is_embedded = me_node->value.is_embedded();
         me_node->value.key = new_key;
+        if (is_embedded)
+        {
+            me_node->value.directory = *parent_node->value.directory / new_str;
+            me_node->value.content_fp = current_config().content_fp_leaf(*me_node->value.directory);
+            log::stream() << "Saving file to " << *me_node->value.content_fp << std::endl;
+            MSS(save_content_(*me_node));
+        }
 
         NodeSet nodes_to_save;
         nodes_to_save.insert(parent_node);
@@ -374,7 +382,6 @@ namespace proast { namespace model {
         }
 
         const auto orig_directory = me_node->value.directory;
-
         MSS(update_content_path_after_move_(*me_node, *parent_node));
 
         if (orig_directory && std::filesystem::exists(*orig_directory))

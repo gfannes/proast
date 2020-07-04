@@ -31,7 +31,8 @@
 * AddNode(inside): `O`
 * AddNode(under): `o`
 * AddLink: `a`
-* Rename: `r`
+* Rename(update): `r`
+* Rename(clear): `R`
 
 ## Item removal
 

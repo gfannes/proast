@@ -258,7 +258,7 @@ namespace proast { namespace presenter {
             }
             MSS_END();
         }
-        bool commander_rename(const std::string &str, bool is_final) override
+        bool commander_rename(const std::string &str, bool update, bool is_final) override
         {
             MSS_BEGIN(bool);
             if (is_final)
@@ -274,9 +274,16 @@ namespace proast { namespace presenter {
                 if (!dialog_)
                 {
                     dialog_.emplace();
+                    if (update)
+                    {
+                        const model::Node *node;
+                        MSS(model_.get(node, model_.path()));
+                        dialog_->set_content(node->value.title);
+                    }
                     dialog_->set_caption("Rename item");
                 }
-                dialog_->set_content(str);
+                else
+                    dialog_->set_content(str);
             }
             MSS_END();
         }

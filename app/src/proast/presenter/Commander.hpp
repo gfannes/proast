@@ -30,7 +30,7 @@ namespace proast { namespace presenter {
             virtual bool commander_move_item(Movement) = 0;
             virtual bool commander_open(bool edit) = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
-            virtual bool commander_rename(const std::string &str, bool is_final) = 0;
+            virtual bool commander_rename(const std::string &str, bool update, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
             virtual bool commander_when(const std::string &str, bool is_final) = 0;
             virtual bool commander_command(const std::string &, bool is_final) = 0;
@@ -123,7 +123,8 @@ namespace proast { namespace presenter {
                         case 'a': MSS(events_->commander_add_links()); break;
 
                                   //Rename item
-                        case 'r': change_state_(State::Rename); break;
+                        case 'r': rename_update_ = true; change_state_(State::Rename); break;
+                        case 'R': rename_update_ = false;  change_state_(State::Rename); break;
 
                                   //Remove item
                         case 'd': change_state_(State::Remove); break;
@@ -290,7 +291,7 @@ namespace proast { namespace presenter {
                             user_input_cb_ = [&](bool is_final)
                             {
                                 if (events_)
-                                    events_->commander_rename(user_input_, is_final);
+                                    events_->commander_rename(user_input_, rename_update_, is_final);
                             };
                             break;
                         case State::Cost:
@@ -343,6 +344,7 @@ namespace proast { namespace presenter {
         State state_ = State::Idle;
         std::string user_input_;
         bool add_insert_ = false;
+        bool rename_update_ = true;
         std::function<void(bool)> user_input_cb_;
         std::optional<model::Removable> removable_;
         bool new_cost_ = false;
