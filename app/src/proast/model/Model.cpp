@@ -507,6 +507,56 @@ namespace proast { namespace model {
 
         MSS_END();
     }
+    bool Model::convert_to_nonleaf()
+    {
+        MSS_BEGIN(bool);
+
+        log::stream() << "Converting " << to_string(path_) << " to nonleaf" << std::endl;
+
+        Node *node_ptr;
+        MSS(!!tree_);
+        MSS(tree_->find(node_ptr, path_));
+        Node &node = *node_ptr;
+
+        Node *parent_ptr;
+        MSS(get_parent(parent_ptr, path_));
+        Node &parent = *parent_ptr;
+
+        if (node.value.content_fp)
+        {
+            const auto orig_content_fp = *node.value.content_fp;
+            bool do_convert = false;
+
+            assert(!!node.value.type);
+            assert(!!parent.value.directory);
+            switch (*node.value.type)
+            {
+                case Type::File:
+                case Type::Directory:
+                    break;
+                default:
+                    {
+                        assert(!!node.value.directory);
+                        //We will actually convert to nonleaf if node is a leaf
+                        do_convert = (orig_content_fp == current_config().content_fp_leaf(*node.value.directory));
+                        if (do_convert)
+                            node.value.content_fp = current_config().content_fp_nonleaf(*node.value.directory);
+                    }
+                    break;
+            }
+
+            if (do_convert)
+            {
+                std::filesystem::create_directories(node.value.content_fp->parent_path());
+                std::filesystem::rename(orig_content_fp, *node.value.content_fp);
+            }
+        }
+
+        MSS(save_content_(node));
+        MSS(save_content_(parent));
+
+        MSS_END();
+    }
 
     //Exporting data
     bool Model::export_nodes(const std::filesystem::path &fp)

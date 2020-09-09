@@ -192,6 +192,9 @@ namespace proast { namespace presenter {
                     if (ix+1 < forest->size())
                         MSS(model_.swap(ix, ix+1));
                     break;
+                case Movement::Nonleaf:
+                    MSS(model_.convert_to_nonleaf());
+                    break;
             }
             MSS_END();
         }

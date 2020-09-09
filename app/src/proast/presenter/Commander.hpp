@@ -8,7 +8,7 @@ namespace proast { namespace presenter {
 
     enum class Movement
     {
-        Left, Down, Up, Right, Top, Bottom,
+        Left, Down, Up, Right, Top, Bottom, Nonleaf,
     };
     enum class State
     {
@@ -104,6 +104,8 @@ namespace proast { namespace presenter {
                                   MSS(events_->commander_move_item(Movement::Down)); break;
                         case 'K':
                                   MSS(events_->commander_move_item(Movement::Up)); break;
+                        case 'L':
+                                  MSS(events_->commander_move_item(Movement::Nonleaf)); break;
 
                                   //Open file
                         case '\n':

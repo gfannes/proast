@@ -21,6 +21,7 @@
 * Up: `K`
 * Down: `J`
 * Left: `H`
+* Nonleaf: `L`: convert item to nonleaf if possible
 
 ## Item interaction
 

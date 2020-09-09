@@ -61,6 +61,7 @@ namespace proast { namespace model {
         bool rename_item(const std::string &new_str);
         bool remove_current(Removable removable);
         bool paste(bool insert);
+        bool convert_to_nonleaf();
 
         //Exporting data
         bool export_nodes(const std::filesystem::path &fp);
