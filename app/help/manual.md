@@ -53,6 +53,7 @@
 
 ## Item attributes
 
+* SetState(<empty>): `tn` or `t `
 * SetState(Unclear): `tu`
 * SetState(Clear): `tc`
 * SetState(Design): `tD`
