@@ -74,3 +74,7 @@ Text-UI application
 * Scripting via input command file
 * Searching
   * Tags
+* Out-of-filesystem storage of nodes and meta information
+* Different views of the same tree
+  * All todos
+  * Milestone view
