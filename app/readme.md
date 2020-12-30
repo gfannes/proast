@@ -65,3 +65,12 @@ Text-UI application
 * Git hash header should not require "git checkout ." each time
 * [external](key:help)
 * [external](key:bugs)
+* Support for file browsing
+* Support for filter-navigation mode
+* dB-based priority
+* Import from freeplane
+* Easy moving and restructuring of nodes
+* Add sufficient info to have a bijection between file system and in-memory representation
+* Scripting via input command file
+* Searching
+  * Tags
