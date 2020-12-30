@@ -78,6 +78,8 @@ Text-UI application
   * Tags
 * Out-of-filesystem storage of nodes and meta information
 * Different views of the same tree
-  * All todos
+  * All todos ordered by priority
   * Milestone view
 * Opening file at specific line
+* Planning based on priorities and dependencies
+  * Export to gnuplot gantt chartt
