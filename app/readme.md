@@ -66,6 +66,8 @@ Text-UI application
 * [external](key:help)
 * [external](key:bugs)
 * Support for file browsing
+  * Copy and move files
+  * Preview
 * Support for filter-navigation mode
 * dB-based priority
 * Import from freeplane
@@ -78,3 +80,4 @@ Text-UI application
 * Different views of the same tree
   * All todos
   * Milestone view
+* Opening file at specific line
