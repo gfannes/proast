@@ -30,7 +30,7 @@ namespace proast { namespace presenter {
             virtual bool commander_move_item(Movement) = 0;
             virtual bool commander_open(bool edit) = 0;
             virtual bool commander_add(const std::string &str, bool insert, bool is_final) = 0;
-            virtual bool commander_rename(const std::string &str, bool update, bool is_final) = 0;
+            virtual bool commander_rename(std::string &str, bool update, bool is_final) = 0;
             virtual bool commander_cost(const std::string &str, bool new_cost, bool is_final) = 0;
             virtual bool commander_when(const std::string &str, bool is_final) = 0;
             virtual bool commander_command(const std::string &, bool is_final) = 0;

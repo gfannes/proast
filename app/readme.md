@@ -24,6 +24,7 @@ Text-UI application
 
 ## Features
 
+* [external](key:execute_file_of_key-presses)
 * Add help command
   * Support for showing formatted text in a dialog
 * [external](key:support_sorting_based_on_state)
