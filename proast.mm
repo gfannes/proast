@@ -2,7 +2,7 @@
 <!--To view this file, download free mind mapping software Freeplane from http://freeplane.sourceforge.net -->
 <node TEXT="proast" FOLDED="false" ID="ID_1298256357" CREATED="1609883997784" MODIFIED="1609884060435" STYLE="oval">
 <font SIZE="18"/>
-<hook NAME="MapStyle" zoom="1.464">
+<hook NAME="MapStyle" zoom="2.852">
     <properties edgeColorConfiguration="#808080ff,#ff0000ff,#0000ffff,#00ff00ff,#ff00ffff,#00ffffff,#7c0000ff,#00007cff,#007c00ff,#7c007cff,#007c7cff,#7c7c00ff" fit_to_viewport="false"/>
 
 <map_styles>
@@ -72,6 +72,7 @@
 </node>
 <node TEXT="Translate requirements into action plan" ID="ID_228574777" CREATED="1609884367441" MODIFIED="1609884449910">
 <node TEXT="do and improve" ID="ID_1398723160" CREATED="1609885749678" MODIFIED="1609885955337"/>
+<node TEXT="minimize effort to stash and pickup a project" ID="ID_1006515886" CREATED="1609957242139" MODIFIED="1609957266098"/>
 </node>
 <node TEXT="Support for metadata" ID="ID_623773751" CREATED="1609884452298" MODIFIED="1609884480103">
 <node TEXT="priorities" ID="ID_401495486" CREATED="1609884481926" MODIFIED="1609884486434"/>
