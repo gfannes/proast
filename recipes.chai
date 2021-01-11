@@ -18,8 +18,28 @@ root.book("proast", fun(b){
     })
 
     b.recipe("ut", TargetType.Executable, fun(rcp){
-        rcp.add("app/unit_test/src", "**.[hc]pp")
+        rcp.add("app/unit_test/src/proast", "**.[hc]pp")
         rcp.depends_on("proast/func")
+        rcp.depends_on("catch/main")
+    })
+})
+
+root.book("proast2", fun(b){
+    b.recipe("func", fun(rcp){
+        rcp.add("app2/src", "proast/**.[hc]pp")
+        rcp.depends_on("termbox/func")
+        rcp.depends_on("gubg/std/func")
+        rcp.depends_on("gubg/algo/func")
+    })
+
+    b.recipe("app", TargetType.Executable, fun(rcp){
+        rcp.depends_on("proast2/func")
+    })
+
+    b.recipe("ut", TargetType.Executable, fun(rcp){
+        rcp.add("app2/unit_test/src/proast", "**.[hc]pp")
+        rcp.depends_on("proast2/func")
+        rcp.depends_on("catch/func")
         rcp.depends_on("catch/main")
     })
 })

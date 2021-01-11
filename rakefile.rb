@@ -51,10 +51,11 @@ task :ut, [:filter] do |t,args|
 
     mode = :debug
     # mode = :release
-    sh "cook -g ninja -T c++.std=17 -T #{mode} proast/ut"
+    proast = "proast2"
+    sh "cook -g ninja -T c++.std=17 -T #{mode} #{proast}/ut"
     sh "ninja -v"
 
-    cmd = %w[./proast.ut -d yes -a] << filter
+    cmd = "./#{proast}.ut -d yes -a".split(" ") << filter
     sh(*cmd)
 end
 

@@ -1,0 +1,29 @@
+#ifndef HEADER_proast_Tree_hpp_ALREADY_INCLUDED
+#define HEADER_proast_Tree_hpp_ALREADY_INCLUDED
+
+#include <proast/Data.hpp>
+#include <gubg/tree/Forest.hpp>
+#include <filesystem>
+#include <set>
+
+namespace proast { 
+    class Tree
+    {
+    public:
+        struct Config
+        {
+            std::set<std::string> skip;
+            Config();
+        };
+        bool add(const std::filesystem::path &, const Config &);
+
+    private:
+        using Forest = gubg::tree::Forest<Data>;
+
+        bool add_(Forest &, const std::filesystem::path &, const Config &);
+
+        Forest forest_;
+    };
+} 
+
+#endif
