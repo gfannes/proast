@@ -6,6 +6,8 @@
 namespace proast { 
     Tree::Config::Config()
     {
+        for (const auto &fn: {"extern"})
+            names_to_skip.insert(fn);
         for (const auto &ext: {".resp", ".a", ".obj", ".o", ".lib", ".dll", ".ut", ".app", ".exe", ".ninja"})
             extensions_to_skip.insert(ext);
     }

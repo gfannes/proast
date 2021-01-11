@@ -37,6 +37,7 @@ task :build => [:dependencies, :version_git_hash_header] do
     mode = :debug
     # mode = :release
     sh "cook -g ninja -T c++.std=17 -T #{mode} proast/app"
+    sh "cook -g ninja -T c++.std=17 -T #{mode} proast2/app"
     sh "ninja -v"
 end
 
@@ -61,7 +62,7 @@ end
 
 desc "Run proast"
 task :test => :build do
-    sh "./proast.app -r ./ -r #{ENV["HOME"]}/nontech -r #{ENV["gubg"]}"
+    sh "./proast2.app -r ./ -r #{ENV["HOME"]}/nontech -r #{ENV["gubg"]}"
 end
 
 desc "Clear cached binaries"

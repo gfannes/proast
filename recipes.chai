@@ -33,6 +33,7 @@ root.book("proast2", fun(b){
     })
 
     b.recipe("app", TargetType.Executable, fun(rcp){
+        rcp.add("app2/src", "main.cpp")
         rcp.depends_on("proast2/func")
     })
 
