@@ -6,7 +6,8 @@
 namespace proast { 
     Tree::Config::Config()
     {
-        skip.insert(".git");
+        for (const auto &ext: {".resp", ".a", ".obj", ".o", ".lib", ".dll", ".ut", ".app", ".exe", ".ninja"})
+            extensions_to_skip.insert(ext);
     }
 
     bool Tree::add(const std::filesystem::path &path, const Tree::Config &config)
@@ -27,8 +28,9 @@ namespace proast {
         {
             const auto path = entry.path();
             const auto fn = path.filename().string();
+            const auto ext = path.extension();
             const auto is_hidden = fn.empty() ? true : fn[0]=='.';
-            if (is_hidden || config.skip.count(fn))
+            if (is_hidden || config.names_to_skip.count(fn) || config.extensions_to_skip.count(ext))
             {
             }
             else if (std::filesystem::is_regular_file(path))

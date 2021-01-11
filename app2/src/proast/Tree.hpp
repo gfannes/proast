@@ -12,7 +12,8 @@ namespace proast {
     public:
         struct Config
         {
-            std::set<std::string> skip;
+            std::set<std::string> names_to_skip;
+            std::set<std::string> extensions_to_skip;
             Config();
         };
         bool add(const std::filesystem::path &, const Config &);
