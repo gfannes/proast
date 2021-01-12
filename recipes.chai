@@ -3,6 +3,12 @@ include("../gubg/recipes.chai")
 root.recipe("termbox/func", fun(rcp){
     rcp.add(".extern/termbox/src", "termbox.[hc]")
 })
+root.recipe("ftxui/func", fun(rcp){
+    rcp.add(".extern/ftxui/include", "ftxui/**/*.hpp")
+    rcp.add(".extern/ftxui/src", "ftxui/**/*.[hc]pp")
+    rcp.remove(".extern/ftxui/src", "ftxui/**/*_test.cpp")
+    rcp.library("pthread")
+})
 
 root.book("proast", fun(b){
     b.recipe("func", fun(rcp){
@@ -27,7 +33,7 @@ root.book("proast", fun(b){
 root.book("proast2", fun(b){
     b.recipe("func", fun(rcp){
         rcp.add("app2/src", "proast/**.[hc]pp")
-        rcp.depends_on("termbox/func")
+        rcp.depends_on("ftxui/func")
         rcp.depends_on("gubg/std/func")
         rcp.depends_on("gubg/algo/func")
     })

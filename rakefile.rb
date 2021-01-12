@@ -4,10 +4,7 @@ task :default do
     sh "rake -T"
 end
 
-file ".extern" do
-    puts "creating dir .extern"
-    FileUtils.mkdir(".extern")
-end
+directory ".extern"
 file ".extern/termbox/ok" => ".extern" do
     Dir.chdir(".extern") do
         FileUtils.rm_rf("termbox")
@@ -17,8 +14,18 @@ file ".extern/termbox/ok" => ".extern" do
         end
     end
 end
+file ".extern/ftxui/ok" => ".extern" do
+    Dir.chdir(".extern") do
+        FileUtils.rm_rf("ftxui")
+        sh "git clone https://github.com/ArthurSonzogni/ftxui"
+        Dir.chdir("ftxui") do
+            sh "touch ok"
+        end
+    end
+end
 
-task :dependencies => ".extern/termbox/ok"
+task :dependencies => [".extern/termbox/ok", ".extern/ftxui/ok"]
+# task :dependencies => ".extern/ftxui/ok"
 
 task :version_git_hash_header do
     File.open("app/src/proast/version_git_hash.hpp", "w") do |fo|
