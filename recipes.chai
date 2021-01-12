@@ -9,6 +9,10 @@ root.recipe("ftxui/func", fun(rcp){
     rcp.remove(".extern/ftxui/src", "ftxui/**/*_test.cpp")
     rcp.library("pthread")
 })
+root.recipe("ftxui/app", TargetType.Executable, fun(rcp){
+    rcp.add(".extern/ftxui/examples", "component/gallery.cpp")
+    rcp.depends_on("ftxui/func")
+})
 
 root.book("proast", fun(b){
     b.recipe("func", fun(rcp){
