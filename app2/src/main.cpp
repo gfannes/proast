@@ -10,20 +10,43 @@ namespace proast {
     {
     public:
         double g = 0.0;
+        std::function<void()> stop;
         ftxui::Element Render() override
         {
             using namespace ftxui;
             g += 0.1;
             return vbox({
                     hbox({
-                            text(L"left") | border,
-                            text(L"middle") | border | flex,
-                            text(L"right") | border,
-                            }),
+                            center(text(str)) | border,
+                            center(
+                            vbox({
+                                    text(L"a"),
+                                    text(L"b"),
+                                    text(L"c"),
+                                    text(L"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                                    })),
+                            center(text(L"right")) | border,
+                            }) | border,
                     gauge(g) | border,
-                    });
+                    }) | border;
+        }
+        bool OnEvent(ftxui::Event event) override
+        {
+            if (event == ftxui::Event::ArrowLeft)
+            {
+                str = L"LEFT";
+                stop();
+            }
+            else
+            {
+                auto &input = event.input();
+                str.resize(input.size());
+                for (auto ix = 0u; ix < str.size(); ++ix)
+                    str[ix] = input[0];
+            }
         }
     private:
+        std::wstring str;
     };
 
     int main(int argc, const char **argv)
@@ -43,6 +66,7 @@ namespace proast {
 
         auto screen = ftxui::ScreenInteractive::Fullscreen();
         MyComponent component;
+        component.stop = screen.ExitLoopClosure();
         screen.Loop(&component);
         std::cout << screen.ToString() << std::endl;
 
