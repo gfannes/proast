@@ -60,17 +60,25 @@ namespace proast {
         {
             MSS_BEGIN(bool);
             MSS(options_.parse(argc, argv));
-            options_.stream(std::cout);
+            if (options_.verbose >= 1)
+                options_.stream(std::cout);
             MSS_END();
         }
 
         bool prepare()
         {
             MSS_BEGIN(bool);
-            proast::Tree::Config config;
-            for (const auto &root: options_.roots)
+            if (options_.print_help)
             {
-                MSS(tree_.add(root, config));
+                std::cout << options_.help();
+            }
+            else
+            {
+                proast::Tree::Config config;
+                for (const auto &root: options_.roots)
+                {
+                    MSS(tree_.add(root, config));
+                }
             }
             MSS_END();
         }
@@ -78,12 +86,16 @@ namespace proast {
         bool run()
         {
             MSS_BEGIN(bool);
-
-            auto screen = ftxui::ScreenInteractive::Fullscreen();
-            MyComponent component;
-            component.stop = screen.ExitLoopClosure();
-            screen.Loop(&component);
-
+            if (options_.print_help)
+            {
+            }
+            else
+            {
+                auto screen = ftxui::ScreenInteractive::Fullscreen();
+                MyComponent component;
+                component.stop = screen.ExitLoopClosure();
+                screen.Loop(&component);
+            }
             MSS_END();
         }
 

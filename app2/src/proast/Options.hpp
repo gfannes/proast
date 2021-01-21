@@ -10,11 +10,14 @@ namespace proast {
     public:
         std::string exe_filename;
         bool print_help = false;
+        unsigned int verbose = 0;
         std::vector<std::string> roots;
 
         bool parse(int argc, const char **argv);
 
         void stream(std::ostream &os) const;
+
+        std::string help() const;
     private:
     };
 } 

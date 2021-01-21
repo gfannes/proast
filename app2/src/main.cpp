@@ -3,11 +3,12 @@
 #include <iostream>
 
 namespace proast { 
-    int main(int argc, const char **argv)
+    bool main(int argc, const char **argv)
     {
-        MSS_BEGIN(int);
+        MSS_BEGIN(bool);
 
         proast::App app;
+
         MSS(app.parse(argc, argv));
 
         MSS(app.prepare());

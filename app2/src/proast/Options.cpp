@@ -31,6 +31,12 @@ namespace proast {
                 MSS(pop_arg(root), std::cout << "Error: No root was specified" << std::endl);
                 roots.push_back(root);
             }
+            else if (matches("-V", "--verbose"))
+            {
+                std::string level;
+                MSS(pop_arg(level), std::cout << "Error: No verbose level was specified" << std::endl);
+                verbose = std::stoul(level);
+            }
             else { std::cout << "Error: unknown CLI argument \"" << arg << "\"" << std::endl; }
         }
 
@@ -43,5 +49,14 @@ namespace proast {
         for (const auto &root: roots)
             os << "  [Root](path:" << root << ")" << std::endl;
         os << "}" << std::endl;
+    }
+
+    std::string Options::help() const
+    {
+        return R"EOF(Help for proast, the PROject ASsisTant.
+-h    --help            Print this help
+-r    --root    FOLDER  Add FOLDER as root tree, multiple roots are supported
+-V    --verbose LEVEL   Set verbosity LEVEL
+)EOF";
     }
 } 
