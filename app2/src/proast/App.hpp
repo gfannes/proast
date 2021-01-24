@@ -2,9 +2,8 @@
 #define HEADER_proast_App_hpp_ALREADY_INCLUDED
 
 #include <proast/Options.hpp>
-#include <proast/Tree.hpp>
+#include <proast/presenter/Presenter.hpp>
 #include <proast/ui/List.hpp>
-#include <proast/view/Main.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
 #include <memory>
@@ -31,10 +30,10 @@ namespace proast {
             }
             else
             {
-                proast::Tree::Config config;
+                proast::model::Tree::Config config;
                 for (const auto &root: options_.roots)
                 {
-                    MSS(tree_.add(root, config));
+                    MSS(model_.add_root(root, config));
                 }
             }
             MSS_END();
@@ -48,17 +47,16 @@ namespace proast {
             }
             else
             {
-                auto screen = ftxui::ScreenInteractive::Fullscreen();
-                view::Main main_view;
-                main_view.stop = screen.ExitLoopClosure();
-                screen.Loop(&main_view);
+                presenter_.run();
             }
             MSS_END();
         }
 
     private:
         Options options_;
-        Tree tree_;
+        model::Model model_;
+        view::View view_;
+        presenter::Presenter presenter_{model_, view_};
     };
 } 
 

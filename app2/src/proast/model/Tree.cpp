@@ -1,9 +1,9 @@
-#include <proast/Tree.hpp>
+#include <proast/model/Tree.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
 #include <map>
 
-namespace proast { 
+namespace proast { namespace model { 
     Tree::Config::Config()
     {
         for (const auto &fn: {"extern"})
@@ -20,6 +20,7 @@ namespace proast {
         MSS_END();
     }
 
+    //Privates
     bool Tree::add_(Forest &forest, const std::filesystem::path &path, const Tree::Config &config)
     {
         MSS_BEGIN(bool);
@@ -57,4 +58,4 @@ namespace proast {
 
         MSS_END();
     }
-} 
+} } 

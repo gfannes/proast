@@ -1,12 +1,13 @@
-#ifndef HEADER_proast_Tree_hpp_ALREADY_INCLUDED
-#define HEADER_proast_Tree_hpp_ALREADY_INCLUDED
+#ifndef HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
+#define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
 #include <proast/Data.hpp>
 #include <gubg/tree/Forest.hpp>
 #include <filesystem>
 #include <set>
 
-namespace proast { 
+namespace proast { namespace model { 
+    using Path = gubg::tree::Path;
     class Tree
     {
     public:
@@ -25,6 +26,6 @@ namespace proast {
 
         Forest forest_;
     };
-} 
+} } 
 
 #endif
