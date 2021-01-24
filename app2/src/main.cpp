@@ -11,8 +11,6 @@ namespace proast {
 
         MSS(app.parse(argc, argv));
 
-        MSS(app.prepare());
-
         MSS(app.run());
 
         MSS_END();

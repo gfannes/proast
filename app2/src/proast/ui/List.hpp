@@ -38,7 +38,8 @@ namespace proast { namespace ui {
         dto::List::Ptr list_;
         ftxui::Box box_;
     };
-    ftxui::Element list(const dto::List::Ptr &list);
+
+    ftxui::Element list(const dto::List::Ptr &, const std::wstring &);
 } } 
 
 #endif
