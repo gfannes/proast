@@ -4,6 +4,11 @@
 #include <map>
 
 namespace proast { namespace model { 
+    Tree::Tree()
+    {
+        root.value.name = L"<ROOT>";
+    }
+
     Tree::Config::Config()
     {
         for (const auto &fn: {"extern"})
@@ -15,13 +20,68 @@ namespace proast { namespace model {
     bool Tree::add(const std::filesystem::path &path, const Tree::Config &config)
     {
         MSS_BEGIN(bool);
-        MSS(add_(forest_, path, config));
-        std::cout << "Loaded " << forest_.node_count() << " nodes from \"" << path << "\"" << std::endl;
+
+        auto &child = root.childs.append();
+        child.value.name = path.filename().wstring();
+
+        MSS(add_(child, path, config));
+        std::cout << "Loaded " << child.node_count() << " nodes from \"" << path << "\"" << std::endl;
+
         MSS_END();
     }
 
+    bool Tree::resolve_datas(Datas &datas, const Path &path)
+    {
+        MSS_BEGIN(bool);
+
+        datas.resize(path.size()+1);
+        datas.resize(0u);
+
+        Node *node = &root;
+        datas.emplace_back(&node->value);
+        for (auto ix: path)
+        {
+            MSS(ix < node->childs.size());
+            node = &node->childs.nodes[ix];
+            datas.emplace_back(&node->value);
+        }
+
+        MSS_END();
+    }
+
+    bool Tree::resolve_nodes(Nodes &nodes, const Path &path)
+    {
+        MSS_BEGIN(bool);
+
+        nodes.resize(path.size()+1);
+        nodes.resize(0u);
+
+        Node *node = &root;
+        nodes.emplace_back(node);
+        for (auto ix: path)
+        {
+            MSS(ix < node->childs.size());
+            node = &node->childs.nodes[ix];
+            nodes.emplace_back(node);
+        }
+
+        MSS_END();
+    }
+
+    std::size_t Tree::selected_ix(const Node &node)
+    {
+        const auto &selected = node.value.selected;
+        const auto &child_nodes = node.childs.nodes;
+        for (auto ix = 0u; ix < child_nodes.size(); ++ix)
+        {
+            if (child_nodes[ix].value.name == selected)
+                return ix;
+        }
+        return 0;
+    }
+
     //Privates
-    bool Tree::add_(Forest &forest, const std::filesystem::path &path, const Tree::Config &config)
+    bool Tree::add_(Node &node, const std::filesystem::path &path, const Tree::Config &config)
     {
         MSS_BEGIN(bool);
 
@@ -48,12 +108,11 @@ namespace proast { namespace model {
 
         for (const auto &[path, is_folder]: path__is_folder)
         {
-            forest.nodes.emplace_back();
-            auto &node = forest.nodes.back();
-            node.value.path = path;
+            auto &child = node.childs.append();
+            child.value.path = path;
             std::cout << path << std::endl;
             if (is_folder)
-                MSS(add_(node.childs, path, config));
+                MSS(add_(child, path, config));
         }
 
         MSS_END();

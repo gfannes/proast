@@ -12,7 +12,7 @@ namespace proast { namespace presenter {
     public:
         Presenter(model::Model &model, view::View &view);
 
-        void run();
+        bool run();
 
         //View::Events API
         void received(wchar_t) override;
@@ -23,6 +23,8 @@ namespace proast { namespace presenter {
 
     private:
         using Commander = Commander_crtp<Presenter>;
+
+        bool refresh_view_();
 
         model::Model &model_;
         view::View &view_;

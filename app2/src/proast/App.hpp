@@ -11,12 +11,11 @@ namespace proast {
     class App
     {
     public:
-        bool parse(int argc, const char **argv);
+        Options options;
 
         bool run();
 
     private:
-        Options options_;
         model::Model model_;
         view::View view_;
         presenter::Presenter presenter_{model_, view_};

@@ -1,4 +1,5 @@
 #include <proast/presenter/Presenter.hpp>
+#include <gubg/mss.hpp>
 
 namespace proast { namespace presenter { 
     Presenter::Presenter(model::Model &model, view::View &view): model_(model), view_(view)
@@ -6,20 +7,50 @@ namespace proast { namespace presenter {
         view_.events = this;
     }
 
-    void Presenter::run()
+    bool Presenter::run()
     {
-        view_.header = L"ok";
-        n00_ = dto::List::create();
-        n00_->items.emplace_back(L"zero");
-        n00_->items.emplace_back(L"one");
-        n00_->items.emplace_back(L"two");
-        n00_->items.emplace_back(L"three");
-        n00_->items.emplace_back(L"four");
-        n00_->items.emplace_back(L"five");
-        n00_->items.emplace_back(L"six");
-        n00_->items.emplace_back(L"seven");
-        view_.n00 = n00_;
+        MSS_BEGIN(bool);
+
+        MSS(refresh_view_());
+
         view_.run();
+
+        MSS_END();
+    }
+
+    bool Presenter::refresh_view_()
+    {
+        MSS_BEGIN(bool);
+
+        auto path = model_.current_path();
+
+        {
+            oss_.str(L"");
+            model::Tree::Datas datas;
+            MSS(model_.tree.resolve_datas(datas, path));
+            oss_ << L"Current path: ";
+            for (auto ptr: datas)
+                oss_ << L"/" << ptr->name;
+            view_.header = oss_.str();
+        }
+
+        {
+            model::Tree::Nodes nodes;
+            MSS(model_.tree.resolve_nodes(nodes, path));
+            const auto node_cnt = nodes.size();
+            if (node_cnt >= 2)
+            {
+                auto parent = nodes[node_cnt-2];
+
+                n00_ = dto::List::create();
+                for (auto &n: parent->childs.nodes)
+                    n00_->items.emplace_back(n.value.name);
+                n00_->ix = model::Tree::selected_ix(*parent);
+                view_.n00 = n00_;
+            }
+        }
+
+        MSS_END();
     }
 
     //Commander API
@@ -29,25 +60,8 @@ namespace proast { namespace presenter {
     }
     void Presenter::commander_move(Direction direction)
     {
-        oss_.str(L"");
-        switch (direction)
-        {
-            case Direction::Down:  
-                oss_ << L"Down"; 
-                ++n00_->ix;
-                break;
-            case Direction::Up:    
-                oss_ << L"Up"; 
-                --n00_->ix;
-                break;
-            case Direction::Left:  
-                oss_ << L"Left"; 
-                break;
-            case Direction::Right: 
-                oss_ << L"Right"; 
-                break;
-        }
-        view_.footer = oss_.str();
+        model_.move(direction);
+        refresh_view_();
     }
 
     //View::Events API

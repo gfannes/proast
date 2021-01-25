@@ -7,6 +7,8 @@ namespace proast {
     class Data
     {
     public:
+        std::wstring name;
+        std::wstring selected;
         std::filesystem::path path;
     private:
     };

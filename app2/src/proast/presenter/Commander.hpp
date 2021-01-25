@@ -1,12 +1,9 @@
 #ifndef HEADER_proast_presenter_Commander_hpp_ALREADY_INCLUDED
 #define HEADER_proast_presenter_Commander_hpp_ALREADY_INCLUDED
 
-namespace proast { namespace presenter { 
-    enum class Direction
-    {
-        Down, Up, Left, Right,
-    };
+#include <proast/Types.hpp>
 
+namespace proast { namespace presenter { 
     template <typename Receiver>
     class Commander_crtp
     {

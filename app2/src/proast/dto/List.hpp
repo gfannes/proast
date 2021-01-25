@@ -9,7 +9,7 @@ namespace proast { namespace dto {
     struct List
     {
         std::vector<std::wstring> items;
-        int ix = 0;
+        int ix = -1;
 
         using Ptr = std::shared_ptr<List>;
         static Ptr create(){return Ptr{new List};}

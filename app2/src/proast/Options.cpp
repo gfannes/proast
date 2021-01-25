@@ -1,5 +1,6 @@
 #include <proast/Options.hpp>
 #include <gubg/mss.hpp>
+#include <iostream>
 
 namespace proast { 
     bool Options::parse(int argc, const char **argv)

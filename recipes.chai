@@ -10,7 +10,7 @@ root.recipe("ftxui/func", fun(rcp){
     rcp.library("pthread")
 })
 root.recipe("ftxui/app", TargetType.Executable, fun(rcp){
-    rcp.add(".extern/ftxui/examples", "component/gallery.cpp")
+    rcp.add(".extern/ftxui/examples", "dom/spinner.cpp")
     rcp.depends_on("ftxui/func")
 })
 
