@@ -48,9 +48,22 @@ namespace proast { namespace model {
                     parent->value.selected = me->value.name;
                 }
                 break;
-            case Direction::Left:  
+            case Direction::Left:
+                {
+                    MSS(!current_path_.empty());
+                    current_path_.pop_back();
+                }
                 break;
-            case Direction::Right: 
+            case Direction::Right:
+                if (tree.is_leaf(current_path_))
+                {
+                }
+                else
+                {
+                    auto me = current_me();
+                    MSS(!!me);
+                    current_path_.emplace_back(Tree::selected_ix(*me));
+                }
                 break;
         }
         MSS_END();

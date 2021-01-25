@@ -1,4 +1,5 @@
 #include <proast/model/Tree.hpp>
+#include <proast/util.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
 #include <map>
@@ -68,6 +69,18 @@ namespace proast { namespace model {
         MSS_END();
     }
 
+    bool Tree::is_leaf(const Path &path) const
+    {
+        const Node *node = &root;
+        for (auto ix: path)
+        {
+            if (ix >= node->nr_childs())
+                return false;
+            node = &node->childs.nodes[ix];
+        }
+        return node->nr_childs() == 0;
+    }
+
     std::size_t Tree::selected_ix(const Node &node)
     {
         const auto &selected = node.value.selected;
@@ -110,7 +123,8 @@ namespace proast { namespace model {
         {
             auto &child = node.childs.append();
             child.value.path = path;
-            std::cout << path << std::endl;
+            child.value.name = path.filename().wstring();
+            std::cout << child.value.path.string() << " " << to_string(child.value.name) << std::endl;
             if (is_folder)
                 MSS(add_(child, path, config));
         }

@@ -31,6 +31,9 @@ namespace proast { namespace presenter {
             oss_ << L"Current path: ";
             for (auto ptr: datas)
                 oss_ << L"/" << ptr->name;
+            for (auto ix = 0u; ix < path.size(); ++ix)
+                oss_ << L" " << std::to_wstring(path[ix]);
+            oss_ << L" " << model_.current_me()->value.path;
             view_.header = oss_.str();
         }
 

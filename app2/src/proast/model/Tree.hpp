@@ -30,6 +30,8 @@ namespace proast { namespace model {
         using Nodes = std::vector<Node *>;
         bool resolve_nodes(Nodes &, const Path &);
 
+        bool is_leaf(const Path &) const;
+
         static std::size_t selected_ix(const Node &);
 
     private:

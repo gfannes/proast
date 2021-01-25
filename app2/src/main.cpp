@@ -11,7 +11,7 @@ namespace proast {
 
         MSS(app.options.parse(argc, argv));
         app.options.roots.emplace_back(std::filesystem::current_path());
-        app.options.roots.emplace_back("/home/geertf/gubg");
+        /* app.options.roots.emplace_back("/home/geertf/gubg"); */
         if (app.options.verbose >= 1)
             app.options.stream(std::cout);
 
