@@ -16,13 +16,14 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Model::move(Direction direction)
+    bool Model::move(Direction direction, int level)
     {
         MSS_BEGIN(bool);
         switch (direction)
         {
             case Direction::Down:
             case Direction::Up:
+                if (level == 0)
                 {
                     auto parent = current_parent();
                     MSS(!!parent);
@@ -46,6 +47,31 @@ namespace proast { namespace model {
                     auto me = current_me();
                     MSS(!!me);
                     parent->value.selected = me->value.name;
+                }
+                else
+                {
+                    auto grand_parent = current_grand_parent();
+                    MSS(!!grand_parent);
+
+                    MSS(current_path_.size() >= 2);
+                    {
+                        auto &parent_ix = current_path_[current_path_.size()-2];
+                        switch (direction)
+                        {
+                            case Direction::Down:
+                                MSS(parent_ix < grand_parent->nr_childs()-1);
+                                ++parent_ix;
+                                break;
+                            case Direction::Up:
+                                MSS(parent_ix > 0);
+                                --parent_ix;
+                                break;
+                        }
+                    }
+
+                    auto parent = current_parent();
+                    MSS(!!parent);
+                    grand_parent->value.selected = parent->value.name;
                 }
                 break;
             case Direction::Left:
@@ -86,6 +112,22 @@ namespace proast { namespace model {
         auto path = current_path_;
         if (path.empty())
             return nullptr;
+        path.pop_back();
+        Tree::Node *n = &tree.root;
+        for (auto ix: path)
+        {
+            if (ix >= n->nr_childs())
+                return nullptr;
+            n = &n->childs.nodes[ix];
+        }
+        return n;
+    }
+    Tree::Node *Model::current_grand_parent()
+    {
+        auto path = current_path_;
+        if (path.size() < 2)
+            return nullptr;
+        path.pop_back();
         path.pop_back();
         Tree::Node *n = &tree.root;
         for (auto ix: path)

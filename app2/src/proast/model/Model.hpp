@@ -12,12 +12,13 @@ namespace proast { namespace model {
 
         bool add_root(const std::filesystem::path &, const Tree::Config &);
 
-        bool move(Direction);
+        bool move(Direction, int level);
 
         const Path &current_path() const {return current_path_;}
 
         Tree::Node *current_me();
         Tree::Node *current_parent();
+        Tree::Node *current_grand_parent();
 
     private:
         Path current_path_;

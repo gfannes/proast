@@ -12,6 +12,14 @@ namespace proast {
             str[ix] = wstr[ix];
         return str;
     }
+    inline std::wstring to_wstring(const std::string &str)
+    {
+        const auto size = str.size();
+        std::wstring wstr(size, '?');
+        for (auto ix = 0u; ix < size; ++ix)
+            wstr[ix] = str[ix];
+        return wstr;
+    }
 } 
 
 #endif

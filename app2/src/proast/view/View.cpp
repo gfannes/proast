@@ -17,18 +17,19 @@ namespace proast { namespace view {
                 text(header) | border,
                 hbox({
                         vbox({
-                                center(text(L"/0/-1"))    | border,
-                                center(text(L"/0"))       | border,
-                                center(text(L"/0/1"))     | border,
+                                ui::list(na) | border,
+                                ui::list(n0) | border,
+                                ui::list(nb) | border,
                                 }) | flex,
                         vbox({
-                                center(text(L"/0/0/-1"))  | border,
-                                center(ui::list(n00, L"/0/0"))     | border,
-                                center(text(L"/0/0/1"))   | border,
+                                ui::list(n0a) | border,
+                                ui::list(n00) | border,
+                                ui::list(n0b) | border,
                                 }) | flex,
                         vbox({
-                                center(text(L"/0/0/0"))   | border,
-                                center(text(L"metadata")) | border,
+                                ui::list(n00a) | border,
+                                ui::list(n000) | border,
+                                ui::list(n00b) | border,
                                 }) | flex,
                         }) | flex,
                 text(footer) | border,

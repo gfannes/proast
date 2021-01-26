@@ -19,7 +19,7 @@ namespace proast { namespace presenter {
 
         //Commander API
         void commander_quit();
-        void commander_move(Direction);
+        void commander_move(Direction, int level = 0);
 
     private:
         using Commander = Commander_crtp<Presenter>;
@@ -28,8 +28,6 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         view::View &view_;
-
-        dto::List::Ptr n00_;
 
         mutable std::basic_ostringstream<wchar_t> oss_;
     };

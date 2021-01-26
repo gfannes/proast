@@ -18,7 +18,15 @@ namespace proast { namespace view {
 
         std::wstring header;
         std::wstring footer;
+        proast::dto::List::Ptr na;
+        proast::dto::List::Ptr n0;
+        proast::dto::List::Ptr nb;
+        proast::dto::List::Ptr n0a;
         proast::dto::List::Ptr n00;
+        proast::dto::List::Ptr n0b;
+        proast::dto::List::Ptr n00a;
+        proast::dto::List::Ptr n000;
+        proast::dto::List::Ptr n00b;
 
         std::function<void()> quit;
 
