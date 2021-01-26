@@ -8,6 +8,7 @@
 namespace proast { namespace dto { 
     struct List
     {
+        std::wstring name;
         std::vector<std::wstring> items;
         int ix = -1;
 

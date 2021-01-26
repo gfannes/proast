@@ -38,7 +38,14 @@ namespace proast { namespace view {
     bool View::OnEvent(ftxui::Event event)
     {
         if (events)
-            events->received(event.character());
+        {
+            if (false) {}
+            else if (event == ftxui::Event::ArrowLeft)  events->received(L'\u2190');
+            else if (event == ftxui::Event::ArrowUp)    events->received(L'\u2191');
+            else if (event == ftxui::Event::ArrowRight) events->received(L'\u2192');
+            else if (event == ftxui::Event::ArrowDown)  events->received(L'\u2193');
+            else events->received(event.character());
+        }
         return true;
     }
 

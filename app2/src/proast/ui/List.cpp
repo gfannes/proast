@@ -40,7 +40,7 @@ namespace proast { namespace ui {
             if (0 <= item_ix && item_ix < list_->items.size())
             {
                 const auto &item = list_->items[item_ix];
-                for (auto col_ix = 0u; col_ix < item.size(); ++col_ix)
+                for (auto col_ix = 0u; col_ix < item.size() && col_ix < x_size; ++col_ix)
                 {
                     auto &pxl = screen.PixelAt(box_.x_min+col_ix, box_.y_min+row_ix);
                     pxl.character = item[col_ix];
