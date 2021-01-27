@@ -28,25 +28,41 @@ namespace proast { namespace model {
                     auto parent = current_parent();
                     MSS(!!parent);
 
-                    MSS(!current_path_.empty());
+                    if (std::filesystem::is_regular_file(parent->value.path))
                     {
-                        auto &me_ix = current_path_.back();
+                        //TODO: should be checked against lines in file
                         switch (direction)
                         {
                             case Direction::Down:
-                                MSS(me_ix < parent->nr_childs()-1);
-                                ++me_ix;
+                                ++parent->value.line_ix;
                                 break;
                             case Direction::Up:
-                                MSS(me_ix > 0);
-                                --me_ix;
+                                --parent->value.line_ix;
                                 break;
                         }
                     }
+                    else
+                    {
+                        MSS(!current_path_.empty());
+                        {
+                            auto &me_ix = current_path_.back();
+                            switch (direction)
+                            {
+                                case Direction::Down:
+                                    MSS(me_ix < parent->nr_childs()-1);
+                                    ++me_ix;
+                                    break;
+                                case Direction::Up:
+                                    MSS(me_ix > 0);
+                                    --me_ix;
+                                    break;
+                            }
+                        }
 
-                    auto me = current_me();
-                    MSS(!!me);
-                    parent->value.selected = me->value.name;
+                        auto me = current_me();
+                        MSS(!!me);
+                        parent->value.selected = me->value.name;
+                    }
                 }
                 else
                 {
@@ -83,6 +99,7 @@ namespace proast { namespace model {
             case Direction::Right:
                 if (tree.is_leaf(current_path_))
                 {
+                    current_path_.emplace_back(-1);
                 }
                 else
                 {
@@ -101,7 +118,7 @@ namespace proast { namespace model {
         Tree::Node *n = &tree.root;
         for (auto ix: path)
         {
-            if (ix >= n->nr_childs())
+            if (ix < 0 || ix >= n->nr_childs())
                 return nullptr;
             n = &n->childs.nodes[ix];
         }
@@ -116,7 +133,7 @@ namespace proast { namespace model {
         Tree::Node *n = &tree.root;
         for (auto ix: path)
         {
-            if (ix >= n->nr_childs())
+            if (ix < 0 || ix >= n->nr_childs())
                 return nullptr;
             n = &n->childs.nodes[ix];
         }
@@ -132,7 +149,7 @@ namespace proast { namespace model {
         Tree::Node *n = &tree.root;
         for (auto ix: path)
         {
-            if (ix >= n->nr_childs())
+            if (ix < 0 || ix >= n->nr_childs())
                 return nullptr;
             n = &n->childs.nodes[ix];
         }

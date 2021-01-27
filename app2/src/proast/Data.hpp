@@ -10,6 +10,7 @@ namespace proast {
         std::wstring name;
         std::wstring selected;
         std::filesystem::path path;
+        std::size_t line_ix = 0;
     private:
     };
 } 

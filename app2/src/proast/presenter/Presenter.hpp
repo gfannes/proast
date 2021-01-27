@@ -20,6 +20,7 @@ namespace proast { namespace presenter {
         //Commander API
         void commander_quit();
         void commander_move(Direction, int level = 0);
+        void commander_open(bool edit);
 
     private:
         using Commander = Commander_crtp<Presenter>;

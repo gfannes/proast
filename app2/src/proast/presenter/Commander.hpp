@@ -29,6 +29,9 @@ namespace proast { namespace presenter {
                 case L'l':
                 case L'\u2192'://Unicode right
                            r.commander_move(Direction::Right); break;
+
+                case L'\n': r.commander_open(true); break;
+                case L's':  r.commander_open(false); break;
             }
         }
 

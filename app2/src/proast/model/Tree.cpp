@@ -31,10 +31,8 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Tree::resolve_datas(Datas &datas, const Path &path)
+    void Tree::resolve_datas(Datas &datas, const Path &path)
     {
-        MSS_BEGIN(bool);
-
         datas.resize(path.size()+1);
         datas.resize(0u);
 
@@ -42,18 +40,17 @@ namespace proast { namespace model {
         datas.emplace_back(&node->value);
         for (auto ix: path)
         {
-            MSS(ix < node->childs.size());
-            node = &node->childs.nodes[ix];
-            datas.emplace_back(&node->value);
+            if (node)
+                if (0 <= ix && ix < node->nr_childs())
+                    node = &node->childs.nodes[ix];
+                else
+                    node = nullptr;
+            datas.emplace_back(node ? &node->value : nullptr);
         }
-
-        MSS_END();
     }
 
-    bool Tree::resolve_nodes(Nodes &nodes, const Path &path)
+    void Tree::resolve_nodes(Nodes &nodes, const Path &path)
     {
-        MSS_BEGIN(bool);
-
         nodes.resize(path.size()+1);
         nodes.resize(0u);
 
@@ -61,12 +58,13 @@ namespace proast { namespace model {
         nodes.emplace_back(node);
         for (auto ix: path)
         {
-            MSS(ix < node->childs.size());
-            node = &node->childs.nodes[ix];
+            if (node)
+                if (0 <= ix && ix < node->nr_childs())
+                    node = &node->childs.nodes[ix];
+                else
+                    node = nullptr;
             nodes.emplace_back(node);
         }
-
-        MSS_END();
     }
 
     bool Tree::is_leaf(const Path &path) const
@@ -74,7 +72,7 @@ namespace proast { namespace model {
         const Node *node = &root;
         for (auto ix: path)
         {
-            if (ix >= node->nr_childs())
+            if (ix < 0 || ix >= node->nr_childs())
                 return false;
             node = &node->childs.nodes[ix];
         }
@@ -85,6 +83,7 @@ namespace proast { namespace model {
     {
         const auto &selected = node.value.selected;
         const auto &child_nodes = node.childs.nodes;
+        //TODO: this linear search can be optimized
         for (auto ix = 0u; ix < child_nodes.size(); ++ix)
         {
             if (child_nodes[ix].value.name == selected)

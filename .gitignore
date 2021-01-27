@@ -13,3 +13,4 @@ proast2.ut
 *.resp
 *.a
 generated/
+proast.log

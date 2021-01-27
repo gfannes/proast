@@ -6,7 +6,7 @@ namespace proast { namespace ui {
     {
         if (list_)
             requirement_.min_y = list_->items.size();
-        requirement_.min_y = 10;
+        requirement_.min_y = height_;
     }
     void List::SetBox(ftxui::Box box)
     {
@@ -50,8 +50,8 @@ namespace proast { namespace ui {
         }
     }
 
-    ftxui::Element list(const dto::List::Ptr &list)
+    ftxui::Element list(const dto::List::Ptr &list, unsigned int height)
     {
-        return ftxui::Element(new List(list));
+        return ftxui::Element(new List(list, height));
     }
 } } 

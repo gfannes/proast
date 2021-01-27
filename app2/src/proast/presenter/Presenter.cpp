@@ -28,13 +28,14 @@ namespace proast { namespace presenter {
             oss_.str(L"");
             model::Tree::Datas datas;
             const auto &path = model_.current_path();
-            MSS(model_.tree.resolve_datas(datas, path));
+            model_.tree.resolve_datas(datas, path);
             oss_ << L"Current path: ";
             for (auto ptr: datas)
-                oss_ << L"/" << ptr->name;
+                oss_ << L"/" << (ptr ? ptr->name : L"nil");
             for (auto ix = 0u; ix < path.size(); ++ix)
                 oss_ << L" " << std::to_wstring(path[ix]);
-            oss_ << L" " << model_.current_me()->value.path;
+            if (auto me = model_.current_me())
+                oss_ << L" " << me->value.path;
             view_.header = oss_.str();
         }
 
@@ -45,21 +46,22 @@ namespace proast { namespace presenter {
             {
                 dst = dto::List::create();
 
-                if (path.empty())
+                if (path.empty() || path.back() == -1)
                     return;
 
                 path.back() += offset;
-                if (!model_.tree.resolve_nodes(nodes, path))
-                    return;
+                model_.tree.resolve_nodes(nodes, path);
 
                 auto node = nodes.back();
+                if (!node)
+                    return;
 
                 if (node->is_leaf() && std::filesystem::is_regular_file(node->value.path))
                 {
                     std::ifstream fi{node->value.path};
                     for (std::string line; std::getline(fi, line);)
                         dst->items.emplace_back(to_wstring(line));
-                    dst->ix = 0;
+                    dst->ix = node->value.line_ix;
                 }
                 else
                 {
@@ -100,10 +102,36 @@ namespace proast { namespace presenter {
         model_.move(direction, level);
         refresh_view_();
     }
+    void Presenter::commander_open(bool edit)
+    {
+        if (auto me = model_.current_me())
+        {
+            const auto path = me->value.path;
+            const auto orig_dir = std::filesystem::current_path();
+            std::filesystem::current_path(path.parent_path());
+
+            std::ostringstream oss;
+            if (edit)
+                oss << "nvim " << path.filename();
+            else
+                oss << "bash";
+
+            log([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
+            std::system(oss.str().c_str());
+            log([&](auto &os){os << "After commander_open(" << edit << ")\n";});
+
+            std::filesystem::current_path(orig_dir);
+        }
+    }
 
     //View::Events API
     void Presenter::received(wchar_t wchar)
     {
+        log([=](auto &os){
+                os << "Received event " << (unsigned int)wchar;
+                if (wchar < 128) os << " '" << (char)wchar << "'";
+                
+                os << std::endl;});
         Commander::process(wchar);
     }
 } } 
