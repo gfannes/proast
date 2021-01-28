@@ -10,18 +10,23 @@ namespace proast { namespace model {
     public:
         Tree tree;
 
+        Model();
+
         bool add_root(const std::filesystem::path &, const Tree::Config &);
 
-        bool move(Direction, int level);
+        bool move(Direction, bool me);
 
-        const Path &current_path() const {return current_path_;}
-
-        Tree::Node *current_me();
-        Tree::Node *current_parent();
-        Tree::Node *current_grand_parent();
+        Node *node();
+        Node *node_0();
+        Node *node_00();
+        Node *node_0a();
+        Node *node_0b();
+        Node *node_000();
+        Node *node_00a();
+        Node *node_00b();
 
     private:
-        Path current_path_;
+        Node *node_ = nullptr;
     };
 } } 
 

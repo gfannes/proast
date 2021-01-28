@@ -19,7 +19,7 @@ namespace proast { namespace presenter {
 
         //Commander API
         void commander_quit();
-        void commander_move(Direction, int level = 0);
+        void commander_move(Direction, bool me);
         void commander_open(bool edit);
 
     private:

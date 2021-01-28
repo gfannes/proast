@@ -1,5 +1,5 @@
 #include <proast/model/Tree.hpp>
-#include <proast/util.hpp>
+#include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
 #include <map>
@@ -24,9 +24,12 @@ namespace proast { namespace model {
 
         auto &child = root.childs.append();
         child.value.name = path.filename().wstring();
+        child.value.path = path;
 
         MSS(add_(child, path, config));
-        std::cout << "Loaded " << child.node_count() << " nodes from \"" << path << "\"" << std::endl;
+        log::raw([&](auto &os){os << "Loaded " << child.node_count() << " nodes from \"" << path << "\"" << std::endl;});
+
+        compute_navigation_(root);
 
         MSS_END();
     }
@@ -81,14 +84,20 @@ namespace proast { namespace model {
 
     std::size_t Tree::selected_ix(const Node &node)
     {
-        const auto &selected = node.value.selected;
         const auto &child_nodes = node.childs.nodes;
+#if 0
+        const auto &selected = node.value.selected;
         //TODO: this linear search can be optimized
         for (auto ix = 0u; ix < child_nodes.size(); ++ix)
         {
             if (child_nodes[ix].value.name == selected)
                 return ix;
         }
+#else
+        for (auto ix = 0u; ix < child_nodes.size(); ++ix)
+            if (node.value.navigation.child == &child_nodes[ix])
+                return ix;
+#endif
         return 0;
     }
 
@@ -123,11 +132,32 @@ namespace proast { namespace model {
             auto &child = node.childs.append();
             child.value.path = path;
             child.value.name = path.filename().wstring();
-            std::cout << child.value.path.string() << " " << to_string(child.value.name) << std::endl;
             if (is_folder)
                 MSS(add_(child, path, config));
         }
 
         MSS_END();
+    }
+
+    void Tree::compute_navigation_(Node &node)
+    {
+        Node *prev = nullptr;
+        for (auto &child: node.childs.nodes)
+        {
+            if (!prev)
+                //TODO: this default navigation setup should be updated with the saved navigation state
+                node.value.navigation.child = &child;
+
+            child.value.navigation.parent = &node;
+            child.value.navigation.child = nullptr;
+            child.value.navigation.up = prev;
+            child.value.navigation.down = nullptr;
+            if (prev)
+                prev->value.navigation.down = &child;
+
+            compute_navigation_(child);
+
+            prev = &child;
+        }
     }
 } } 

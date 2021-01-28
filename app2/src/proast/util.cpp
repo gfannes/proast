@@ -1,6 +1,4 @@
 #include <proast/util.hpp>
-#include <fstream>
-#include <optional>
 
 namespace proast { 
     std::string to_string(const std::wstring &wstr)
@@ -18,13 +16,5 @@ namespace proast {
         for (auto ix = 0u; ix < size; ++ix)
             wstr[ix] = str[ix];
         return wstr;
-    }
-
-    std::ostream &log_stream()
-    {
-        static std::optional<std::ofstream> fo;
-        if (!fo)
-            fo.emplace("proast.log");
-        return *fo;
     }
 } 

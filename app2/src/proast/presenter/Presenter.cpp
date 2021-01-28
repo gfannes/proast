@@ -1,5 +1,5 @@
 #include <proast/presenter/Presenter.hpp>
-#include <proast/util.hpp>
+#include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <fstream>
 
@@ -22,46 +22,33 @@ namespace proast { namespace presenter {
 
     bool Presenter::refresh_view_()
     {
+        auto s = log::Scope{"Presenter.refresh_view_()"};
         MSS_BEGIN(bool);
 
         {
             oss_.str(L"");
-            model::Tree::Datas datas;
-            const auto &path = model_.current_path();
-            model_.tree.resolve_datas(datas, path);
-            oss_ << L"Current path: ";
-            for (auto ptr: datas)
-                oss_ << L"/" << (ptr ? ptr->name : L"nil");
-            for (auto ix = 0u; ix < path.size(); ++ix)
-                oss_ << L" " << std::to_wstring(path[ix]);
-            if (auto me = model_.current_me())
-                oss_ << L" " << me->value.path;
+            oss_ << model_.node()->value.path.wstring();
             view_.header = oss_.str();
         }
 
         {
-            model::Tree::Nodes nodes;
-
-            auto set_view_dto = [&](auto &dst, model::Path path, int offset)
+            auto set_view_dto = [&](auto &dst, auto node)
             {
                 dst = dto::List::create();
-
-                if (path.empty() || path.back() == -1)
-                    return;
-
-                path.back() += offset;
-                model_.tree.resolve_nodes(nodes, path);
-
-                auto node = nodes.back();
                 if (!node)
                     return;
-
-                if (node->is_leaf() && std::filesystem::is_regular_file(node->value.path))
+                if (std::filesystem::is_regular_file(node->value.path))
                 {
-                    std::ifstream fi{node->value.path};
-                    for (std::string line; std::getline(fi, line);)
-                        dst->items.emplace_back(to_wstring(line));
-                    dst->ix = node->value.line_ix;
+                    if (!node->value.content)
+                    {
+                        s.line([&](auto &os){os << "Loading content from " << node->value.path;});
+                        node->value.content = Content::create(node->value.path);
+                        s.line([&](auto &os){os << "Loaded " << node->value.content->lines.size() << " lines";});
+                    }
+                    auto &content = *node->value.content;
+                    for (const auto &line: content.lines)
+                        dst->items.emplace_back(line);
+                    dst->ix = content.line_ix;
                 }
                 else
                 {
@@ -70,23 +57,13 @@ namespace proast { namespace presenter {
                     dst->ix = model::Tree::selected_ix(*node);
                 }
             };
-
-            auto path = model_.current_path();
-            set_view_dto(view_.n00a, path, -1);
-            set_view_dto(view_.n000, path, 0);
-            set_view_dto(view_.n00b, path, 1);
-            if (!path.empty())
-            {
-                path.pop_back();
-                set_view_dto(view_.n0a, path, -1);
-                set_view_dto(view_.n00, path, 0);
-                set_view_dto(view_.n0b, path, 1);
-                if (!path.empty())
-                {
-                    path.pop_back();
-                    set_view_dto(view_.n0, path, 0);
-                }
-            }
+            set_view_dto(view_.n0, model_.node_0());
+            set_view_dto(view_.n0a, model_.node_0a());
+            set_view_dto(view_.n00, model_.node_00());
+            set_view_dto(view_.n0b, model_.node_0b());
+            set_view_dto(view_.n00a, model_.node_00a());
+            set_view_dto(view_.n000, model_.node_000());
+            set_view_dto(view_.n00b, model_.node_00b());
         }
 
         MSS_END();
@@ -97,14 +74,16 @@ namespace proast { namespace presenter {
     {
         view_.quit();
     }
-    void Presenter::commander_move(Direction direction, int level)
+    void Presenter::commander_move(Direction direction, bool me)
     {
-        model_.move(direction, level);
+        auto s = log::Scope{"Presenter.commander_move()"};
+        model_.move(direction, me);
+        s.line([](auto &os){os << "After move";});
         refresh_view_();
     }
     void Presenter::commander_open(bool edit)
     {
-        if (auto me = model_.current_me())
+        if (auto me = model_.node_000())
         {
             const auto path = me->value.path;
             const auto orig_dir = std::filesystem::current_path();
@@ -116,9 +95,9 @@ namespace proast { namespace presenter {
             else
                 oss << "bash";
 
-            log([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
+            log::raw([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
             std::system(oss.str().c_str());
-            log([&](auto &os){os << "After commander_open(" << edit << ")\n";});
+            log::raw([&](auto &os){os << "After commander_open(" << edit << ")\n";});
 
             std::filesystem::current_path(orig_dir);
         }
@@ -127,7 +106,7 @@ namespace proast { namespace presenter {
     //View::Events API
     void Presenter::received(wchar_t wchar)
     {
-        log([=](auto &os){
+        log::raw([=](auto &os){
                 os << "Received event " << (unsigned int)wchar;
                 if (wchar < 128) os << " '" << (char)wchar << "'";
                 

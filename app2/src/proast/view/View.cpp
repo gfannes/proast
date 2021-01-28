@@ -1,6 +1,6 @@
 #include <proast/view/View.hpp>
 #include <proast/ui/List.hpp>
-#include <proast/util.hpp>
+#include <proast/log.hpp>
 
 namespace proast { namespace view { 
     void View::run()
@@ -13,7 +13,7 @@ namespace proast { namespace view {
     //ftxui::Component API
     ftxui::Element View::Render()
     {
-        log([](auto &os){os << "Rendering" << std::endl;});
+        auto s = log::Scope{"Rendering"};
         using namespace ftxui;
         const auto small_frac = 0.2;
         const auto large_frac = 1.0-2*small_frac;
@@ -44,6 +44,7 @@ namespace proast { namespace view {
     }
     bool View::OnEvent(ftxui::Event event)
     {
+        auto s = log::Scope{"OnEvent"};
         if (events)
         {
             if (false) {}

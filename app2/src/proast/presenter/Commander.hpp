@@ -17,18 +17,18 @@ namespace proast { namespace presenter {
 
                 case L'j':
                 case L'\u2193'://Unicode down
-                           r.commander_move(Direction::Down); break;
-                case L'J': r.commander_move(Direction::Down, 1); break;
+                           r.commander_move(Direction::Down, true); break;
+                case L'J': r.commander_move(Direction::Down, false); break;
                 case L'k':
                 case L'\u2191'://Unicode up
-                           r.commander_move(Direction::Up); break;
-                case L'K': r.commander_move(Direction::Up, 1); break;
+                           r.commander_move(Direction::Up, true); break;
+                case L'K': r.commander_move(Direction::Up, false); break;
                 case L'h': 
                 case L'\u2190'://Unicode left
-                           r.commander_move(Direction::Left); break;
+                           r.commander_move(Direction::Left, true); break;
                 case L'l':
                 case L'\u2192'://Unicode right
-                           r.commander_move(Direction::Right); break;
+                           r.commander_move(Direction::Right, true); break;
 
                 case L'\n': r.commander_open(true); break;
                 case L's':  r.commander_open(false); break;

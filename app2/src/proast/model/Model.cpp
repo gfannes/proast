@@ -1,158 +1,122 @@
 #include <proast/model/Model.hpp>
+#include <proast/log.hpp>
 #include <gubg/mss.hpp>
 
 namespace proast { namespace model { 
-    bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
+    Model::Model()
     {
-        MSS_BEGIN(bool);
-
-        bool is_first = (tree.root.nr_childs() == 0);
-
-        MSS(tree.add(path, config));
-
-        if (is_first)
-            current_path_ = {0u};
-
-        MSS_END();
+        node_ = &tree.root;
     }
 
-    bool Model::move(Direction direction, int level)
+    bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
     {
+        return tree.add(path, config);
+    }
+
+    Node *Model::node()
+    {
+        if (auto n = node_000())
+            return n;
+        if (auto n = node_00())
+            return n;
+        if (auto n = node_0())
+            return n;
+        return nullptr;
+    }
+    Node *Model::node_0()
+    {
+        return node_;
+    }
+    Node *Model::node_00()
+    {
+        return node_->value.navigation.child;
+    }
+    Node *Model::node_0a()
+    {
+        auto node00 = node_00();
+        if (node00)
+            return node00->value.navigation.up;
+        return nullptr;
+    }
+    Node *Model::node_0b()
+    {
+        auto node00 = node_00();
+        if (node00)
+            return node00->value.navigation.down;
+        return nullptr;
+    }
+    Node *Model::node_000()
+    {
+        auto node00 = node_00();
+        if (node00)
+            return node00->value.navigation.child;
+        return nullptr;
+    }
+    Node *Model::node_00a()
+    {
+        auto node000 = node_000();
+        if (node000)
+            return node000->value.navigation.up;
+        return nullptr;
+    }
+    Node *Model::node_00b()
+    {
+        auto node000 = node_000();
+        if (node000)
+            return node000->value.navigation.down;
+        return nullptr;
+    }
+
+    bool Model::move(Direction direction, bool me)
+    {
+        auto s = log::Scope("Model.move()", [&](auto &h){h.attr("me", me);});
         MSS_BEGIN(bool);
         switch (direction)
         {
             case Direction::Down:
-            case Direction::Up:
-                if (level == 0)
+                if (me)
                 {
-                    auto parent = current_parent();
-                    MSS(!!parent);
-
-                    if (std::filesystem::is_regular_file(parent->value.path))
-                    {
-                        //TODO: should be checked against lines in file
-                        switch (direction)
-                        {
-                            case Direction::Down:
-                                ++parent->value.line_ix;
-                                break;
-                            case Direction::Up:
-                                --parent->value.line_ix;
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        MSS(!current_path_.empty());
-                        {
-                            auto &me_ix = current_path_.back();
-                            switch (direction)
-                            {
-                                case Direction::Down:
-                                    MSS(me_ix < parent->nr_childs()-1);
-                                    ++me_ix;
-                                    break;
-                                case Direction::Up:
-                                    MSS(me_ix > 0);
-                                    --me_ix;
-                                    break;
-                            }
-                        }
-
-                        auto me = current_me();
-                        MSS(!!me);
-                        parent->value.selected = me->value.name;
-                    }
+                    if (auto child = node_->value.navigation.child)
+                        if (auto &childchild = child->value.navigation.child)
+                            if (auto down = childchild->value.navigation.down)
+                                childchild = down;
                 }
                 else
                 {
-                    auto grand_parent = current_grand_parent();
-                    MSS(!!grand_parent);
-
-                    MSS(current_path_.size() >= 2);
-                    {
-                        auto &parent_ix = current_path_[current_path_.size()-2];
-                        switch (direction)
+                    if (auto &child = node_->value.navigation.child)
+                        if (auto down = child->value.navigation.down)
                         {
-                            case Direction::Down:
-                                MSS(parent_ix < grand_parent->nr_childs()-1);
-                                ++parent_ix;
-                                break;
-                            case Direction::Up:
-                                MSS(parent_ix > 0);
-                                --parent_ix;
-                                break;
+                            child = down;
+                            s.line([&](auto &os){os << "new child " << child << " for " << node_;});
                         }
-                    }
-
-                    auto parent = current_parent();
-                    MSS(!!parent);
-                    grand_parent->value.selected = parent->value.name;
+                    s.line([](auto &os){os << "ola";});
+                }
+                break;
+            case Direction::Up:
+                if (me)
+                {
+                    if (auto child = node_->value.navigation.child)
+                        if (auto &childchild = child->value.navigation.child)
+                            if (auto up = childchild->value.navigation.up)
+                                childchild = up;
+                }
+                else
+                {
+                    if (auto &child = node_->value.navigation.child)
+                        if (auto up = child->value.navigation.up)
+                            child = up;
                 }
                 break;
             case Direction::Left:
-                {
-                    MSS(!current_path_.empty());
-                    current_path_.pop_back();
-                }
+                if (node_->value.navigation.parent)
+                    node_ = node_->value.navigation.parent;
                 break;
             case Direction::Right:
-                if (tree.is_leaf(current_path_))
-                {
-                    current_path_.emplace_back(-1);
-                }
-                else
-                {
-                    auto me = current_me();
-                    MSS(!!me);
-                    current_path_.emplace_back(Tree::selected_ix(*me));
-                }
+                if (node_->value.navigation.child)
+                    node_ = node_->value.navigation.child;
                 break;
         }
+        s.line([](auto &os){os << "olb";});
         MSS_END();
-    }
-
-    Tree::Node *Model::current_me()
-    {
-        auto path = current_path_;
-        Tree::Node *n = &tree.root;
-        for (auto ix: path)
-        {
-            if (ix < 0 || ix >= n->nr_childs())
-                return nullptr;
-            n = &n->childs.nodes[ix];
-        }
-        return n;
-    }
-    Tree::Node *Model::current_parent()
-    {
-        auto path = current_path_;
-        if (path.empty())
-            return nullptr;
-        path.pop_back();
-        Tree::Node *n = &tree.root;
-        for (auto ix: path)
-        {
-            if (ix < 0 || ix >= n->nr_childs())
-                return nullptr;
-            n = &n->childs.nodes[ix];
-        }
-        return n;
-    }
-    Tree::Node *Model::current_grand_parent()
-    {
-        auto path = current_path_;
-        if (path.size() < 2)
-            return nullptr;
-        path.pop_back();
-        path.pop_back();
-        Tree::Node *n = &tree.root;
-        for (auto ix: path)
-        {
-            if (ix < 0 || ix >= n->nr_childs())
-                return nullptr;
-            n = &n->childs.nodes[ix];
-        }
-        return n;
     }
 } } 

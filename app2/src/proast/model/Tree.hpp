@@ -8,11 +8,15 @@
 
 namespace proast { namespace model { 
 
+    using Node = gubg::tree::Node<Data>;
+
     using Path = std::vector<int>;
 
     class Tree
     {
     public:
+        using Node = model::Node;
+
         Tree();
 
         struct Config
@@ -23,7 +27,6 @@ namespace proast { namespace model {
         };
         bool add(const std::filesystem::path &, const Config &);
 
-        using Node = gubg::tree::Node<Data>;
         Node root;
 
         using Datas = std::vector<Data *>;
@@ -38,7 +41,7 @@ namespace proast { namespace model {
 
     private:
         bool add_(Node &, const std::filesystem::path &, const Config &);
-
+        static void compute_navigation_(Node &);
     };
 } } 
 
