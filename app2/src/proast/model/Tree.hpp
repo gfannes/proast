@@ -1,7 +1,7 @@
 #ifndef HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
-#include <proast/Data.hpp>
+#include <proast/model/Data.hpp>
 #include <gubg/tree/Node.hpp>
 #include <filesystem>
 #include <set>

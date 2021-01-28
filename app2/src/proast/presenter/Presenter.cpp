@@ -22,7 +22,6 @@ namespace proast { namespace presenter {
 
     bool Presenter::refresh_view_()
     {
-        auto s = log::Scope{"Presenter.refresh_view_()"};
         MSS_BEGIN(bool);
 
         {
@@ -34,24 +33,20 @@ namespace proast { namespace presenter {
         {
             auto set_view_dto = [&](auto &dst, auto node)
             {
-                dst = dto::List::create();
                 if (!node)
+                {
+                    dst.reset();
                     return;
+                }
                 if (std::filesystem::is_regular_file(node->value.path))
                 {
                     if (!node->value.content)
-                    {
-                        s.line([&](auto &os){os << "Loading content from " << node->value.path;});
-                        node->value.content = Content::create(node->value.path);
-                        s.line([&](auto &os){os << "Loaded " << node->value.content->lines.size() << " lines";});
-                    }
-                    auto &content = *node->value.content;
-                    for (const auto &line: content.lines)
-                        dst->items.emplace_back(line);
-                    dst->ix = content.line_ix;
+                        node->value.content = content_.create(node->value.path);
+                    dst = node->value.content;
                 }
                 else
                 {
+                    dst = dto::List::create();
                     for (auto &n: node->childs.nodes)
                         dst->items.emplace_back(n.value.name);
                     dst->ix = model::Tree::selected_ix(*node);
@@ -76,9 +71,7 @@ namespace proast { namespace presenter {
     }
     void Presenter::commander_move(Direction direction, bool me)
     {
-        auto s = log::Scope{"Presenter.commander_move()"};
         model_.move(direction, me);
-        s.line([](auto &os){os << "After move";});
         refresh_view_();
     }
     void Presenter::commander_open(bool edit)

@@ -3,6 +3,7 @@
 
 #include <proast/presenter/Commander.hpp>
 #include <proast/model/Model.hpp>
+#include <proast/model/Content.hpp>
 #include <proast/view/View.hpp>
 #include <sstream>
 
@@ -29,6 +30,8 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         view::View &view_;
+
+        model::Content content_;
 
         mutable std::basic_ostringstream<wchar_t> oss_;
     };

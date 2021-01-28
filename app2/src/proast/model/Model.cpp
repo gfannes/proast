@@ -69,7 +69,6 @@ namespace proast { namespace model {
 
     bool Model::move(Direction direction, bool me)
     {
-        auto s = log::Scope("Model.move()", [&](auto &h){h.attr("me", me);});
         MSS_BEGIN(bool);
         switch (direction)
         {
@@ -78,18 +77,30 @@ namespace proast { namespace model {
                 {
                     if (auto child = node_->value.navigation.child)
                         if (auto &childchild = child->value.navigation.child)
+                        {
                             if (auto down = childchild->value.navigation.down)
                                 childchild = down;
+                        }
+                        else if (auto content = child->value.content)
+                        {
+                            if (content->ix+1 < content->items.size())
+                            ++content->ix;
+                        }
                 }
                 else
                 {
                     if (auto &child = node_->value.navigation.child)
+                    {
                         if (auto down = child->value.navigation.down)
                         {
                             child = down;
-                            s.line([&](auto &os){os << "new child " << child << " for " << node_;});
                         }
-                    s.line([](auto &os){os << "ola";});
+                    }
+                    else if (auto content = node_->value.content)
+                    {
+                        if (content->ix+1 < content->items.size())
+                            ++content->ix;
+                    }
                 }
                 break;
             case Direction::Up:
@@ -97,14 +108,28 @@ namespace proast { namespace model {
                 {
                     if (auto child = node_->value.navigation.child)
                         if (auto &childchild = child->value.navigation.child)
+                        {
                             if (auto up = childchild->value.navigation.up)
                                 childchild = up;
+                        }
+                        else if (auto content = child->value.content)
+                        {
+                            if (content->ix > 0)
+                                --content->ix;
+                        }
                 }
                 else
                 {
                     if (auto &child = node_->value.navigation.child)
+                    {
                         if (auto up = child->value.navigation.up)
                             child = up;
+                    }
+                    else if (auto content = node_->value.content)
+                    {
+                        if (content->ix > 0)
+                            --content->ix;
+                    }
                 }
                 break;
             case Direction::Left:
@@ -116,7 +141,6 @@ namespace proast { namespace model {
                     node_ = node_->value.navigation.child;
                 break;
         }
-        s.line([](auto &os){os << "olb";});
         MSS_END();
     }
 } } 

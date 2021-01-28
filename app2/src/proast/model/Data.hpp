@@ -1,14 +1,14 @@
-#ifndef HEADER_proast_Data_hpp_ALREADY_INCLUDED
-#define HEADER_proast_Data_hpp_ALREADY_INCLUDED
+#ifndef HEADER_proast_model_Data_hpp_ALREADY_INCLUDED
+#define HEADER_proast_model_Data_hpp_ALREADY_INCLUDED
 
-#include <proast/Content.hpp>
+#include <proast/dto/List.hpp>
 #include <filesystem>
 
 namespace gubg { namespace tree { 
     template <typename Data> class Node;
 } } 
 
-namespace proast { 
+namespace proast { namespace model { 
     class Data;
 
     using Node = gubg::tree::Node<Data>;
@@ -27,9 +27,9 @@ namespace proast {
         Navigation navigation;
         std::wstring name;
         std::filesystem::path path;
-        Content::Ptr content;
+        dto::List::Ptr content;
     private:
     };
-} 
+} } 
 
 #endif
