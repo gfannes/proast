@@ -13,9 +13,20 @@ namespace proast { namespace presenter {
     {
         MSS_BEGIN(bool);
 
-        MSS(refresh_view_());
+        for (bool do_run = true; do_run;)
+        {
+            MSS(refresh_view_());
 
-        view_.run();
+            view_.run();
+
+            do_run = false;
+            if (scheduled_operation_)
+            {
+                MSS(scheduled_operation_());
+                scheduled_operation_ = nullptr;
+                do_run = true;
+            }
+        }
 
         MSS_END();
     }
@@ -60,6 +71,14 @@ namespace proast { namespace presenter {
             set_view_dto(view_.n000, model_.node_000());
             set_view_dto(view_.n00b, model_.node_00b());
         }
+        
+        {
+            view_.footer = L"";
+            if (auto wstr = state_str())
+            {
+                view_.footer = *wstr;
+            }
+        }
 
         MSS_END();
     }
@@ -72,28 +91,40 @@ namespace proast { namespace presenter {
     void Presenter::commander_move(Direction direction, bool me)
     {
         model_.move(direction, me);
-        refresh_view_();
     }
     void Presenter::commander_open(bool edit)
     {
         if (auto me = model_.node_000())
         {
             const auto path = me->value.path;
-            const auto orig_dir = std::filesystem::current_path();
-            std::filesystem::current_path(path.parent_path());
+            scheduled_operation_ = [path,edit]()
+            {
+                const auto orig_dir = std::filesystem::current_path();
+                std::filesystem::current_path(path.parent_path());
 
-            std::ostringstream oss;
-            if (edit)
-                oss << "nvim " << path.filename();
-            else
-                oss << "bash";
+                std::ostringstream oss;
+                if (edit)
+                    oss << "nvim " << path.filename();
+                else
+                    oss << "bash";
 
-            log::raw([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
-            std::system(oss.str().c_str());
-            log::raw([&](auto &os){os << "After commander_open(" << edit << ")\n";});
+                log::raw([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
+                std::system(oss.str().c_str());
+                log::raw([&](auto &os){os << "After commander_open(" << edit << ")\n";});
 
-            std::filesystem::current_path(orig_dir);
+                std::filesystem::current_path(orig_dir);
+
+                return true;
+            };
+            view_.quit();
         }
+    }
+    void Presenter::commander_bookmark(wchar_t wchar, bool do_register)
+    {
+        if (do_register)
+            model_.register_bookmark(wchar);
+        else
+            model_.jump_to_bookmark(wchar);
     }
 
     //View::Events API
@@ -105,5 +136,6 @@ namespace proast { namespace presenter {
                 
                 os << std::endl;});
         Commander::process(wchar);
+        refresh_view_();
     }
 } } 

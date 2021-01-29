@@ -1,4 +1,5 @@
 #include <proast/view/View.hpp>
+#include <proast/unicode.hpp>
 #include <proast/ui/List.hpp>
 #include <proast/log.hpp>
 
@@ -46,11 +47,12 @@ namespace proast { namespace view {
         if (events)
         {
             if (false) {}
-            else if (event == ftxui::Event::ArrowLeft)  events->received(L'\u2190');
-            else if (event == ftxui::Event::ArrowUp)    events->received(L'\u2191');
-            else if (event == ftxui::Event::ArrowRight) events->received(L'\u2192');
-            else if (event == ftxui::Event::ArrowDown)  events->received(L'\u2193');
-            else if (event == ftxui::Event::Return)     events->received(L'\n');
+            else if (event == ftxui::Event::ArrowLeft)  events->received(ArrowLeft);
+            else if (event == ftxui::Event::ArrowUp)    events->received(ArrowUp);
+            else if (event == ftxui::Event::ArrowRight) events->received(ArrowRight);
+            else if (event == ftxui::Event::ArrowDown)  events->received(ArrowDown);
+            else if (event == ftxui::Event::Return)     events->received(Return);
+            else if (event == ftxui::Event::Escape)     events->received(Escape);
             else events->received(event.character());
         }
         return true;

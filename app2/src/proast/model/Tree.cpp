@@ -34,70 +34,31 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    void Tree::resolve_datas(Datas &datas, const Path &path)
+    Node *Tree::find(const Path &path)
     {
-        datas.resize(path.size()+1);
-        datas.resize(0u);
-
         Node *node = &root;
-        datas.emplace_back(&node->value);
-        for (auto ix: path)
+        for (const auto &part: path)
         {
-            if (node)
-                if (0 <= ix && ix < node->nr_childs())
-                    node = &node->childs.nodes[ix];
-                else
-                    node = nullptr;
-            datas.emplace_back(node ? &node->value : nullptr);
+            auto &childs = node->childs.nodes;
+            node = nullptr;
+            for (auto &child: childs)
+                if (child.value.name == part)
+                {
+                    node = &child;
+                    break;
+                }
+            if (!node)
+                break;
         }
-    }
-
-    void Tree::resolve_nodes(Nodes &nodes, const Path &path)
-    {
-        nodes.resize(path.size()+1);
-        nodes.resize(0u);
-
-        Node *node = &root;
-        nodes.emplace_back(node);
-        for (auto ix: path)
-        {
-            if (node)
-                if (0 <= ix && ix < node->nr_childs())
-                    node = &node->childs.nodes[ix];
-                else
-                    node = nullptr;
-            nodes.emplace_back(node);
-        }
-    }
-
-    bool Tree::is_leaf(const Path &path) const
-    {
-        const Node *node = &root;
-        for (auto ix: path)
-        {
-            if (ix < 0 || ix >= node->nr_childs())
-                return false;
-            node = &node->childs.nodes[ix];
-        }
-        return node->nr_childs() == 0;
+        return node;
     }
 
     std::size_t Tree::selected_ix(const Node &node)
     {
         const auto &child_nodes = node.childs.nodes;
-#if 0
-        const auto &selected = node.value.selected;
-        //TODO: this linear search can be optimized
-        for (auto ix = 0u; ix < child_nodes.size(); ++ix)
-        {
-            if (child_nodes[ix].value.name == selected)
-                return ix;
-        }
-#else
         for (auto ix = 0u; ix < child_nodes.size(); ++ix)
             if (node.value.navigation.child == &child_nodes[ix])
                 return ix;
-#endif
         return 0;
     }
 

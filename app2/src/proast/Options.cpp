@@ -1,11 +1,18 @@
 #include <proast/Options.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
+#include <cstdlib>
 
 namespace proast { 
     bool Options::parse(int argc, const char **argv)
     {
         MSS_BEGIN(bool);
+
+        if (auto home = std::getenv("HOME"))
+        {
+            home_dir = home;
+            home_dir += "/.config/proast";
+        }
 
         int arg_ix = 0;
         auto pop_arg = [&](std::string &arg)
@@ -38,6 +45,12 @@ namespace proast {
                 MSS(pop_arg(level), std::cout << "Error: No verbose level was specified" << std::endl);
                 verbose = std::stoul(level);
             }
+            else if (matches("-L", "--home"))
+            {
+                std::string dir;
+                MSS(pop_arg(dir), std::cout << "Error: No home directory was specified" << std::endl);
+                home_dir = dir;
+            }
             else { std::cout << "Error: unknown CLI argument \"" << arg << "\"" << std::endl; }
         }
 
@@ -47,6 +60,7 @@ namespace proast {
     void Options::stream(std::ostream &os) const
     {
         os << "[Options]{" << std::endl;
+        os << "  [Home](path:" << home_dir << ")" << std::endl;
         for (const auto &root: roots)
             os << "  [Root](path:" << root << ")" << std::endl;
         os << "}" << std::endl;
@@ -58,6 +72,7 @@ namespace proast {
 -h    --help            Print this help
 -r    --root    FOLDER  Add FOLDER as root tree, multiple roots are supported
 -V    --verbose LEVEL   Set verbosity LEVEL
+-L    --home    FOLDER  Set home FOLDER, default is $HOME/.config/proast
 )EOF";
     }
 } 

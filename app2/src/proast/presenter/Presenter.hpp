@@ -6,6 +6,7 @@
 #include <proast/model/Content.hpp>
 #include <proast/view/View.hpp>
 #include <sstream>
+#include <functional>
 
 namespace proast { namespace presenter { 
     class Presenter: public view::View::Events, public Commander_crtp<Presenter>
@@ -22,6 +23,7 @@ namespace proast { namespace presenter {
         void commander_quit();
         void commander_move(Direction, bool me);
         void commander_open(bool edit);
+        void commander_bookmark(wchar_t wchar, bool do_register);
 
     private:
         using Commander = Commander_crtp<Presenter>;
@@ -32,6 +34,8 @@ namespace proast { namespace presenter {
         view::View &view_;
 
         model::Content content_;
+
+        std::function<bool()> scheduled_operation_;
 
         mutable std::basic_ostringstream<wchar_t> oss_;
     };

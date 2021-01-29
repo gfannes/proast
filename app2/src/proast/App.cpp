@@ -11,6 +11,8 @@ namespace proast {
         }
         else
         {
+            MSS(model_.set_home(options.home_dir));
+
             proast::model::Tree::Config config;
             for (const auto &root: options.roots)
             {

@@ -1,16 +1,80 @@
 #include <proast/model/Model.hpp>
 #include <proast/log.hpp>
 #include <gubg/mss.hpp>
+#include <filesystem>
 
 namespace proast { namespace model { 
     Model::Model()
     {
-        node_ = &tree.root;
+        node_ = &tree_.root;
+    }
+    Model::~Model()
+    {
+        if (!bookmarks_.save(bookmarks_fp_))
+            log::ostream() << "Warning: could not save bookmarks to " << bookmarks_fp_ << std::endl;
+    }
+
+    bool Model::set_home(const std::filesystem::path &home_dir)
+    {
+        MSS_BEGIN(bool);
+
+        if (!std::filesystem::is_directory(home_dir))
+            std::filesystem::create_directories(home_dir);
+        MSS(std::filesystem::is_directory(home_dir));
+
+        {
+            bookmarks_fp_ = home_dir/"bookmarks.naft";
+            if (!bookmarks_.load(bookmarks_fp_))
+                log::ostream() << "Warning: could not load bookmarks from " << bookmarks_fp_ << std::endl;
+        }
+
+        MSS_END();
     }
 
     bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
     {
-        return tree.add(path, config);
+        return tree_.add(path, config);
+    }
+
+    Path Model::to_path(Node *node) const
+    {
+        Path p;
+        while (node)
+        {
+            auto parent = node->value.navigation.parent;
+            if (parent)
+                //We do not include the root node name
+                p.push_back(node->value.name);
+            node = parent;
+        }
+        std::reverse(p.begin(), p.end());
+        return p;
+    }
+
+    bool Model::register_bookmark(wchar_t wchar)
+    {
+        MSS_BEGIN(bool);
+        auto n = node();
+        MSS(!!n);
+        bookmarks_.set(wchar, to_path(n));
+        MSS_END();
+    }
+    bool Model::jump_to_bookmark(wchar_t wchar)
+    {
+        MSS_BEGIN(bool);
+        Path p;
+        MSS(bookmarks_.get(p, wchar));
+        auto node = tree_.find(p);
+        MSS(!!node);
+        //Reroute navigation.child for parent and grand_parent
+        for (auto ix = 0u; ix < 2 && node; ++ix)
+            if (auto parent = node->value.navigation.parent)
+            {
+                parent->value.navigation.child = node;
+                node = parent;
+            }
+        node_ = node;
+        MSS_END();
     }
 
     Node *Model::node()
@@ -84,7 +148,7 @@ namespace proast { namespace model {
                         else if (auto content = child->value.content)
                         {
                             if (content->ix+1 < content->items.size())
-                            ++content->ix;
+                                ++content->ix;
                         }
                 }
                 else

@@ -4,6 +4,7 @@
 #include <proast/log/raw.hpp>
 
 namespace proast { namespace log { 
+    //TODO: Rework into generic gubg logger
     class Scope
     {
     public:

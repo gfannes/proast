@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <filesystem>
 
 namespace proast { 
     class Options
@@ -12,6 +13,7 @@ namespace proast {
         bool print_help = false;
         unsigned int verbose = 0;
         std::vector<std::string> roots;
+        std::filesystem::path home_dir;
 
         bool parse(int argc, const char **argv);
 

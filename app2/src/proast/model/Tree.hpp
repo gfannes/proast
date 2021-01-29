@@ -2,6 +2,7 @@
 #define HEADER_proast_model_Tree_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Data.hpp>
+#include <proast/model/Path.hpp>
 #include <gubg/tree/Node.hpp>
 #include <filesystem>
 #include <set>
@@ -9,8 +10,6 @@
 namespace proast { namespace model { 
 
     using Node = gubg::tree::Node<Data>;
-
-    using Path = std::vector<int>;
 
     class Tree
     {
@@ -29,13 +28,7 @@ namespace proast { namespace model {
 
         Node root;
 
-        using Datas = std::vector<Data *>;
-        void resolve_datas(Datas &, const Path &);
-
-        using Nodes = std::vector<Node *>;
-        void resolve_nodes(Nodes &, const Path &);
-
-        bool is_leaf(const Path &) const;
+        Node *find(const Path &);
 
         static std::size_t selected_ix(const Node &);
 
