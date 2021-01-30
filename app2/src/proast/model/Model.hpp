@@ -33,7 +33,7 @@ namespace proast { namespace model {
         Path to_path(Node *node) const;
 
     private:
-        Node *node_ = nullptr;
+        Node *current_node_ = nullptr;
 
         Tree tree_;
 

@@ -6,7 +6,7 @@
 namespace proast { namespace model { 
     Model::Model()
     {
-        node_ = &tree_.root;
+        current_node_ = &tree_.root;
     }
     Model::~Model()
     {
@@ -73,7 +73,7 @@ namespace proast { namespace model {
                 parent->value.navigation.child = node;
                 node = parent;
             }
-        node_ = node;
+        current_node_ = node;
         MSS_END();
     }
 
@@ -89,11 +89,11 @@ namespace proast { namespace model {
     }
     Node *Model::node_0()
     {
-        return node_;
+        return current_node_;
     }
     Node *Model::node_00()
     {
-        return node_->value.navigation.child;
+        return current_node_->value.navigation.child;
     }
     Node *Model::node_0a()
     {
@@ -139,7 +139,7 @@ namespace proast { namespace model {
             case Direction::Down:
                 if (me)
                 {
-                    if (auto child = node_->value.navigation.child)
+                    if (auto child = current_node_->value.navigation.child)
                         if (auto &childchild = child->value.navigation.child)
                         {
                             if (auto down = childchild->value.navigation.down)
@@ -153,14 +153,14 @@ namespace proast { namespace model {
                 }
                 else
                 {
-                    if (auto &child = node_->value.navigation.child)
+                    if (auto &child = current_node_->value.navigation.child)
                     {
                         if (auto down = child->value.navigation.down)
                         {
                             child = down;
                         }
                     }
-                    else if (auto content = node_->value.content)
+                    else if (auto content = current_node_->value.content)
                     {
                         if (content->ix+1 < content->items.size())
                             ++content->ix;
@@ -170,7 +170,7 @@ namespace proast { namespace model {
             case Direction::Up:
                 if (me)
                 {
-                    if (auto child = node_->value.navigation.child)
+                    if (auto child = current_node_->value.navigation.child)
                         if (auto &childchild = child->value.navigation.child)
                         {
                             if (auto up = childchild->value.navigation.up)
@@ -184,12 +184,12 @@ namespace proast { namespace model {
                 }
                 else
                 {
-                    if (auto &child = node_->value.navigation.child)
+                    if (auto &child = current_node_->value.navigation.child)
                     {
                         if (auto up = child->value.navigation.up)
                             child = up;
                     }
-                    else if (auto content = node_->value.content)
+                    else if (auto content = current_node_->value.content)
                     {
                         if (content->ix > 0)
                             --content->ix;
@@ -197,12 +197,12 @@ namespace proast { namespace model {
                 }
                 break;
             case Direction::Left:
-                if (node_->value.navigation.parent)
-                    node_ = node_->value.navigation.parent;
+                if (current_node_->value.navigation.parent)
+                    current_node_ = current_node_->value.navigation.parent;
                 break;
             case Direction::Right:
-                if (node_->value.navigation.child)
-                    node_ = node_->value.navigation.child;
+                if (current_node_->value.navigation.child)
+                    current_node_ = current_node_->value.navigation.child;
                 break;
         }
         MSS_END();
