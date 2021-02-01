@@ -22,7 +22,7 @@ namespace proast { namespace presenter {
         //Commander API
         void commander_quit();
         void commander_move(Direction, bool me);
-        void commander_open(bool edit);
+        void commander_open(Open);
         void commander_bookmark(wchar_t wchar, bool do_register);
 
     private:

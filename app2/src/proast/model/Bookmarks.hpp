@@ -16,6 +16,13 @@ namespace proast { namespace model {
         bool get(Path &, wchar_t) const;
         void set(wchar_t, const Path &);
 
+        template <typename Ftor>
+        void each(Ftor &&ftor)
+        {
+            for (auto &[wchar, path]: ch__path_)
+                ftor(wchar, path);
+        }
+
     private:
         std::map<wchar_t, Path> ch__path_;
     };

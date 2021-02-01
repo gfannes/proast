@@ -2,6 +2,7 @@
 #include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <fstream>
+#include <algorithm>
 
 namespace proast { namespace presenter { 
     Presenter::Presenter(model::Model &model, view::View &view): model_(model), view_(view)
@@ -43,42 +44,77 @@ namespace proast { namespace presenter {
         }
 
         {
-            auto set_view_dto = [&](auto &dst, auto node)
+            auto set_view_dto = [&](auto &lst, auto node, std::size_t path_size)
             {
                 if (!node)
                 {
-                    dst.reset();
+                    lst.reset();
                     return;
                 }
+
                 if (std::filesystem::is_regular_file(node->value.path))
                 {
                     if (!node->value.content)
                         node->value.content = content_.create(node->value.path);
-                    dst = node->value.content;
+                    lst = node->value.content;
                 }
                 else
                 {
-                    dst = dto::List::create();
+                    lst = dto::List::create();
                     for (auto &n: node->childs.nodes)
-                        dst->items.emplace_back(n.value.name);
-                    dst->ix = model::Tree::selected_ix(*node);
+                        lst->items.emplace_back(n.value.name);
+                    lst->ix = model::Tree::selected_ix(*node);
                 }
+
+                auto path = to_path(node);
+                path_size = std::min(path_size, path.size());
+                path.erase(path.begin(), path.end()-path_size);
+
+                lst->name = model::to_wstring(path);
             };
-            set_view_dto(view_.n0, model_.node_0());
-            set_view_dto(view_.n0a, model_.node_0a());
-            set_view_dto(view_.n00, model_.node_00());
-            set_view_dto(view_.n0b, model_.node_0b());
-            set_view_dto(view_.n00a, model_.node_00a());
-            set_view_dto(view_.n000, model_.node_000());
-            set_view_dto(view_.n00b, model_.node_00b());
+            set_view_dto(view_.n0,   model_.node_0(),   1);
+            set_view_dto(view_.n0a,  model_.node_0a(),  2);
+            set_view_dto(view_.n00,  model_.node_00(),  2);
+            set_view_dto(view_.n0b,  model_.node_0b(),  2);
+            set_view_dto(view_.n00a, model_.node_00a(), 3);
+            set_view_dto(view_.n000, model_.node_000(), 3);
+            set_view_dto(view_.n00b, model_.node_00b(), 3);
+
+            {
+                auto lst = dto::List::create();
+                lst->name = L"Metadata";
+                view_.metadata = lst;
+            }
+
+            {
+                auto lst = dto::List::create();
+                lst->name = L"Details";
+                switch (state())
+                {
+                    case State::BookmarkRegister:
+                    case State::BookmarkJump:
+                        lst->name = L"Bookmarks";
+                        model_.each_bookmark([&](auto wchar, const auto &path){
+                                oss_.str(L"");
+                                oss_ << wchar << L" => " << model::to_wstring(path);
+                                lst->items.emplace_back(oss_.str());
+                                });
+                        break;
+                    default: break;
+                }
+                view_.details = lst;
+            }
         }
         
         {
-            view_.footer = L"";
-            if (auto wstr = state_str())
+            std::wstring wstr;
+            switch (state())
             {
-                view_.footer = *wstr;
+                case State::BookmarkRegister: wstr = L"Registering bookmark"; break;
+                case State::BookmarkJump:     wstr = L"Jump to bookmark"; break;
+                default: break;
             }
+            view_.footer = wstr;
         }
 
         MSS_END();
@@ -93,25 +129,38 @@ namespace proast { namespace presenter {
     {
         model_.move(direction, me);
     }
-    void Presenter::commander_open(bool edit)
+    void Presenter::commander_open(Open open)
     {
         if (auto me = model_.node_000())
         {
             const auto path = me->value.path;
-            scheduled_operation_ = [path,edit]()
+            scheduled_operation_ = [path,open]()
             {
                 const auto orig_dir = std::filesystem::current_path();
                 std::filesystem::current_path(path.parent_path());
 
                 std::ostringstream oss;
-                if (edit)
-                    oss << "nvim " << path.filename();
-                else
-                    oss << "bash";
+                switch (open)
+                {
+                    case Open::View:
+                        oss << "nvim " << path.filename();
+                        break;
+                    case Open::Edit:
+                        {
+                            std::string my_editor = "nvim";
+                            if (auto editor = std::getenv("EDITOR"))
+                                my_editor = editor;
+                            oss << my_editor << " " << path.filename();
+                        }
+                        break;
+                    case Open::Shell:
+                        oss << "bash";
+                        break;
+                }
 
-                log::raw([&](auto &os){os << "Before commander_open(" << edit << ") " << oss.str() << "\n";});
+                log::raw([&](auto &os){os << "Before commander_open() " << oss.str() << "\n";});
                 std::system(oss.str().c_str());
-                log::raw([&](auto &os){os << "After commander_open(" << edit << ")\n";});
+                log::raw([&](auto &os){os << "After commander_open()\n";});
 
                 std::filesystem::current_path(orig_dir);
 

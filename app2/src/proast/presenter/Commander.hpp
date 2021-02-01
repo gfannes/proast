@@ -7,6 +7,16 @@
 #include <optional>
 
 namespace proast { namespace presenter { 
+    enum class Open
+    {
+        View, Edit, Shell,
+    };
+
+    enum class State
+    {
+        Idle, BookmarkRegister, BookmarkJump,
+    };
+
     template <typename Receiver>
     class Commander_crtp
     {
@@ -53,8 +63,9 @@ namespace proast { namespace presenter {
                     case ArrowRight:
                                r.commander_move(Direction::Right, true); break;
 
-                    case Return: r.commander_open(true); break;
-                    case L's':   r.commander_open(false); break;
+                    case Return: r.commander_open(Open::View); break;
+                    case L'e': r.commander_open(Open::Edit); break;
+                    case L's':   r.commander_open(Open::Shell); break;
 
                     case L'm':
                     case L'\'':
@@ -64,17 +75,17 @@ namespace proast { namespace presenter {
             }
         }
 
-        std::optional<std::wstring> state_str() const
+        State state() const
         {
-            std::optional<std::wstring> wstr;
+            auto state = State::Idle;
             if (state_)
                 switch (*state_)
                 {
-                    case L'm': wstr = L"Registering bookmark"; break;
-                    case L'\'': wstr = L"Jump to bookmark"; break;
+                    case L'm':  state = State::BookmarkRegister; break;
+                    case L'\'': state = State::BookmarkJump; break;
                     default: break;
                 }
-            return wstr;
+            return state;
         }
 
     private:

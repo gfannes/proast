@@ -18,9 +18,9 @@ namespace proast { namespace view {
 
         std::wstring header;
         std::wstring footer;
-        proast::dto::List::Ptr na;
+        proast::dto::List::Ptr metadata;
         proast::dto::List::Ptr n0;
-        proast::dto::List::Ptr nb;
+        proast::dto::List::Ptr details;
         proast::dto::List::Ptr n0a;
         proast::dto::List::Ptr n00;
         proast::dto::List::Ptr n0b;

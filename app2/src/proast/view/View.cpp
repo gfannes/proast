@@ -24,19 +24,19 @@ namespace proast { namespace view {
                 text(header) | border,
                 hbox({
                         vbox({
-                                ui::list(na, small_height) | border,
-                                ui::list(n0, large_height) | border,
-                                ui::list(nb, small_height) | border,
+                                ui::list(metadata, small_height),
+                                ui::list(n0, large_height),
+                                ui::list(details, small_height),
                                 }) | flex,
                         vbox({
-                                ui::list(n0a, small_height) | border,
-                                ui::list(n00, large_height) | border,
-                                ui::list(n0b, small_height) | border,
+                                ui::list(n0a, small_height),
+                                ui::list(n00, large_height),
+                                ui::list(n0b, small_height),
                                 }) | flex,
                         vbox({
-                                ui::list(n00a, small_height) | border,
-                                ui::list(n000, large_height) | border,
-                                ui::list(n00b, small_height) | border,
+                                ui::list(n00a, small_height),
+                                ui::list(n000, large_height),
+                                ui::list(n00b, small_height),
                                 }) | flex,
                         }) | flex,
                 text(footer) | border,

@@ -19,6 +19,8 @@ namespace proast { namespace model {
         
         bool register_bookmark(wchar_t wchar);
         bool jump_to_bookmark(wchar_t wchar);
+        template <typename Ftor>
+        void each_bookmark(Ftor &&ftor){bookmarks_.each(ftor);}
 
         bool move(Direction, bool me);
 
@@ -30,8 +32,6 @@ namespace proast { namespace model {
         Node *node_000();
         Node *node_00a();
         Node *node_00b();
-
-        Path to_path(Node *node) const;
 
     private:
         Node *current_node_ = nullptr;

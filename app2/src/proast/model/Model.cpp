@@ -36,21 +36,6 @@ namespace proast { namespace model {
         return tree_.add(path, config);
     }
 
-    Path Model::to_path(Node *node) const
-    {
-        Path p;
-        while (node)
-        {
-            auto parent = node->value.navigation.parent;
-            if (parent)
-                //We do not include the root node name
-                p.push_back(node->value.name);
-            node = parent;
-        }
-        std::reverse(p.begin(), p.end());
-        return p;
-    }
-
     bool Model::register_bookmark(wchar_t wchar)
     {
         MSS_BEGIN(bool);
