@@ -176,6 +176,10 @@ namespace proast { namespace presenter {
         else
             model_.jump_to_bookmark(wchar);
     }
+    void Presenter::commander_reload()
+    {
+        model_.reload();
+    }
 
     //View::Events API
     void Presenter::received(wchar_t wchar)

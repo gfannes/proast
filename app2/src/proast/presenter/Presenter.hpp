@@ -24,6 +24,7 @@ namespace proast { namespace presenter {
         void commander_move(Direction, bool me);
         void commander_open(Open);
         void commander_bookmark(wchar_t wchar, bool do_register);
+        void commander_reload();
 
     private:
         using Commander = Commander_crtp<Presenter>;

@@ -6,6 +6,7 @@
 #include <proast/model/Path.hpp>
 #include <proast/model/JumpList.hpp>
 #include <proast/types.hpp>
+#include <tuple>
 
 namespace proast { namespace model { 
     class Model
@@ -16,6 +17,8 @@ namespace proast { namespace model {
 
         bool set_home(const std::filesystem::path &);
         bool add_root(const std::filesystem::path &, const Tree::Config &);
+
+        bool reload();
         
         bool register_bookmark(wchar_t wchar);
         bool jump_to_bookmark(wchar_t wchar);
@@ -35,6 +38,9 @@ namespace proast { namespace model {
 
     private:
         Node *current_node_ = nullptr;
+
+        std::vector<std::tuple<std::filesystem::path, Tree::Config>> root_config_ary_;
+        std::filesystem::path home_dir_;
 
         Tree tree_;
 

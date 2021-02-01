@@ -71,6 +71,10 @@ namespace proast { namespace presenter {
                     case L'\'':
                                  state_.emplace(wchar);
                                  break;
+
+                    case L'r':
+                                 r.commander_reload();
+                                 break;
                 }
             }
         }

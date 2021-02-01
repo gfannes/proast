@@ -22,6 +22,8 @@ namespace proast { namespace model {
             std::filesystem::create_directories(home_dir);
         MSS(std::filesystem::is_directory(home_dir));
 
+        home_dir_ = home_dir;
+
         {
             bookmarks_fp_ = home_dir/"bookmarks.naft";
             if (!bookmarks_.load(bookmarks_fp_))
@@ -33,7 +35,29 @@ namespace proast { namespace model {
 
     bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
     {
+        root_config_ary_.emplace_back(path, config);
         return tree_.add(path, config);
+    }
+
+    bool Model::reload()
+    {
+        MSS_BEGIN(bool);
+
+        bookmarks_.save(bookmarks_fp_);
+
+        MSS(set_home(home_dir_));
+
+        tree_.clear();
+        //Copy root_config_ary_ because it will be updated during calls to add_root()
+        auto root_config_ary_copy = root_config_ary_;
+        root_config_ary_.clear();
+        for (const auto &[path, config]: root_config_ary_copy)
+        {
+            log::ostream() << path << std::endl;
+            MSS(add_root(path, config));
+        }
+
+        MSS_END();
     }
 
     bool Model::register_bookmark(wchar_t wchar)

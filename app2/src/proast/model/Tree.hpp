@@ -20,6 +20,8 @@ namespace proast { namespace model {
 
         Tree();
 
+        void clear() {*this = Tree();}
+
         struct Config
         {
             std::set<std::string> names_to_skip;
