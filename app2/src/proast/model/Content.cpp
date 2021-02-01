@@ -1,6 +1,7 @@
 #include <proast/model/Content.hpp>
 #include <proast/util.hpp>
 #include <fstream>
+#include <string>
 
 namespace proast { namespace model {
     Content::Content()
@@ -15,8 +16,10 @@ namespace proast { namespace model {
         {
             std::ifstream fi{path};
             for (std::string line; std::getline(fi, line);)
-                //TODO: Do proper conversion to unicode, otherwise, ftxui might hang
+            {
+                //TODO: Convert tab into double-space
                 ptr->items.push_back(to_wstring(line));
+            }
         }
         else
         {
