@@ -24,7 +24,7 @@ namespace proast { namespace presenter {
             if (scheduled_operation_)
             {
                 MSS(scheduled_operation_());
-                //TODO: reload model after an operation
+                MSS(model_.reload());
                 scheduled_operation_ = nullptr;
                 do_run = true;
             }
