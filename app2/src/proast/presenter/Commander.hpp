@@ -3,6 +3,7 @@
 
 #include <proast/types.hpp>
 #include <proast/unicode.hpp>
+#include <string>
 #include <optional>
 
 namespace proast { namespace presenter { 

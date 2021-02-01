@@ -4,6 +4,7 @@
 #include <proast/model/Tree.hpp>
 #include <proast/model/Bookmarks.hpp>
 #include <proast/model/Path.hpp>
+#include <proast/model/JumpList.hpp>
 #include <proast/types.hpp>
 
 namespace proast { namespace model { 
@@ -39,6 +40,7 @@ namespace proast { namespace model {
 
         std::filesystem::path bookmarks_fp_;
         Bookmarks bookmarks_;
+        JumpList jump_list_;
     };
 } } 
 
