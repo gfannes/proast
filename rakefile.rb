@@ -17,7 +17,7 @@ end
 file ".extern/ftxui/ok" => ".extern" do
     Dir.chdir(".extern") do
         FileUtils.rm_rf("ftxui")
-        sh "git clone https://github.com/ArthurSonzogni/ftxui"
+        sh "git clone https://github.com/gfannes/ftxui"
         Dir.chdir("ftxui") do
             sh "touch ok"
         end
