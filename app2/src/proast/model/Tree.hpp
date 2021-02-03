@@ -34,6 +34,8 @@ namespace proast { namespace model {
 
         Node *find(const Path &);
 
+        static void recompute_metadata(Node &);
+
         static std::size_t selected_ix(const Node &);
 
     private:

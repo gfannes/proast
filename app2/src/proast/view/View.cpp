@@ -53,6 +53,7 @@ namespace proast { namespace view {
             else if (event == ftxui::Event::ArrowDown)  events->received(ArrowDown);
             else if (event == ftxui::Event::Return)     events->received(Return);
             else if (event == ftxui::Event::Escape)     events->received(Escape);
+            else if (event == ftxui::Event::Backspace)  events->received(Backspace);
             else events->received(event.character());
         }
         return true;

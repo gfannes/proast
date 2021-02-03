@@ -24,6 +24,7 @@ namespace proast { namespace presenter {
         void commander_move(Direction, bool me);
         void commander_open(Open);
         void commander_bookmark(wchar_t wchar, bool do_register);
+        void commander_set_metadata(MetadataField, const std::wstring &content);
         void commander_reload();
 
     private:

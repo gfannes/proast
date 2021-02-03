@@ -216,4 +216,10 @@ namespace proast { namespace model {
         }
         MSS_END();
     }
+
+    void Model::recompute_metadata()
+    {
+        tree_.recompute_metadata(tree_.root);
+    }
+
 } } 

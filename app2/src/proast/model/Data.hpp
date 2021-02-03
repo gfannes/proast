@@ -2,6 +2,7 @@
 #define HEADER_proast_model_Data_hpp_ALREADY_INCLUDED
 
 #include <proast/dto/List.hpp>
+#include <proast/model/Metadata.hpp>
 #include <filesystem>
 
 namespace gubg { namespace tree { 
@@ -28,6 +29,7 @@ namespace proast { namespace model {
         std::wstring name;
         std::filesystem::path path;
         dto::List::Ptr content;
+        Metadata metadata;
     private:
     };
 } } 

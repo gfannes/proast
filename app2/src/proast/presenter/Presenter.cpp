@@ -62,7 +62,16 @@ namespace proast { namespace presenter {
                 {
                     lst = dto::List::create();
                     for (auto &n: node->childs.nodes)
-                        lst->items.emplace_back(n.value.name);
+                    {
+                        oss_.str(L"");
+                        oss_ << std::fixed << std::setprecision(1) << std::setw(5);
+                            if (n.value.metadata.effort == 0)
+                                oss_ << L' ';
+                            else
+                                oss_ << n.value.metadata.effort << L" ";
+                        oss_ << n.value.name;
+                        lst->items.emplace_back(oss_.str());
+                    }
                     lst->ix = model::Tree::selected_ix(*node);
                 }
 
@@ -82,7 +91,51 @@ namespace proast { namespace presenter {
 
             {
                 auto lst = dto::List::create();
-                lst->name = L"Metadata";
+                if (auto node = model_.node())
+                {
+                    lst->name = L"Metadata for ";
+                    auto path = to_path(node);
+                    const auto path_size = std::min<unsigned int>(3, path.size());
+                    path.erase(path.begin(), path.end()-path_size);
+                    lst->name += model::to_wstring(path);
+
+                    auto as_number = [](auto &os, const auto &effort){
+                        os << std::fixed << std::setprecision(2) << effort;
+                    };
+                    auto as_volume = [](auto &os, const auto &volume){
+                        os << std::fixed << std::setprecision(2) << volume << L"dB";
+                    };
+                    auto as_pct = [](auto &os, const auto &pct){
+                        os << std::fixed << std::setprecision(2) << pct << L"%";
+                    };
+                    auto as_date = [](auto &os, const auto &date){
+                        os << date;
+                    };
+                    auto as_tags = [](auto &os, const auto &tags){
+                        for (const auto &tag: tags)
+                            os << tag << L" ";
+                    };
+                    auto add_field = [&](const auto &value, const auto descr, auto &&streamer){
+                        oss_.str(L"");
+                        oss_ << std::setw(10) << descr << L": ";
+                        streamer(oss_, value);
+                        lst->items.push_back(oss_.str());
+                    };
+                    auto add_field_opt = [&](const auto &value, const auto descr, auto &&streamer){
+                        if (!value)
+                            return;
+                        add_field(value.value(), descr, streamer);
+                    };
+                    add_field(node->value.metadata.effort, L"effort", as_number);
+
+                    add_field_opt(node->value.metadata.my_effort, L"my effort", as_number);
+                    add_field_opt(node->value.metadata.my_impact, L"my impact", as_number);
+                    add_field_opt(node->value.metadata.my_completion_pct, L"my completion", as_pct);
+                    add_field_opt(node->value.metadata.my_volume_db, L"my volume", as_volume);
+                    add_field_opt(node->value.metadata.my_live, L"my live", as_date);
+                    add_field_opt(node->value.metadata.my_dead, L"my dead", as_date);
+                    add_field_opt(node->value.metadata.my_tags, L"my tags", as_tags);
+                }
                 view_.metadata = lst;
             }
 
@@ -100,6 +153,17 @@ namespace proast { namespace presenter {
                                 lst->items.emplace_back(oss_.str());
                                 });
                         break;
+                    case State::SetMetadataField:
+                        lst->name = L"Metadata fields";
+                        for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd'})
+                        {
+                            oss_.str(L"");
+                            oss_ << wchar << L": ";
+                            if (auto mf = to_metadata_field(wchar))
+                                oss_ << to_wstring(*mf);
+                            lst->items.emplace_back(oss_.str());
+                        }
+                        break;
                     default: break;
                 }
                 view_.details = lst;
@@ -107,14 +171,20 @@ namespace proast { namespace presenter {
         }
         
         {
-            std::wstring wstr;
+            oss_.str(L"");
             switch (state())
             {
-                case State::BookmarkRegister: wstr = L"Registering bookmark"; break;
-                case State::BookmarkJump:     wstr = L"Jump to bookmark"; break;
+                case State::BookmarkRegister: oss_ << L"Registering bookmark"; break;
+                case State::BookmarkJump:     oss_ << L"Jump to bookmark"; break;
+                case State::SetMetadataField:
+                                              if (!metadata_field)
+                                                  oss_ << L"Choose metadata field";
+                                              else
+                                                  oss_ << L"Metadata for " << to_wstring(*metadata_field) << L": " << content;
+                                              break;
                 default: break;
             }
-            view_.footer = wstr;
+            view_.footer = oss_.str();
         }
 
         MSS_END();
@@ -175,6 +245,29 @@ namespace proast { namespace presenter {
             model_.register_bookmark(wchar);
         else
             model_.jump_to_bookmark(wchar);
+    }
+    void Presenter::commander_set_metadata(MetadataField field, const std::wstring &content)
+    {
+        if (auto node = model_.node())
+        {
+            bool was_set = true;
+            auto as_number = [&](auto &dst, double default_value)
+            {
+                try { dst = content.empty() ? default_value : std::stod(content); }
+                catch (std::invalid_argument) { was_set = false; }
+            };
+            switch (field)
+            {
+                case MetadataField::Effort:        as_number(node->value.metadata.my_effort, 0.0); break;
+                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db, -20.0); break;
+                case MetadataField::Impact:        as_number(node->value.metadata.my_impact, 1.0); break;
+                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct, 0.0); break;
+                case MetadataField::Live:          node->value.metadata.my_live = content; break;
+                case MetadataField::Dead:          node->value.metadata.my_dead = content; break;
+            }
+            if (was_set)
+                model_.recompute_metadata();
+        }
     }
     void Presenter::commander_reload()
     {

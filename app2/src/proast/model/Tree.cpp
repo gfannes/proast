@@ -78,6 +78,19 @@ namespace proast { namespace model {
         return 0;
     }
 
+    void Tree::recompute_metadata(Node &node)
+    {
+        auto &my_md = node.value.metadata;
+        my_md.reset_aggregated_data();
+        if (my_md.my_effort)
+            my_md.effort += *my_md.my_effort;
+        for (auto &child: node.childs.nodes)
+        {
+            recompute_metadata(child);
+            node.value.metadata.effort += child.value.metadata.effort;
+        }
+    }
+
     //Privates
     bool Tree::add_(Node &node, const std::filesystem::path &path, const Tree::Config &config)
     {
