@@ -114,24 +114,25 @@ namespace proast { namespace presenter {
                     path.erase(path.begin(), path.end()-path_size);
                     lst->name += model::to_wstring(path);
 
+                    const unsigned int align = 15;
                     auto as_number = [](auto &os, const auto &effort){
-                        os << std::fixed << std::setprecision(2) << effort;
+                        os << std::fixed << std::setprecision(1) << effort;
                     };
                     auto as_size = [](auto &os, const auto &container){
                         os << container.size();
                     };
                     auto as_volume = [](auto &os, const auto &volume){
-                        os << std::fixed << std::setprecision(2) << volume << L"dB";
+                        os << std::fixed << std::setprecision(0) << volume << L"dB";
                     };
                     auto as_pct = [](auto &os, const auto &pct){
-                        os << std::fixed << std::setprecision(2) << pct << L"%";
+                        os << std::fixed << std::setprecision(0) << pct << L"%";
                     };
                     auto as_date = [](auto &os, const auto &date){
                         os << date;
                     };
                     auto add_field = [&](const auto &value, const auto descr, auto &&streamer){
                         oss_.str(L"");
-                        oss_ << std::setw(10) << descr << L": ";
+                        oss_ << std::setw(align) << descr << L": ";
                         streamer(oss_, value);
                         lst->items.push_back(oss_.str());
                     };
@@ -145,7 +146,7 @@ namespace proast { namespace presenter {
                         if (tags.size())
                         {
                             oss_.str(L"");
-                            oss_ << std::setw(10) << descr << L": ";
+                            oss_ << std::setw(align) << descr << L": ";
                             for (const auto &tag: tags)
                                 oss_ << tag << L" ";
                             lst->items.push_back(oss_.str());
@@ -282,17 +283,23 @@ namespace proast { namespace presenter {
         if (auto node = model_.node())
         {
             bool was_set = true;
-            auto as_number = [&](auto &dst, double default_value)
+            auto as_number = [&](auto &dst)
             {
-                try { dst = content.empty() ? default_value : std::stod(content); }
+                try
+                {
+                    if (content.empty())
+                        dst.reset();
+                    else
+                        dst = std::stod(content);
+                }
                 catch (std::invalid_argument) { was_set = false; }
             };
             switch (field)
             {
-                case MetadataField::Effort:        as_number(node->value.metadata.my_effort, 0.0); break;
-                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db, -20.0); break;
-                case MetadataField::Impact:        as_number(node->value.metadata.my_impact, 1.0); break;
-                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct, 0.0); break;
+                case MetadataField::Effort:        as_number(node->value.metadata.my_effort); break;
+                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db); break;
+                case MetadataField::Impact:        as_number(node->value.metadata.my_impact); break;
+                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct); break;
                 case MetadataField::Live:          node->value.metadata.my_live = content; break;
                 case MetadataField::Dead:          node->value.metadata.my_dead = content; break;
                 case MetadataField::Tag:

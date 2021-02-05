@@ -20,7 +20,7 @@ namespace proast { namespace ui {
         const auto selected_item_ix = list_->ix;
         const auto item_count = list_->items.size();
 
-        const auto y_margin = 2;
+        const auto y_margin = 1;
         const auto y_size = box_.y_max-box_.y_min+1-y_margin;
         const auto x_margin = 0;
         const auto x_size = box_.x_max-box_.x_min+1-x_margin;

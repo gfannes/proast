@@ -68,6 +68,7 @@ namespace proast { namespace model {
             }
             return res;
         };
+
         stream_item_2("Effort", my_effort);
         if (my_tags.size())
         {
@@ -89,8 +90,12 @@ namespace proast { namespace model {
             MSS(range.pop_attr(key, value));
             MSS(key == "value");
             if (false) {}
-            else if (tag == "Effort")
-                my_effort = std::stod(value);
+            else if (tag == "Effort") my_effort = std::stod(value);
+            else if (tag == "Volume_db") my_volume_db = std::stod(value);
+            else if (tag == "Impact") my_impact = std::stod(value);
+            else if (tag == "Completion_pct") my_completion_pct = std::stod(value);
+            else if (tag == "Dead") my_dead = proast::to_wstring(value);
+            else if (tag == "Live") my_dead = proast::to_wstring(value);
             else if (tag == "Tags")
             {
                 for (std::string_view sv{value}; !sv.empty();)
@@ -112,6 +117,11 @@ namespace proast { namespace model {
     void Metadata::set_when_unset(const Metadata &other)
     {
         if (!my_effort) my_effort = other.my_effort;
+        if (!my_volume_db) my_volume_db = other.my_volume_db;
+        if (!my_impact) my_impact = other.my_impact;
+        if (!my_completion_pct) my_completion_pct = other.my_completion_pct;
+        if (!my_dead) my_dead = other.my_dead;
+        if (!my_live) my_live = other.my_live;
         if (!my_tags.size()) my_tags = other.my_tags;
     }
 } } 
