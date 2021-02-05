@@ -37,6 +37,7 @@ namespace proast { namespace model {
         Node *node_00b();
 
         void recompute_metadata();
+        bool sync_metadata();
 
     private:
         Node *current_node_ = nullptr;

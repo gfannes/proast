@@ -19,6 +19,7 @@ namespace proast { namespace presenter {
             case L'c': return MetadataField::CompletionPct;
             case L'l': return MetadataField::Live;
             case L'd': return MetadataField::Dead;
+            case L'D': return MetadataField::Dependency;
             default: break;
         }
         return std::nullopt;
@@ -28,6 +29,10 @@ namespace proast { namespace presenter {
     class Commander_crtp
     {
     public:
+        std::optional<State> state;
+        std::optional<MetadataField> metadata_field;
+        std::wstring content;
+
         void process(wchar_t wchar)
         {
             auto &r = receiver_();
@@ -35,26 +40,26 @@ namespace proast { namespace presenter {
             //* It is currently not possible to clear `content` with Escape when setting a metadata field
             if (wchar == Escape)
             {
-                state_.reset();
+                state.reset();
             }
-            else if (state_)
+            else if (state)
             {
-                switch (*state_)
+                switch (*state)
                 {
-                    case L'm':
+                    case State::BookmarkRegister:
                         r.commander_bookmark(wchar, true);
-                        state_.reset();
+                        state.reset();
                         break;
-                    case L'\'':
+                    case State::BookmarkJump:
                         r.commander_bookmark(wchar, false);
-                        state_.reset();
+                        state.reset();
                         break;
-                    case L's':
+                    case State::SetMetadataField:
                         if (!metadata_field)
                         {
                             content.clear();
                             if (!(metadata_field = to_metadata_field(wchar)))
-                                state_.reset();
+                                state.reset();
                         }
                         else
                             switch (wchar)
@@ -63,14 +68,14 @@ namespace proast { namespace presenter {
                                     r.commander_set_metadata(*metadata_field, content);
                                     content.clear();
                                     metadata_field.reset();
-                                    state_.reset();
+                                    state.reset();
                                     break;
                                 case Backspace:
                                     if (!content.empty())
                                         content.pop_back();
                                     break;
                                 case Escape:
-                                    //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state_`
+                                    //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
                                     if (!content.empty())
                                         content.clear();
                                     else
@@ -80,6 +85,10 @@ namespace proast { namespace presenter {
                                     content.push_back(wchar);
                                     break;
                             }
+                        break;
+                    case State::ShowMetadataField:
+                        r.commander_show_metadata(to_metadata_field(wchar));
+                        state.reset();
                         break;
                 }
             }
@@ -109,36 +118,18 @@ namespace proast { namespace presenter {
                     case L'e': r.commander_open(Open::Edit); break;
                     case L'S':   r.commander_open(Open::Shell); break;
 
-                    case L'm':
-                    case L'\'': state_.emplace(wchar); break;
-
-                    case L's': state_.emplace(wchar); break;
+                    case L'm':  state = State::BookmarkRegister; break;
+                    case L'\'': state = State::BookmarkJump; break;
+                    case L's':  state = State::SetMetadataField; break;
+                    case L'M':  state = State::ShowMetadataField; break;
 
                     case L'r': r.commander_reload(); break;
                 }
             }
         }
 
-        State state() const
-        {
-            auto state = State::Idle;
-            if (state_)
-                switch (*state_)
-                {
-                    case L'm':  state = State::BookmarkRegister; break;
-                    case L'\'': state = State::BookmarkJump; break;
-                    case L's':  state = State::SetMetadataField; break;
-                    default: break;
-                }
-            return state;
-        }
-
-        std::optional<MetadataField> metadata_field;
-        std::wstring content;
-
     private:
         Receiver &receiver_() {return *static_cast<Receiver*>(this);}
-        std::optional<wchar_t> state_;
     };
 } } 
 

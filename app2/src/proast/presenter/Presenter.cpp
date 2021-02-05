@@ -55,7 +55,7 @@ namespace proast { namespace presenter {
                 if (std::filesystem::is_regular_file(node->value.path))
                 {
                     if (!node->value.content)
-                        node->value.content = content_.create(node->value.path);
+                        node->value.content = content_mgr_.load(node->value.path);
                     lst = node->value.content;
                 }
                 else
@@ -64,11 +64,26 @@ namespace proast { namespace presenter {
                     for (auto &n: node->childs.nodes)
                     {
                         oss_.str(L"");
-                        oss_ << std::fixed << std::setprecision(1) << std::setw(5);
-                            if (n.value.metadata.effort == 0)
-                                oss_ << L' ';
-                            else
-                                oss_ << n.value.metadata.effort << L" ";
+                        if (show_metadata_field_)
+                        {
+                            switch (*show_metadata_field_)
+                            {
+                                case MetadataField::Effort:
+                                    oss_ << std::fixed << std::setprecision(1) << std::setw(5);
+                                    if (auto effort = n.value.metadata.effort(); effort > 0)
+                                        oss_ << effort;
+                                    else
+                                        oss_ << L' ';
+                                    oss_ << L' ';
+                                    break;
+                                case MetadataField::Dependency:
+                                    oss_ << std::fixed << std::setprecision(1) << std::setw(4);
+                                    oss_ << n.value.metadata.dependencies.size() << L" ";
+                                    break;
+                            }
+                        }
+                        else
+                            oss_ << L' ';
                         oss_ << n.value.name;
                         lst->items.emplace_back(oss_.str());
                     }
@@ -102,6 +117,9 @@ namespace proast { namespace presenter {
                     auto as_number = [](auto &os, const auto &effort){
                         os << std::fixed << std::setprecision(2) << effort;
                     };
+                    auto as_size = [](auto &os, const auto &container){
+                        os << container.size();
+                    };
                     auto as_volume = [](auto &os, const auto &volume){
                         os << std::fixed << std::setprecision(2) << volume << L"dB";
                     };
@@ -126,7 +144,9 @@ namespace proast { namespace presenter {
                             return;
                         add_field(value.value(), descr, streamer);
                     };
-                    add_field(node->value.metadata.effort, L"effort", as_number);
+                    add_field(node->value.metadata.dependencies, L"dependencies", as_size);
+                    add_field(node->value.metadata.effort(), L"effort", as_number);
+                    add_field(node->value.metadata.tags(), L"tags", as_tags);
 
                     add_field_opt(node->value.metadata.my_effort, L"my effort", as_number);
                     add_field_opt(node->value.metadata.my_impact, L"my impact", as_number);
@@ -142,48 +162,52 @@ namespace proast { namespace presenter {
             {
                 auto lst = dto::List::create();
                 lst->name = L"Details";
-                switch (state())
-                {
-                    case State::BookmarkRegister:
-                    case State::BookmarkJump:
-                        lst->name = L"Bookmarks";
-                        model_.each_bookmark([&](auto wchar, const auto &path){
+                if (Commander::state)
+                    switch (*Commander::state)
+                    {
+                        case State::BookmarkRegister:
+                        case State::BookmarkJump:
+                            lst->name = L"Bookmarks";
+                            model_.each_bookmark([&](auto wchar, const auto &path){
+                                    oss_.str(L"");
+                                    oss_ << wchar << L" => " << model::to_wstring(path);
+                                    lst->items.emplace_back(oss_.str());
+                                    });
+                            break;
+                        case State::SetMetadataField:
+                        case State::ShowMetadataField:
+                            lst->name = L"Metadata fields";
+                            for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd', L'D'})
+                            {
                                 oss_.str(L"");
-                                oss_ << wchar << L" => " << model::to_wstring(path);
+                                oss_ << wchar << L": ";
+                                if (auto mf = to_metadata_field(wchar))
+                                    oss_ << to_wstring(*mf);
                                 lst->items.emplace_back(oss_.str());
-                                });
-                        break;
-                    case State::SetMetadataField:
-                        lst->name = L"Metadata fields";
-                        for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd'})
-                        {
-                            oss_.str(L"");
-                            oss_ << wchar << L": ";
-                            if (auto mf = to_metadata_field(wchar))
-                                oss_ << to_wstring(*mf);
-                            lst->items.emplace_back(oss_.str());
-                        }
-                        break;
-                    default: break;
-                }
+                            }
+                            break;
+                        default: break;
+                    }
                 view_.details = lst;
             }
         }
         
         {
             oss_.str(L"");
-            switch (state())
-            {
-                case State::BookmarkRegister: oss_ << L"Registering bookmark"; break;
-                case State::BookmarkJump:     oss_ << L"Jump to bookmark"; break;
-                case State::SetMetadataField:
-                                              if (!metadata_field)
-                                                  oss_ << L"Choose metadata field";
-                                              else
-                                                  oss_ << L"Metadata for " << to_wstring(*metadata_field) << L": " << content;
-                                              break;
-                default: break;
-            }
+            if (Commander::state)
+                switch (*Commander::state)
+                {
+                    case State::BookmarkRegister:  oss_ << L"Registering bookmark"; break;
+                    case State::BookmarkJump:      oss_ << L"Jump to bookmark"; break;
+                    case State::SetMetadataField:
+                                                   if (!Commander::metadata_field)
+                                                       oss_ << L"Choose metadata field";
+                                                   else
+                                                       oss_ << L"Metadata for " << to_wstring(*Commander::metadata_field) << L": " << Commander::content;
+                                                   break;
+                    case State::ShowMetadataField: oss_ << L"Show metadata field"; break;
+                    default: break;
+                }
             view_.footer = oss_.str();
         }
 
@@ -266,8 +290,15 @@ namespace proast { namespace presenter {
                 case MetadataField::Dead:          node->value.metadata.my_dead = content; break;
             }
             if (was_set)
+            {
+                model_.sync_metadata();
                 model_.recompute_metadata();
+            }
         }
+    }
+    void Presenter::commander_show_metadata(std::optional<MetadataField> mf_opt)
+    {
+        show_metadata_field_ = mf_opt;
     }
     void Presenter::commander_reload()
     {

@@ -6,12 +6,11 @@
 #include <gubg/tree/Node.hpp>
 #include <filesystem>
 #include <set>
+#include <map>
 
 namespace proast { namespace model { 
 
     using Node = gubg::tree::Node<Data>;
-
-    Path to_path(Node *node);
 
     class Tree
     {
@@ -35,12 +34,20 @@ namespace proast { namespace model {
         Node *find(const Path &);
 
         static void recompute_metadata(Node &);
+        bool stream_metadata();
 
         static std::size_t selected_ix(const Node &);
 
     private:
         bool add_(Node &, const std::filesystem::path &, const Config &);
         static void compute_navigation_(Node &);
+
+        static bool stream_metadata_(std::ostream &, Node &);
+
+        std::filesystem::path metadata_fn_;
+        using Path__Metadata = std::map<Path, Metadata>;
+        static bool parse_metadata_(Path__Metadata &, const std::filesystem::path &);
+        void set_metadata_(const Path__Metadata &);
     };
 
 } } 

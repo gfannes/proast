@@ -35,8 +35,15 @@ namespace proast { namespace model {
 
     bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
     {
+        MSS_BEGIN(bool);
+
         root_config_ary_.emplace_back(path, config);
-        return tree_.add(path, config);
+
+        MSS(tree_.add(path, config));
+
+        tree_.recompute_metadata(tree_.root);
+
+        MSS_END();
     }
 
     bool Model::reload()
@@ -220,6 +227,10 @@ namespace proast { namespace model {
     void Model::recompute_metadata()
     {
         tree_.recompute_metadata(tree_.root);
+    }
+    bool Model::sync_metadata()
+    {
+        return tree_.stream_metadata();
     }
 
 } } 

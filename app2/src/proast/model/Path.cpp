@@ -1,4 +1,6 @@
 #include <proast/model/Path.hpp>
+#include <proast/model/Tree.hpp>
+#include <proast/util.hpp>
 #include <sstream>
 #include <string_view>
 
@@ -10,6 +12,10 @@ namespace proast { namespace model {
         for (const auto &e: path)
             oss << L'/' << e;
         return oss.str();
+    }
+    std::string to_utf8(const Path &path)
+    {
+        return proast::to_utf8(to_wstring(path));
     }
     Path to_path(const std::wstring &wstr)
     {
@@ -24,10 +30,10 @@ namespace proast { namespace model {
                 wstrv.remove_prefix(1);
         };
 
-        for (std::wstring part; !wstrv.empty(); path.push_back(part), pop_sep())
+        for (std::wstring part; (pop_sep(), !wstrv.empty()); path.push_back(part))
         {
             auto pop_part = [&](std::size_t count){
-                part = wstrv.substr(count);
+                part = wstrv.substr(0, count);
                 wstrv.remove_prefix(count);
             };
 
@@ -38,6 +44,20 @@ namespace proast { namespace model {
         }
 
         return path;
+    }
+    Path to_path(Node *node)
+    {
+        Path p;
+        while (node)
+        {
+            auto parent = node->value.navigation.parent;
+            if (parent)
+                //We do not include the root node name
+                p.push_back(node->value.name);
+            node = parent;
+        }
+        std::reverse(p.begin(), p.end());
+        return p;
     }
 
     bool pop_if(Path &path, const Path &needle)

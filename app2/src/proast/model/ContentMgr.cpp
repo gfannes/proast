@@ -1,15 +1,15 @@
-#include <proast/model/Content.hpp>
+#include <proast/model/ContentMgr.hpp>
 #include <proast/util.hpp>
 #include <fstream>
 #include <string>
 
 namespace proast { namespace model {
-    Content::Content()
+    ContentMgr::ContentMgr()
     {
-        allowed_extensions_ = {".md", ".h", ".c", ".hpp", ".cpp", ".txt", ".naft" };
+        allowed_extensions_ = {".md", ".h", ".c", ".hpp", ".cpp", ".txt", ".naft", ".tsv"};
     }
 
-    dto::List::Ptr Content::create(const std::filesystem::path &path) const
+    dto::List::Ptr ContentMgr::load(const std::filesystem::path &path) const
     {
         auto ptr = dto::List::create();
         if (allowed_extensions_.count(path.extension().string()))

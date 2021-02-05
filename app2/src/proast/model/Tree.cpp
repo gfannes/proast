@@ -1,29 +1,20 @@
 #include <proast/model/Tree.hpp>
+#include <proast/util.hpp>
 #include <proast/log.hpp>
+#include <gubg/naft/Document.hpp>
+#include <gubg/naft/Range.hpp>
+#include <gubg/file/system.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <algorithm>
 
 namespace proast { namespace model { 
-    Path to_path(Node *node)
-    {
-        Path p;
-        while (node)
-        {
-            auto parent = node->value.navigation.parent;
-            if (parent)
-                //We do not include the root node name
-                p.push_back(node->value.name);
-            node = parent;
-        }
-        std::reverse(p.begin(), p.end());
-        return p;
-    }
-
     Tree::Tree()
     {
         root.value.name = L"<ROOT>";
+        metadata_fn_ = "proast-metadata.naft";
     }
 
     Tree::Config::Config()
@@ -46,6 +37,12 @@ namespace proast { namespace model {
         log::raw([&](auto &os){os << "Loaded " << child.node_count() << " nodes from \"" << path << "\"" << std::endl;});
 
         compute_navigation_(root);
+
+        {
+            Path__Metadata path__metadata;
+            MSS(parse_metadata_(path__metadata, metadata_fn_));
+            set_metadata_(path__metadata);
+        }
 
         MSS_END();
     }
@@ -81,17 +78,72 @@ namespace proast { namespace model {
     void Tree::recompute_metadata(Node &node)
     {
         auto &my_md = node.value.metadata;
-        my_md.reset_aggregated_data();
-        if (my_md.my_effort)
-            my_md.effort += *my_md.my_effort;
+        my_md.dependencies.clear();
         for (auto &child: node.childs.nodes)
         {
+            //Depth-first search
             recompute_metadata(child);
-            node.value.metadata.effort += child.value.metadata.effort;
+
+            node.value.metadata.dependencies.add(&child);
+            node.value.metadata.dependencies.add(child.value.metadata.dependencies);
         }
+    }
+    bool Tree::stream_metadata()
+    {
+        MSS_BEGIN(bool);
+        std::ofstream fo{metadata_fn_};
+        MSS(stream_metadata_(fo, root));
+        MSS_END();
     }
 
     //Privates
+    bool Tree::stream_metadata_(std::ostream &os, Node &node)
+    {
+        MSS_BEGIN(bool);
+        gubg::naft::Document doc{os};
+        if (node.value.metadata.has_local_data())
+        {
+            auto n = doc.node("Metadata");
+            n.attr("path", to_utf8(to_path(&node)));
+            node.value.metadata.stream(n);
+        }
+        for (auto &child: node.childs.nodes)
+        {
+            //Depth-first search
+            MSS(stream_metadata_(os, child));
+        }
+        MSS_END();
+    }
+    bool Tree::parse_metadata_(Path__Metadata &path__metadata, const std::filesystem::path &fp)
+    {
+        MSS_BEGIN(bool);
+
+        std::string content;
+        MSS(gubg::file::read(content, fp));
+        gubg::naft::Range range{content};
+
+        std::string key, value;
+        while (range.pop_tag("Metadata"))
+        {
+            MSS(range.pop_attr(key, value));
+            MSS(key == "path");
+            const auto &path_utf8 = value;
+            const auto path = to_path(proast::to_wstring(path_utf8));
+            auto &md = path__metadata[path];
+            gubg::naft::Range subrange;
+            MSS(range.pop_block(subrange));
+            MSS(md.parse(subrange));
+        }
+
+        MSS_END();
+    }
+    void Tree::set_metadata_(const Path__Metadata &path__metadata)
+    {
+        for (const auto &[path,md]: path__metadata)
+            if (auto n = find(path))
+                n->value.metadata.set_when_unset(md);
+    }
+
     bool Tree::add_(Node &node, const std::filesystem::path &path, const Tree::Config &config)
     {
         MSS_BEGIN(bool);

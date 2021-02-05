@@ -22,7 +22,7 @@ namespace proast { namespace ui {
 
         const auto y_margin = 2;
         const auto y_size = box_.y_max-box_.y_min+1-y_margin;
-        const auto x_margin = 2;
+        const auto x_margin = 0;
         const auto x_size = box_.x_max-box_.x_min+1-x_margin;
         const int mid_row_ix = (y_size-1)/2;
         const int selected_row_ix = (

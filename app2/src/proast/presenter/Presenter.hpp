@@ -3,7 +3,7 @@
 
 #include <proast/presenter/Commander.hpp>
 #include <proast/model/Model.hpp>
-#include <proast/model/Content.hpp>
+#include <proast/model/ContentMgr.hpp>
 #include <proast/view/View.hpp>
 #include <sstream>
 #include <functional>
@@ -12,6 +12,8 @@ namespace proast { namespace presenter {
     class Presenter: public view::View::Events, public Commander_crtp<Presenter>
     {
     public:
+        using Commander = Commander_crtp<Presenter>;
+
         Presenter(model::Model &model, view::View &view);
 
         bool run();
@@ -25,17 +27,17 @@ namespace proast { namespace presenter {
         void commander_open(Open);
         void commander_bookmark(wchar_t wchar, bool do_register);
         void commander_set_metadata(MetadataField, const std::wstring &content);
+        void commander_show_metadata(std::optional<MetadataField>);
         void commander_reload();
 
     private:
-        using Commander = Commander_crtp<Presenter>;
-
         bool refresh_view_();
 
         model::Model &model_;
+        std::optional<MetadataField> show_metadata_field_;
         view::View &view_;
 
-        model::Content content_;
+        model::ContentMgr content_mgr_;
 
         std::function<bool()> scheduled_operation_;
 

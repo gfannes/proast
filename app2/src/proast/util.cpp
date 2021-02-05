@@ -22,4 +22,9 @@ namespace proast {
                 wch = '~';
         return wstr;
     }
+    std::string to_utf8(const std::wstring &wstr)
+    {
+        auto str = s_converter.to_bytes(wstr);
+        return str;
+    }
 } 

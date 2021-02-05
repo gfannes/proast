@@ -5,44 +5,55 @@
 #include <string>
 
 namespace proast { namespace presenter { 
-    enum class Open
-    {
-        View, Edit, Shell,
-    };
+#define ftor_value_(t,v) v,
+#define ftor_case_(t,v) case t::v: return WIDEN(#v);
+#define define_enum_(type, each_value) \
+    enum class type \
+    { \
+        each_value(type, ftor_value_) \
+    }; \
+    inline std::wstring to_wstring(type v) \
+    { \
+        switch (v) \
+        { \
+            each_value(type, ftor_case_) \
+            default: break; \
+        } \
+        return L"<unknown value>"; \
+    } \
 
-    enum class State
-    {
-        Idle, BookmarkRegister, BookmarkJump, SetMetadataField,
-    };
+#define my_each_value_(type, ftor) \
+    ftor(type, View) \
+    ftor(type, Edit) \
+    ftor(type, Shell) \
 
+    define_enum_(Open, my_each_value_);
+#undef my_each_value_
 
-    //Begin MetadataField values
-#define unroll_proast_present_MetadataField_values(ftor) \
-    ftor(Effort) \
-    ftor(Volume) \
-    ftor(Impact) \
-    ftor(CompletionPct) \
-    ftor(Live) \
-    ftor(Dead) \
+#define my_each_value_(type, ftor) \
+    ftor(type, BookmarkRegister) \
+    ftor(type, BookmarkJump) \
+    ftor(type, SetMetadataField) \
+    ftor(type, ShowMetadataField) \
 
-    enum class MetadataField
-    {
-#define ftor(v) v,
-        unroll_proast_present_MetadataField_values(ftor)
-#undef ftor
-    };
-    inline std::wstring to_wstring(MetadataField v)
-    {
-        switch (v)
-        {
-#define ftor(v) case MetadataField::v: return WIDEN(#v);
-            unroll_proast_present_MetadataField_values(ftor)
-#undef ftor
-            default: break;
-        }
-        return L"<Unknown MetadataField>";
-    }
-    //End MetadataField values
+    define_enum_(State, my_each_value_);
+#undef my_each_value_
+
+#define my_each_value_(type, ftor) \
+    ftor(type, Effort) \
+    ftor(type, Volume) \
+    ftor(type, Impact) \
+    ftor(type, CompletionPct) \
+    ftor(type, Live) \
+    ftor(type, Dead) \
+    ftor(type, Dependency) \
+
+    define_enum_(MetadataField, my_each_value_);
+#undef my_each_value_
+
+#undef define_enum_
+#undef ftor_case_
+#undef ftor_value_
 } } 
 
 #endif
