@@ -17,12 +17,12 @@ namespace proast { namespace model {
         using Tags = std::set<Tag>;
 
         std::optional<double>       my_effort;
-        std::optional<Tags>         my_tags;
         std::optional<std::wstring> my_live;
         std::optional<std::wstring> my_dead;
         std::optional<double>       my_completion_pct;
         std::optional<double>       my_volume_db;
         std::optional<double>       my_impact;
+        Tags                        my_tags;
 
         bool has_local_data() const;
 

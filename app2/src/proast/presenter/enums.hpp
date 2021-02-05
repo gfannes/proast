@@ -46,6 +46,7 @@ namespace proast { namespace presenter {
     ftor(type, CompletionPct) \
     ftor(type, Live) \
     ftor(type, Dead) \
+    ftor(type, Tag) \
     ftor(type, Dependency) \
 
     define_enum_(MetadataField, my_each_value_);

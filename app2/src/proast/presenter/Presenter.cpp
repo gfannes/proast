@@ -129,10 +129,6 @@ namespace proast { namespace presenter {
                     auto as_date = [](auto &os, const auto &date){
                         os << date;
                     };
-                    auto as_tags = [](auto &os, const auto &tags){
-                        for (const auto &tag: tags)
-                            os << tag << L" ";
-                    };
                     auto add_field = [&](const auto &value, const auto descr, auto &&streamer){
                         oss_.str(L"");
                         oss_ << std::setw(10) << descr << L": ";
@@ -144,9 +140,20 @@ namespace proast { namespace presenter {
                             return;
                         add_field(value.value(), descr, streamer);
                     };
+                    auto add_tags = [&](const auto &tags, const auto descr)
+                    {
+                        if (tags.size())
+                        {
+                            oss_.str(L"");
+                            oss_ << std::setw(10) << descr << L": ";
+                            for (const auto &tag: tags)
+                                oss_ << tag << L" ";
+                            lst->items.push_back(oss_.str());
+                        }
+                    };
                     add_field(node->value.metadata.dependencies, L"dependencies", as_size);
                     add_field(node->value.metadata.effort(), L"effort", as_number);
-                    add_field(node->value.metadata.tags(), L"tags", as_tags);
+                    add_tags(node->value.metadata.tags(), L"tags");
 
                     add_field_opt(node->value.metadata.my_effort, L"my effort", as_number);
                     add_field_opt(node->value.metadata.my_impact, L"my impact", as_number);
@@ -154,7 +161,7 @@ namespace proast { namespace presenter {
                     add_field_opt(node->value.metadata.my_volume_db, L"my volume", as_volume);
                     add_field_opt(node->value.metadata.my_live, L"my live", as_date);
                     add_field_opt(node->value.metadata.my_dead, L"my dead", as_date);
-                    add_field_opt(node->value.metadata.my_tags, L"my tags", as_tags);
+                    add_tags(node->value.metadata.my_tags, L"my tags");
                 }
                 view_.metadata = lst;
             }
@@ -177,7 +184,7 @@ namespace proast { namespace presenter {
                         case State::SetMetadataField:
                         case State::ShowMetadataField:
                             lst->name = L"Metadata fields";
-                            for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd', L'D'})
+                            for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd', L't', L'D'})
                             {
                                 oss_.str(L"");
                                 oss_ << wchar << L": ";
@@ -191,7 +198,7 @@ namespace proast { namespace presenter {
                 view_.details = lst;
             }
         }
-        
+
         {
             oss_.str(L"");
             if (Commander::state)
@@ -288,6 +295,14 @@ namespace proast { namespace presenter {
                 case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct, 0.0); break;
                 case MetadataField::Live:          node->value.metadata.my_live = content; break;
                 case MetadataField::Dead:          node->value.metadata.my_dead = content; break;
+                case MetadataField::Tag:
+                                                   if (content.empty())
+                                                       return;
+                                                   if (content[0] == L'~')
+                                                       node->value.metadata.my_tags.erase(content.substr(1));
+                                                   else
+                                                       node->value.metadata.my_tags.insert(content);
+                                                   break;
             }
             if (was_set)
             {
@@ -311,7 +326,7 @@ namespace proast { namespace presenter {
         log::raw([=](auto &os){
                 os << "Received event " << (unsigned int)wchar;
                 if (wchar < 128) os << " '" << (char)wchar << "'";
-                
+
                 os << std::endl;});
         Commander::process(wchar);
         refresh_view_();

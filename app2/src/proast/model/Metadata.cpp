@@ -11,12 +11,13 @@ namespace proast { namespace model {
         bool b = false;
         auto check = [&](auto &opt){if (opt) b = true;};
         check(my_effort);
-        check(my_tags);
         check(my_live);
         check(my_dead);
         check(my_completion_pct);
         check(my_volume_db);
         check(my_impact);
+        if (my_tags.size())
+            b = true;
         return b;
     }
 
@@ -32,11 +33,11 @@ namespace proast { namespace model {
     }
     Metadata::Tags Metadata::tags() const
     {
-        Tags tags;
+        Tags tags = my_tags;
         auto aggregate = [&](Node &n)
         {
-            if (auto &n_tags = n.value.metadata.my_tags)
-                tags.insert(n_tags->begin(), n_tags->end());
+            auto &n_tags = n.value.metadata.my_tags;
+            tags.insert(n_tags.begin(), n_tags.end());
         };
         dependencies.each(aggregate);
         return tags;
@@ -68,7 +69,11 @@ namespace proast { namespace model {
             return res;
         };
         stream_item_2("Effort", my_effort);
-        stream_item_3("Tags", my_tags, piped);
+        if (my_tags.size())
+        {
+            auto n = body.node("Tags");
+            n.attr("value", piped(my_tags));
+        }
         stream_item_3("Live", my_live, proast::to_utf8);
         stream_item_3("Dead", my_dead, proast::to_utf8);
         stream_item_2("Completion_pct", my_completion_pct);
@@ -86,6 +91,20 @@ namespace proast { namespace model {
             if (false) {}
             else if (tag == "Effort")
                 my_effort = std::stod(value);
+            else if (tag == "Tags")
+            {
+                for (std::string_view sv{value}; !sv.empty();)
+                    if (auto ix = sv.find('|'))
+                    {
+                        const std::string str = std::string{sv.substr(0, ix)};
+                        my_tags.emplace(proast::to_wstring(str));
+                        sv.remove_prefix(str.size());
+
+                        if (ix != sv.npos)
+                            sv.remove_prefix(1);
+                    }
+                
+            }
         }
         MSS_END();
     }
@@ -93,5 +112,6 @@ namespace proast { namespace model {
     void Metadata::set_when_unset(const Metadata &other)
     {
         if (!my_effort) my_effort = other.my_effort;
+        if (!my_tags.size()) my_tags = other.my_tags;
     }
 } } 

@@ -19,6 +19,7 @@ namespace proast { namespace presenter {
             case L'c': return MetadataField::CompletionPct;
             case L'l': return MetadataField::Live;
             case L'd': return MetadataField::Dead;
+            case L't': return MetadataField::Tag;
             case L'D': return MetadataField::Dependency;
             default: break;
         }

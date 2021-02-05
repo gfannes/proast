@@ -40,8 +40,8 @@ namespace proast { namespace model {
 
         {
             Path__Metadata path__metadata;
-            MSS(parse_metadata_(path__metadata, metadata_fn_));
-            set_metadata_(path__metadata);
+            if (parse_metadata_(path__metadata, metadata_fn_))
+                set_metadata_(path__metadata);
         }
 
         MSS_END();
