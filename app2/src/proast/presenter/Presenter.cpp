@@ -49,7 +49,7 @@ namespace proast { namespace presenter {
         }
 
         {
-            auto set_view_dto = [&](auto &lst, auto node, std::size_t path_size)
+            auto set_view_dto = [&](auto &lst, auto node)
             {
                 if (!node)
                 {
@@ -95,29 +95,21 @@ namespace proast { namespace presenter {
                     lst->ix = model::Tree::selected_ix(*node);
                 }
 
-                auto path = to_path(node);
-                path_size = std::min(path_size, path.size());
-                path.erase(path.begin(), path.end()-path_size);
-
-                lst->name = model::to_wstring(path);
+                lst->name = model::to_wstring(to_path(node));
             };
-            set_view_dto(view_.n0,   model_.node_0(),   1);
-            set_view_dto(view_.n0a,  model_.node_0a(),  2);
-            set_view_dto(view_.n00,  model_.node_00(),  2);
-            set_view_dto(view_.n0b,  model_.node_0b(),  2);
-            set_view_dto(view_.n00a, model_.node_00a(), 3);
-            set_view_dto(view_.n000, model_.node_000(), 3);
-            set_view_dto(view_.n00b, model_.node_00b(), 3);
+            set_view_dto(view_.n0,   model_.node_0());
+            set_view_dto(view_.n0a,  model_.node_0a());
+            set_view_dto(view_.n00,  model_.node_00());
+            set_view_dto(view_.n0b,  model_.node_0b());
+            set_view_dto(view_.n00a, model_.node_00a());
+            set_view_dto(view_.n000, model_.node_000());
+            set_view_dto(view_.n00b, model_.node_00b());
 
             {
                 auto lst = dto::List::create();
                 if (auto node = model_.node())
                 {
-                    lst->name = L"Metadata for ";
-                    auto path = to_path(node);
-                    const auto path_size = std::min<unsigned int>(3, path.size());
-                    path.erase(path.begin(), path.end()-path_size);
-                    lst->name += model::to_wstring(path);
+                    lst->name = model::to_wstring(to_path(node));
 
                     const unsigned int align = 15;
                     auto as_number = [](auto &os, const auto &effort){
@@ -174,7 +166,6 @@ namespace proast { namespace presenter {
 
             {
                 auto lst = dto::List::create();
-                lst->name = L"Details";
                 if (Commander::state)
                     switch (*Commander::state)
                     {
@@ -199,6 +190,21 @@ namespace proast { namespace presenter {
                                 lst->items.emplace_back(oss_.str());
                             }
                             break;
+                        case State::Create:
+                            {
+                                lst->name = L"Create";
+                                auto add_help = [&](auto wchar, auto descr)
+                                {
+                                    oss_.str(L"");
+                                    oss_ << wchar << L": " << descr;
+                                    lst->items.emplace_back(oss_.str());
+                                };
+                                add_help(L'f', L"Create file in parent");
+                                add_help(L'F', L"Create file in self");
+                                add_help(L'd', L"Create directory in parent");
+                                add_help(L'D', L"Create directory in self");
+                            }
+                            break;
                         default: break;
                     }
                 view_.details = lst;
@@ -219,6 +225,11 @@ namespace proast { namespace presenter {
                                                        oss_ << L"Metadata for " << to_wstring(*Commander::metadata_field) << L": " << Commander::content;
                                                    break;
                     case State::ShowMetadataField: oss_ << L"Show metadata field"; break;
+                    case State::Create:            if (!Commander::create_what)
+                                                       oss_ << L"Create new file or directory";
+                                                   else
+                                                       oss_ << L"Name: " << Commander::content;
+                                                   break;
                     default: break;
                 }
             view_.footer = oss_.str();
@@ -265,12 +276,11 @@ namespace proast { namespace presenter {
                         break;
                 }
 
-                log::raw([&](auto &os){os << "Before commander_open() " << oss.str() << "\n";});
-                std::system(oss.str().c_str());
-                log::raw([&](auto &os){os << "After commander_open()\n";});
+                log::raw([&](auto &os){os << "Running \"" << oss.str() << "\"\n";});
+                const auto rc = std::system(oss.str().c_str());
+                log::raw([&](auto &os){os << "  => " << rc << "\n";});
 
                 std::filesystem::current_path(orig_dir);
-                log::ostream() << "Back in " << std::filesystem::current_path() << std::endl;
 
                 return true;
             };
@@ -340,6 +350,38 @@ namespace proast { namespace presenter {
     void Presenter::commander_show_metadata(std::optional<MetadataField> mf_opt)
     {
         show_metadata_field_ = mf_opt;
+    }
+    void Presenter::commander_create(const std::wstring &name, bool create_file, bool in_parent)
+    {
+        //TODO:: move this functionality to the model
+        if (auto n = model_.node())
+        {
+            auto fp = n->value.path;
+            if (in_parent || std::filesystem::is_regular_file(fp))
+                fp = fp.parent_path();
+            fp /= name;
+
+            if (create_file)
+                std::ofstream touch{fp};
+            else
+                std::filesystem::create_directories(fp);
+
+            model_.reload();
+        }
+    }
+    void Presenter::commander_delete()
+    {
+        //TODO: move this functionality to the model, and do not actually delete but rather move to scratch
+        if (auto n = model_.node())
+        {
+            const auto path = n->value.path;
+            if (std::filesystem::is_regular_file(path))
+                std::filesystem::remove(path);
+            else
+                std::filesystem::remove_all(path);
+
+            model_.reload();
+        }
     }
     void Presenter::commander_reload()
     {

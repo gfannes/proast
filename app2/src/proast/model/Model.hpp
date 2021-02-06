@@ -52,6 +52,10 @@ namespace proast { namespace model {
         std::filesystem::path bookmarks_fp_;
         Bookmarks bookmarks_;
         JumpList jump_list_;
+
+        std::filesystem::path current_location_fn_;
+        bool save_current_location_();
+        bool load_current_location_();
     };
 } } 
 

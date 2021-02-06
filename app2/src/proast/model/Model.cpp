@@ -1,7 +1,10 @@
 #include <proast/model/Model.hpp>
+#include <proast/util.hpp>
 #include <proast/log.hpp>
+#include <gubg/file/system.hpp>
 #include <gubg/mss.hpp>
 #include <filesystem>
+#include <fstream>
 
 namespace proast { namespace model { 
     Model::Model()
@@ -12,6 +15,8 @@ namespace proast { namespace model {
     {
         if (!bookmarks_.save(bookmarks_fp_))
             log::ostream() << "Warning: could not save bookmarks to " << bookmarks_fp_ << std::endl;
+        if (!save_current_location_())
+            log::ostream() << "Warning: could not save the current location to " << current_location_fn_ << std::endl;
     }
 
     bool Model::set_home(const std::filesystem::path &home_dir)
@@ -29,6 +34,7 @@ namespace proast { namespace model {
             if (!bookmarks_.load(bookmarks_fp_))
                 log::ostream() << "Warning: could not load bookmarks from " << bookmarks_fp_ << std::endl;
         }
+        current_location_fn_ = home_dir/"current_location.txt";
 
         MSS_END();
     }
@@ -43,6 +49,9 @@ namespace proast { namespace model {
 
         tree_.recompute_metadata(tree_.root);
 
+        //TODO: rework into adding all roots at once so we know when we can set the current location
+        load_current_location_();
+
         MSS_END();
     }
 
@@ -50,8 +59,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        const auto restore_path = to_path(node());
-
+        save_current_location_();
         bookmarks_.save(bookmarks_fp_);
 
         MSS(set_home(home_dir_));
@@ -66,7 +74,7 @@ namespace proast { namespace model {
             MSS(add_root(path, config));
         }
 
-        focus(restore_path);
+        load_current_location_();
 
         MSS_END();
     }
@@ -250,6 +258,33 @@ namespace proast { namespace model {
     bool Model::sync_metadata()
     {
         return tree_.stream_metadata();
+    }
+
+    //Privates
+    bool Model::save_current_location_()
+    {
+        MSS_BEGIN(bool);
+
+        std::ofstream fo{current_location_fn_};
+        if (auto n = node())
+            fo << to_utf8(to_path(n));
+
+        MSS_END();
+    }
+    bool Model::load_current_location_()
+    {
+        MSS_BEGIN(bool);
+
+        current_node_ = &tree_.root;
+
+        std::string content;
+        MSS(gubg::file::read(content, current_location_fn_));
+
+        for (auto p = to_path(proast::to_wstring(content)); !p.empty(); p.pop_back())
+            if (focus(p))
+                break;
+
+        MSS_END();
     }
 
 } } 

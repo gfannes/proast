@@ -28,6 +28,8 @@ namespace proast { namespace presenter {
         void commander_bookmark(wchar_t wchar, bool do_register);
         void commander_set_metadata(MetadataField, const std::wstring &content);
         void commander_show_metadata(std::optional<MetadataField>);
+        void commander_create(const std::wstring &name, bool create_file, bool in_parent);
+        void commander_delete();
         void commander_reload();
 
     private:

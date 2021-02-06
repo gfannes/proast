@@ -33,6 +33,7 @@ namespace proast { namespace presenter {
         std::optional<State> state;
         std::optional<MetadataField> metadata_field;
         std::wstring content;
+        std::optional<wchar_t> create_what;
 
         void process(wchar_t wchar)
         {
@@ -91,6 +92,54 @@ namespace proast { namespace presenter {
                         r.commander_show_metadata(to_metadata_field(wchar));
                         state.reset();
                         break;
+                    case State::Create:
+                        if (!create_what)
+                        {
+                            switch (wchar)
+                            {
+                                case L'f':
+                                case L'F':
+                                case L'd':
+                                case L'D':
+                                    create_what = wchar;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else
+                            switch (wchar)
+                            {
+                                case Return:
+                                    {
+                                        const auto wch = *create_what;
+                                        r.commander_create(content, wch==L'f'||wch==L'F', wch==L'f'||wch==L'd');
+                                        content.clear();
+                                        state.reset();
+                                        create_what.reset();
+                                    }
+                                    break;
+                                case Backspace:
+                                    if (!content.empty())
+                                        content.pop_back();
+                                    break;
+                                case Escape:
+                                    //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
+                                    content.clear();
+                                    break;
+                                default:
+                                    content.push_back(wchar);
+                                    break;
+                            }
+                        break;
+                    case State::Delete:
+                        switch (wchar)
+                        {
+                            case L'd': r.commander_delete(); break;
+                            default: break;
+                        }
+                        state.reset();
+                        break;
                 }
             }
             else
@@ -123,6 +172,8 @@ namespace proast { namespace presenter {
                     case L'\'': state = State::BookmarkJump; break;
                     case L's':  state = State::SetMetadataField; break;
                     case L'M':  state = State::ShowMetadataField; break;
+                    case L'c':  state = State::Create; break;
+                    case L'd':  state = State::Delete; break;
 
                     case L'r': r.commander_reload(); break;
                 }

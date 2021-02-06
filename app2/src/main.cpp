@@ -16,7 +16,7 @@ namespace proast {
         app.options.roots.emplace_back("/home/geertf/nontech");
         app.options.roots.emplace_back("/home/geertf/decode-it/momu");
         app.options.roots.emplace_back("/home/geertf/decode-it/auro");
-        app.options.roots.emplace_back("/home/geertf/auro/all");
+        /* app.options.roots.emplace_back("/home/geertf/auro/all"); */
         if (app.options.verbose >= 1)
             app.options.stream(std::cout);
 
