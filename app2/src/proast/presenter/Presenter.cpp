@@ -37,9 +37,14 @@ namespace proast { namespace presenter {
     {
         MSS_BEGIN(bool);
 
+        auto s = log::Scope{"Presenter::refresh_view_()"};
+
         {
             oss_.str(L"");
-            oss_ << model_.node()->value.path.wstring();
+            if (auto n = model_.node())
+                oss_ << n->value.path.wstring();
+            else
+                oss_ << L"<no valid node>";
             view_.header = oss_.str();
         }
 
@@ -265,6 +270,7 @@ namespace proast { namespace presenter {
                 log::raw([&](auto &os){os << "After commander_open()\n";});
 
                 std::filesystem::current_path(orig_dir);
+                log::ostream() << "Back in " << std::filesystem::current_path() << std::endl;
 
                 return true;
             };
@@ -283,29 +289,42 @@ namespace proast { namespace presenter {
         if (auto node = model_.node())
         {
             bool was_set = true;
-            auto as_number = [&](auto &dst)
+            auto as_number = [&](auto &dst, auto default_value)
             {
                 try
                 {
                     if (content.empty())
+                        dst = default_value;
+                    else if (content[0] == L'~')
                         dst.reset();
                     else
                         dst = std::stod(content);
                 }
                 catch (std::invalid_argument) { was_set = false; }
             };
+            auto as_date = [&](auto &dst)
+            {
+                if (content.empty())
+                    dst = L"now";
+                else if (content[0] == L'~')
+                    dst.reset();
+                else
+                    dst = content;
+            };
             switch (field)
             {
-                case MetadataField::Effort:        as_number(node->value.metadata.my_effort); break;
-                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db); break;
-                case MetadataField::Impact:        as_number(node->value.metadata.my_impact); break;
-                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct); break;
-                case MetadataField::Live:          node->value.metadata.my_live = content; break;
-                case MetadataField::Dead:          node->value.metadata.my_dead = content; break;
+                case MetadataField::Effort:        as_number(node->value.metadata.my_effort, 1.0); break;
+                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db, -20.0); break;
+                case MetadataField::Impact:        as_number(node->value.metadata.my_impact, 1); break;
+                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct, 0.0); break;
+                case MetadataField::Live:          as_date(node->value.metadata.my_live); break;
+                case MetadataField::Dead:          as_date(node->value.metadata.my_dead); break;
                 case MetadataField::Tag:
                                                    if (content.empty())
-                                                       return;
-                                                   if (content[0] == L'~')
+                                                       was_set = true;
+                                                   else if (content == L"~")
+                                                       node->value.metadata.my_tags.clear();
+                                                   else if (content[0] == L'~')
                                                        node->value.metadata.my_tags.erase(content.substr(1));
                                                    else
                                                        node->value.metadata.my_tags.insert(content);
@@ -330,11 +349,11 @@ namespace proast { namespace presenter {
     //View::Events API
     void Presenter::received(wchar_t wchar)
     {
-        log::raw([=](auto &os){
-                os << "Received event " << (unsigned int)wchar;
-                if (wchar < 128) os << " '" << (char)wchar << "'";
+        auto s = log::Scope{"Presenter::received()", [=](auto &hdr){
+            hdr.attr("uint", (unsigned int)wchar);
+            if (32 <= wchar && wchar < 128) hdr.attr("char", (char)wchar);
+        }};
 
-                os << std::endl;});
         Commander::process(wchar);
         refresh_view_();
     }

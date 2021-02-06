@@ -44,10 +44,11 @@ namespace proast { namespace model {
 
         static bool stream_metadata_(std::ostream &, Node &);
 
-        std::filesystem::path metadata_fn_;
         using Path__Metadata = std::map<Path, Metadata>;
-        static bool parse_metadata_(Path__Metadata &, const std::filesystem::path &);
-        void set_metadata_(const Path__Metadata &);
+        Path__Metadata path__metadata_;
+        bool append_metadata_(const std::filesystem::path &);
+        void set_metadata_();
+        static std::filesystem::path metadata_fn_(const std::filesystem::path &base_dir);
     };
 
 } } 

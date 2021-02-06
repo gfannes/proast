@@ -50,6 +50,8 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
+        const auto restore_path = to_path(node());
+
         bookmarks_.save(bookmarks_fp_);
 
         MSS(set_home(home_dir_));
@@ -64,23 +66,16 @@ namespace proast { namespace model {
             MSS(add_root(path, config));
         }
 
+        focus(restore_path);
+
         MSS_END();
     }
 
-    bool Model::register_bookmark(wchar_t wchar)
+    bool Model::focus(const Path &path)
     {
         MSS_BEGIN(bool);
-        auto n = node();
-        MSS(!!n);
-        bookmarks_.set(wchar, to_path(n));
-        MSS_END();
-    }
-    bool Model::jump_to_bookmark(wchar_t wchar)
-    {
-        MSS_BEGIN(bool);
-        Path p;
-        MSS(bookmarks_.get(p, wchar));
-        auto node = tree_.find(p);
+
+        auto node = tree_.find(path);
         MSS(!!node);
         //Reroute navigation.child for parent and grand_parent
         for (auto ix = 0u; ix < 2 && node; ++ix)
@@ -90,6 +85,30 @@ namespace proast { namespace model {
                 node = parent;
             }
         current_node_ = node;
+
+        MSS_END();
+    }
+
+    bool Model::register_bookmark(wchar_t wchar)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        bookmarks_.set(wchar, to_path(n));
+
+        MSS_END();
+    }
+    bool Model::jump_to_bookmark(wchar_t wchar)
+    {
+        MSS_BEGIN(bool);
+
+        Path path;
+        MSS(bookmarks_.get(path, wchar));
+
+        MSS(focus(path));
+
         MSS_END();
     }
 

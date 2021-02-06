@@ -10,8 +10,12 @@ namespace proast {
         proast::App app;
 
         MSS(app.options.parse(argc, argv));
-        app.options.roots.emplace_back(std::filesystem::current_path());
+        app.options.roots.emplace_back("/home/geertf/proast");
         app.options.roots.emplace_back("/home/geertf/gubg");
+        app.options.roots.emplace_back("/home/geertf/subsoil");
+        app.options.roots.emplace_back("/home/geertf/nontech");
+        app.options.roots.emplace_back("/home/geertf/decode-it/momu");
+        app.options.roots.emplace_back("/home/geertf/decode-it/auro");
         app.options.roots.emplace_back("/home/geertf/auro/all");
         if (app.options.verbose >= 1)
             app.options.stream(std::cout);

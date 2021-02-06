@@ -14,7 +14,6 @@ namespace proast { namespace model {
     Tree::Tree()
     {
         root.value.name = L"<ROOT>";
-        metadata_fn_ = "proast-metadata.naft";
     }
 
     Tree::Config::Config()
@@ -38,11 +37,10 @@ namespace proast { namespace model {
 
         compute_navigation_(root);
 
-        {
-            Path__Metadata path__metadata;
-            if (parse_metadata_(path__metadata, metadata_fn_))
-                set_metadata_(path__metadata);
-        }
+        if (auto fn = metadata_fn_(child.value.path); !std::filesystem::is_regular_file(fn))
+            log::raw([&](auto &os){os << "Warning: could not load metadata from " << fn << ", this file does not exist." << std::endl;});
+        else if (append_metadata_(fn))
+            set_metadata_();
 
         MSS_END();
     }
@@ -91,8 +89,13 @@ namespace proast { namespace model {
     bool Tree::stream_metadata()
     {
         MSS_BEGIN(bool);
-        std::ofstream fo{metadata_fn_};
-        MSS(stream_metadata_(fo, root));
+
+        for (auto &child: root.childs.nodes)
+        {
+            std::ofstream fo{metadata_fn_(child.value.path)};
+            MSS(stream_metadata_(fo, child));
+        }
+
         MSS_END();
     }
 
@@ -114,7 +117,7 @@ namespace proast { namespace model {
         }
         MSS_END();
     }
-    bool Tree::parse_metadata_(Path__Metadata &path__metadata, const std::filesystem::path &fp)
+    bool Tree::append_metadata_(const std::filesystem::path &fp)
     {
         MSS_BEGIN(bool);
 
@@ -129,7 +132,7 @@ namespace proast { namespace model {
             MSS(key == "path");
             const auto &path_utf8 = value;
             const auto path = to_path(proast::to_wstring(path_utf8));
-            auto &md = path__metadata[path];
+            auto &md = path__metadata_[path];
             gubg::naft::Range subrange;
             MSS(range.pop_block(subrange));
             MSS(md.parse(subrange));
@@ -137,9 +140,9 @@ namespace proast { namespace model {
 
         MSS_END();
     }
-    void Tree::set_metadata_(const Path__Metadata &path__metadata)
+    void Tree::set_metadata_()
     {
-        for (const auto &[path,md]: path__metadata)
+        for (const auto &[path,md]: path__metadata_)
             if (auto n = find(path))
                 n->value.metadata.set_when_unset(md);
     }
@@ -201,5 +204,10 @@ namespace proast { namespace model {
 
             prev = &child;
         }
+    }
+
+    std::filesystem::path Tree::metadata_fn_(const std::filesystem::path &base_dir)
+    {
+        return base_dir / "proast-metadata.naft";
     }
 } } 

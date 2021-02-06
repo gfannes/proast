@@ -27,6 +27,8 @@ namespace proast { namespace model {
 
         bool move(Direction, bool me);
 
+        bool focus(const Path &);
+
         Node *node();
         Node *node_0();
         Node *node_00();
