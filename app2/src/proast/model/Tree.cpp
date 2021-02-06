@@ -28,6 +28,8 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
+        MSS(std::filesystem::is_directory(path), log::ostream() << "Cannot add " << path << ", this is not a directory" << std::endl);
+
         auto &child = root.childs.append();
         child.value.name = path.filename().wstring();
         child.value.path = path;

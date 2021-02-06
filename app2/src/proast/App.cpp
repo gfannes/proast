@@ -15,9 +15,8 @@ namespace proast {
 
             proast::model::Tree::Config config;
             for (const auto &root: options.roots)
-            {
-                MSS(model_.add_root(root, config));
-            }
+                if (model_.add_root(root, config))
+                    std::cout << "Error: could not add " << root << std::endl;
 
             MSS(presenter_.run());
         }
