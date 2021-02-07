@@ -1,7 +1,6 @@
 #ifndef HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 
-#include <proast/model/Dependencies.hpp>
 #include <gubg/naft/Node.hpp>
 #include <gubg/naft/Range.hpp>
 #include <optional>
@@ -26,11 +25,6 @@ namespace proast { namespace model {
         Tags                        my_tags;
 
         bool has_local_data() const;
-
-        Dependencies dependencies;
-
-        double effort() const;
-        Tags tags() const;
 
         void stream(gubg::naft::Node &);
         bool parse(gubg::naft::Range &);

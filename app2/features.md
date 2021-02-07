@@ -47,10 +47,9 @@ Features for proast
 
 ## Tree
 
-* Use `std::shared_ptr`-based tree implementation to allow reshaping the tree
-* Childs are `std::weak_ptr`, parent is `std::shared_ptr`: when a subtree loses its parent, it will vanish. This requires a child to be tested before each use
-* Each node stores a part of a path, the full path is the combination of all
-  * `Base` node has absolute path, all the rest uses relative paths
+* (/) Use `std::shared_ptr`-based tree implementation to allow reshaping the tree
+* (/) Each node stores a part of a path, the full path is the combination of all
+  * (/) `Base` node has absolute path, all the rest uses relative paths
 * Support for using a different name for a `base` node
 
 ## Dependencies

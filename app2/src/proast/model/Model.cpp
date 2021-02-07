@@ -1,15 +1,18 @@
 #include <proast/model/Model.hpp>
-#include <proast/util.hpp>
 #include <proast/log.hpp>
 #include <gubg/file/system.hpp>
+#include <gubg/naft/Document.hpp>
 #include <gubg/mss.hpp>
 #include <filesystem>
 #include <fstream>
+#include <map>
+#include <cassert>
 
 namespace proast { namespace model { 
     Model::Model()
     {
-        current_node_ = &tree_.root;
+        root_ = Node_::create("<ROOT>");
+        current_node_ = root_;
     }
     Model::~Model()
     {
@@ -17,6 +20,14 @@ namespace proast { namespace model {
             log::ostream() << "Warning: could not save bookmarks to " << bookmarks_fp_ << std::endl;
         if (!save_current_location_())
             log::ostream() << "Warning: could not save the current location to " << current_location_fn_ << std::endl;
+    }
+
+    Model::Config::Config()
+    {
+        for (const auto &fn: {"extern"})
+            names_to_skip.insert(fn);
+        for (const auto &ext: {".resp", ".a", ".obj", ".o", ".lib", ".dll", ".ut", ".app", ".exe", ".ninja"})
+            extensions_to_skip.insert(ext);
     }
 
     bool Model::set_home(const std::filesystem::path &home_dir)
@@ -39,15 +50,30 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Model::add_root(const std::filesystem::path &path, const Tree::Config &config)
+    bool Model::add_root(const std::filesystem::path &path, const Config &config)
     {
         MSS_BEGIN(bool);
 
+        MSS(std::filesystem::is_directory(path), log::ostream() << "Cannot add " << path << ", this is not a directory" << std::endl);
+
         root_config_ary_.emplace_back(path, config);
 
-        MSS(tree_.add(path, config));
+        MSS(!!root_);
+        auto child = root_->append_child();
+        //TODO: allow base node to have a different name than path.filename()
+        child->segment = path;
 
-        tree_.recompute_metadata(tree_.root);
+        MSS(add_(child, path, config));
+        log::raw([&](auto &os){os << "Loaded " << child->node_count() << " nodes from \"" << path << "\"" << std::endl;});
+
+        compute_navigation_(root_);
+
+        if (auto fn = metadata_fn_(child->path()); !std::filesystem::is_regular_file(fn))
+            log::raw([&](auto &os){os << "Warning: could not load metadata from " << fn << ", this file does not exist." << std::endl;});
+        else if (append_metadata_(fn))
+            set_metadata_();
+
+        recompute_metadata();
 
         //TODO: rework into adding all roots at once so we know when we can set the current location
         load_current_location_();
@@ -64,7 +90,10 @@ namespace proast { namespace model {
 
         MSS(set_home(home_dir_));
 
-        tree_.clear();
+        depth_first_search(root_, [](auto &n){n->clear_dependencies();});
+        path__metadata_.clear();
+        root_ = Node_::create("<ROOT>");
+
         //Copy root_config_ary_ because it will be updated during calls to add_root()
         auto root_config_ary_copy = root_config_ary_;
         root_config_ary_.clear();
@@ -83,16 +112,19 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto node = tree_.find(path);
-        MSS(!!node);
-        //Reroute navigation.child for parent and grand_parent
-        for (auto ix = 0u; ix < 2 && node; ++ix)
-            if (auto parent = node->value.navigation.parent)
-            {
-                parent->value.navigation.child = node;
-                node = parent;
-            }
-        current_node_ = node;
+        MSS(!!root_);
+
+        if (auto node = root_->find(path))
+        {
+            //Reroute navigation.child for parent and grand_parent
+            for (auto ix = 0u; ix < 2 && node; ++ix)
+                if (auto parent = node->parent.lock())
+                {
+                    parent->child = node;
+                    node = parent;
+                }
+            current_node_ = node;
+        }
 
         MSS_END();
     }
@@ -105,7 +137,7 @@ namespace proast { namespace model {
         MSS(!!n);
 
         //TODO: rework into index when !in_parent
-        auto fp = n->value.path;
+        auto fp = n->path();
         if (in_parent || std::filesystem::is_regular_file(fp))
             fp = fp.parent_path();
         fp /= name;
@@ -124,7 +156,7 @@ namespace proast { namespace model {
         MSS(!!n);
 
         //TODO: rework into index when !in_parent
-        auto fp = n->value.path;
+        auto fp = n->path();
         if (in_parent || std::filesystem::is_regular_file(fp))
             fp = fp.parent_path();
         fp /= name;
@@ -143,7 +175,7 @@ namespace proast { namespace model {
         MSS(!!n);
 
         //TODO: move to scratchpad iso actually deleting
-        const auto path = n->value.path;
+        const auto path = n->path();
         if (std::filesystem::is_regular_file(path))
             std::filesystem::remove(path);
         else
@@ -162,7 +194,7 @@ namespace proast { namespace model {
         auto n = node();
         MSS(!!n);
 
-        bookmarks_.set(ch, to_path(n));
+        bookmarks_.set(ch, n->to_path());
 
         MSS_END();
     }
@@ -178,7 +210,7 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    Node *Model::node()
+    Node Model::node()
     {
         if (auto n = node_000())
             return n;
@@ -186,67 +218,80 @@ namespace proast { namespace model {
             return n;
         if (auto n = node_0())
             return n;
-        return nullptr;
+        return Node{};
     }
-    Node *Model::node_0()
+    Node Model::node_0()
     {
         return current_node_;
     }
-    Node *Model::node_00()
+    Node Model::node_00()
     {
-        return current_node_->value.navigation.child;
+        if (current_node_)
+            return current_node_->child.lock();
+        return Node{};
     }
-    Node *Model::node_0a()
+    Node Model::node_0a()
     {
-        auto node00 = node_00();
-        if (node00)
-            return node00->value.navigation.up;
-        return nullptr;
+        if (auto node00 = node_00())
+            return node00->up.lock();
+        return Node{};
     }
-    Node *Model::node_0b()
+    Node Model::node_0b()
     {
-        auto node00 = node_00();
-        if (node00)
-            return node00->value.navigation.down;
-        return nullptr;
+        if (auto node00 = node_00())
+            return node00->down.lock();
+        return Node{};
     }
-    Node *Model::node_000()
+    Node Model::node_000()
     {
-        auto node00 = node_00();
-        if (node00)
-            return node00->value.navigation.child;
-        return nullptr;
+        if (auto node00 = node_00())
+            return node00->child.lock();
+        return Node{};
     }
-    Node *Model::node_00a()
+    Node Model::node_00a()
     {
-        auto node000 = node_000();
-        if (node000)
-            return node000->value.navigation.up;
-        return nullptr;
+        if (auto node000 = node_000())
+            return node000->up.lock();
+        return Node{};
     }
-    Node *Model::node_00b()
+    Node Model::node_00b()
     {
-        auto node000 = node_000();
-        if (node000)
-            return node000->value.navigation.down;
-        return nullptr;
+        if (auto node000 = node_000())
+            return node000->down.lock();
+        return Node{};
+    }
+
+    std::size_t Model::selected_ix(Node &node)
+    {
+        if (node)
+            if (auto child = node->child.lock())
+            {
+                const auto &childs = node->childs;
+                for (auto ix = 0u; ix < childs.size(); ++ix)
+                    if (child == childs[ix])
+                        return ix;
+            }
+        return 0;
     }
 
     bool Model::move(Direction direction, bool me)
     {
         MSS_BEGIN(bool);
+
+        MSS(!!current_node_);
+
         switch (direction)
         {
             case Direction::Down:
                 if (me)
                 {
-                    if (auto child = current_node_->value.navigation.child)
-                        if (auto &childchild = child->value.navigation.child)
+                    if (auto child = current_node_->child.lock())
+                        if (auto ptr = child->child.lock())
                         {
-                            if (auto down = childchild->value.navigation.down)
-                                childchild = down;
+                            if (auto down = ptr->down.lock())
+                                child->child = down;
                         }
-                        else if (auto content = child->value.content)
+                        else if (auto content = child->content)
                         {
                             if (content->ix+1 < content->items.size())
                                 ++content->ix;
@@ -254,14 +299,14 @@ namespace proast { namespace model {
                 }
                 else
                 {
-                    if (auto &child = current_node_->value.navigation.child)
+                    if (auto child = current_node_->child.lock())
                     {
-                        if (auto down = child->value.navigation.down)
+                        if (auto down = child->down.lock())
                         {
-                            child = down;
+                            current_node_->child = down;
                         }
                     }
-                    else if (auto content = current_node_->value.content)
+                    else if (auto content = current_node_->content)
                     {
                         if (content->ix+1 < content->items.size())
                             ++content->ix;
@@ -271,13 +316,13 @@ namespace proast { namespace model {
             case Direction::Up:
                 if (me)
                 {
-                    if (auto child = current_node_->value.navigation.child)
-                        if (auto &childchild = child->value.navigation.child)
+                    if (auto child = current_node_->child.lock())
+                        if (auto ptr = child->child.lock())
                         {
-                            if (auto up = childchild->value.navigation.up)
-                                childchild = up;
+                            if (auto up = ptr->up.lock())
+                                child->child = up;
                         }
-                        else if (auto content = child->value.content)
+                        else if (auto content = child->content)
                         {
                             if (content->ix > 0)
                                 --content->ix;
@@ -285,12 +330,12 @@ namespace proast { namespace model {
                 }
                 else
                 {
-                    if (auto &child = current_node_->value.navigation.child)
+                    if (auto child = current_node_->child.lock())
                     {
-                        if (auto up = child->value.navigation.up)
-                            child = up;
+                        if (auto up = child->up.lock())
+                            current_node_->child = up;
                     }
-                    else if (auto content = current_node_->value.content)
+                    else if (auto content = current_node_->content)
                     {
                         if (content->ix > 0)
                             --content->ix;
@@ -298,12 +343,12 @@ namespace proast { namespace model {
                 }
                 break;
             case Direction::Left:
-                if (current_node_->value.navigation.parent)
-                    current_node_ = current_node_->value.navigation.parent;
+                if (auto ptr = current_node_->parent.lock())
+                    current_node_ = ptr;
                 break;
             case Direction::Right:
-                if (current_node_->value.navigation.child)
-                    current_node_ = current_node_->value.navigation.child;
+                if (auto ptr = current_node_->child.lock())
+                    current_node_ = ptr;
                 break;
         }
         MSS_END();
@@ -311,11 +356,23 @@ namespace proast { namespace model {
 
     void Model::recompute_metadata()
     {
-        tree_.recompute_metadata(tree_.root);
+        if (root_)
+            recompute_metadata_(root_);
     }
     bool Model::sync_metadata()
     {
-        return tree_.stream_metadata();
+        MSS_BEGIN(bool);
+
+        MSS(!!root_);
+        for (auto &child: root_->childs)
+        {
+            if (!child)
+                continue;
+            std::ofstream fo{metadata_fn_(child->path())};
+            stream_metadata_(fo, child);
+        }
+
+        MSS_END();
     }
 
     //Privates
@@ -325,7 +382,7 @@ namespace proast { namespace model {
 
         std::ofstream fo{current_location_fn_};
         if (auto n = node())
-            fo << to_string(to_path(n));
+            fo << to_string(n->to_path());
 
         MSS_END();
     }
@@ -333,7 +390,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        current_node_ = &tree_.root;
+        current_node_ = root_;
 
         std::string content;
         MSS(gubg::file::read(content, current_location_fn_));
@@ -343,6 +400,137 @@ namespace proast { namespace model {
                 break;
 
         MSS_END();
+    }
+    bool Model::add_(Node node, const std::filesystem::path &path, const Config &config)
+    {
+        MSS_BEGIN(bool);
+
+        assert(!!node);
+
+        std::map<std::filesystem::path, bool> path__is_folder;
+
+        for (auto &entry: std::filesystem::directory_iterator(path))
+        {
+            const auto path = entry.path();
+            const auto fn = path.filename().string();
+            const auto ext = path.extension();
+            const auto is_hidden = fn.empty() ? true : fn[0]=='.';
+            if (is_hidden || config.names_to_skip.count(fn) || config.extensions_to_skip.count(ext))
+            {
+            }
+            else if (std::filesystem::is_regular_file(path))
+            {
+                path__is_folder[path] = false;
+            }
+            else if (std::filesystem::is_directory(path))
+            {
+                path__is_folder[path] = true;
+            }
+        }
+
+        for (const auto &[path, is_folder]: path__is_folder)
+        {
+            auto child = node->append_child();
+            child->segment = path.filename().string();
+            if (is_folder)
+                MSS(add_(child, path, config));
+        }
+
+        MSS_END();
+    }
+    void Model::recompute_metadata_(Node node)
+    {
+        assert(!!node);
+
+        node->clear_dependencies();
+        for (auto &child: node->childs)
+        {
+            if (!child)
+                continue;
+
+            //Depth-first search
+            recompute_metadata_(child);
+
+            node->add_dependencies(child);
+        }
+    }
+    void Model::stream_metadata_(std::ostream &os, Node &node)
+    {
+        assert(!!node);
+
+        gubg::naft::Document doc{os};
+        if (node->metadata.has_local_data())
+        {
+            auto n = doc.node("Metadata");
+            n.attr("path", to_string(node->to_path()));
+            node->metadata.stream(n);
+        }
+        for (auto &child: node->childs)
+        {
+            if (!child)
+                continue;
+            //Depth-first search
+            stream_metadata_(os, child);
+        }
+    }
+    void Model::compute_navigation_(Node &node)
+    {
+        assert(!!node);
+
+        Node prev;
+        for (auto &child: node->childs)
+        {
+            if (!child)
+                continue;
+            if (!prev)
+                //TODO: this default navigation setup should be updated with the saved navigation state
+                node->child = child;
+
+            child->child.reset();
+            child->up = prev;
+            child->down.reset();
+            if (prev)
+                prev->down = child;
+
+            compute_navigation_(child);
+
+            prev = child;
+        }
+    }
+
+    bool Model::append_metadata_(const std::filesystem::path &fp)
+    {
+        MSS_BEGIN(bool);
+
+        std::string content;
+        MSS(gubg::file::read(content, fp));
+        gubg::naft::Range range{content};
+
+        std::string key, value;
+        while (range.pop_tag("Metadata"))
+        {
+            MSS(range.pop_attr(key, value));
+            MSS(key == "path");
+            const auto path = to_path(value);
+            auto &md = path__metadata_[path];
+            gubg::naft::Range subrange;
+            MSS(range.pop_block(subrange));
+            MSS(md.parse(subrange));
+        }
+
+        MSS_END();
+    }
+    void Model::set_metadata_()
+    {
+        if (!root_)
+            return;
+        for (const auto &[path,md]: path__metadata_)
+            if (auto n = root_->find(path))
+                n->metadata.set_when_unset(md);
+    }
+    std::filesystem::path Model::metadata_fn_(const std::filesystem::path &base_dir)
+    {
+        return base_dir / "proast-metadata.naft";
     }
 
 } } 

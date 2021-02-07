@@ -1,6 +1,4 @@
 #include <proast/model/Metadata.hpp>
-#include <proast/model/Tree.hpp>
-#include <proast/util.hpp>
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/mss.hpp>
 #include <string>
@@ -22,27 +20,6 @@ namespace proast { namespace model {
         return b;
     }
 
-    double Metadata::effort() const
-    {
-        double sum = my_effort.value_or(0.0);
-        auto aggregate = [&](Node &n)
-        {
-            sum += n.value.metadata.my_effort.value_or(0.0);
-        };
-        dependencies.each(aggregate);
-        return sum;
-    }
-    Metadata::Tags Metadata::tags() const
-    {
-        Tags tags = my_tags;
-        auto aggregate = [&](Node &n)
-        {
-            auto &n_tags = n.value.metadata.my_tags;
-            tags.insert(n_tags.begin(), n_tags.end());
-        };
-        dependencies.each(aggregate);
-        return tags;
-    }
     void Metadata::stream(gubg::naft::Node &body)
     {
         auto stream_item_2 = [&](auto name, auto &item)

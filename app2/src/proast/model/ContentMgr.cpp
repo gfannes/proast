@@ -1,5 +1,4 @@
 #include <proast/model/ContentMgr.hpp>
-#include <proast/util.hpp>
 #include <fstream>
 #include <string>
 

@@ -1,5 +1,4 @@
 #include <proast/presenter/Presenter.hpp>
-#include <proast/util.hpp>
 #include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <fstream>
@@ -43,7 +42,7 @@ namespace proast { namespace presenter {
         {
             oss_.str("");
             if (auto n = model_.node())
-                oss_ << n->value.path.string();
+                oss_ << n->path().string();
             else
                 oss_ << "<no valid node>";
             view_.header = oss_.str();
@@ -58,17 +57,20 @@ namespace proast { namespace presenter {
                     return;
                 }
 
-                if (std::filesystem::is_regular_file(node->value.path))
+                const auto path = node->path();
+                if (std::filesystem::is_regular_file(path))
                 {
-                    if (!node->value.content)
-                        node->value.content = content_mgr_.load(node->value.path);
-                    lst = node->value.content;
+                    if (!node->content)
+                        node->content = content_mgr_.load(path);
+                    lst = node->content;
                 }
                 else
                 {
                     lst = dto::List::create();
-                    for (auto &n: node->childs.nodes)
+                    for (auto &child: node->childs)
                     {
+                        if (!child)
+                            continue;
                         oss_.str("");
                         if (show_metadata_field_)
                         {
@@ -76,27 +78,27 @@ namespace proast { namespace presenter {
                             {
                                 case MetadataField::Effort:
                                     oss_ << std::fixed << std::setprecision(1) << std::setw(5);
-                                    if (auto effort = n.value.metadata.effort(); effort > 0)
-                                        oss_ << effort;
+                                    if (auto &effort = child->metadata.my_effort)
+                                        oss_ << *effort;
                                     else
                                         oss_ << ' ';
                                     oss_ << ' ';
                                     break;
                                 case MetadataField::Dependency:
                                     oss_ << std::fixed << std::setprecision(1) << std::setw(4);
-                                    oss_ << n.value.metadata.dependencies.size() << " ";
+                                    oss_ << child->dependency_count() << " ";
                                     break;
                             }
                         }
                         else
                             oss_ << ' ';
-                        oss_ << n.value.name;
+                        oss_ << child->name();
                         lst->items.emplace_back(oss_.str());
                     }
-                    lst->ix = model::Tree::selected_ix(*node);
+                    lst->ix = model::Model::selected_ix(node);
                 }
 
-                lst->name = model::to_string(to_path(node));
+                lst->name = model::to_string(node->to_path());
             };
             set_view_dto(view_.n0,   model_.node_0());
             set_view_dto(view_.n0a,  model_.node_0a());
@@ -110,7 +112,7 @@ namespace proast { namespace presenter {
                 auto lst = dto::List::create();
                 if (auto node = model_.node())
                 {
-                    lst->name = model::to_string(to_path(node));
+                    lst->name = model::to_string(node->to_path());
 
                     const unsigned int align = 15;
                     auto as_number = [](auto &os, const auto &effort){
@@ -150,17 +152,13 @@ namespace proast { namespace presenter {
                             lst->items.push_back(oss_.str());
                         }
                     };
-                    add_field(node->value.metadata.dependencies, "dependencies", as_size);
-                    add_field(node->value.metadata.effort(), "effort", as_number);
-                    add_tags(node->value.metadata.tags(), "tags");
-
-                    add_field_opt(node->value.metadata.my_effort, "my effort", as_number);
-                    add_field_opt(node->value.metadata.my_impact, "my impact", as_number);
-                    add_field_opt(node->value.metadata.my_completion_pct, "my completion", as_pct);
-                    add_field_opt(node->value.metadata.my_volume_db, "my volume", as_volume);
-                    add_field_opt(node->value.metadata.my_live, "my live", as_date);
-                    add_field_opt(node->value.metadata.my_dead, "my dead", as_date);
-                    add_tags(node->value.metadata.my_tags, "my tags");
+                    add_field_opt(node->metadata.my_effort, "my effort", as_number);
+                    add_field_opt(node->metadata.my_impact, "my impact", as_number);
+                    add_field_opt(node->metadata.my_completion_pct, "my completion", as_pct);
+                    add_field_opt(node->metadata.my_volume_db, "my volume", as_volume);
+                    add_field_opt(node->metadata.my_live, "my live", as_date);
+                    add_field_opt(node->metadata.my_dead, "my dead", as_date);
+                    add_tags(node->metadata.my_tags, "my tags");
                 }
                 view_.metadata = lst;
             }
@@ -252,7 +250,7 @@ namespace proast { namespace presenter {
     {
         if (auto me = model_.node_000())
         {
-            const auto path = me->value.path;
+            const auto path = me->path();
             scheduled_operation_ = [path,open]()
             {
                 const auto orig_dir = std::filesystem::current_path();
@@ -324,21 +322,21 @@ namespace proast { namespace presenter {
             };
             switch (field)
             {
-                case MetadataField::Effort:        as_number(node->value.metadata.my_effort, 1.0); break;
-                case MetadataField::Volume:        as_number(node->value.metadata.my_volume_db, -20.0); break;
-                case MetadataField::Impact:        as_number(node->value.metadata.my_impact, 1); break;
-                case MetadataField::CompletionPct: as_number(node->value.metadata.my_completion_pct, 0.0); break;
-                case MetadataField::Live:          as_date(node->value.metadata.my_live); break;
-                case MetadataField::Dead:          as_date(node->value.metadata.my_dead); break;
+                case MetadataField::Effort:        as_number(node->metadata.my_effort, 1.0); break;
+                case MetadataField::Volume:        as_number(node->metadata.my_volume_db, -20.0); break;
+                case MetadataField::Impact:        as_number(node->metadata.my_impact, 1); break;
+                case MetadataField::CompletionPct: as_number(node->metadata.my_completion_pct, 0.0); break;
+                case MetadataField::Live:          as_date(node->metadata.my_live); break;
+                case MetadataField::Dead:          as_date(node->metadata.my_dead); break;
                 case MetadataField::Tag:
                                                    if (content.empty())
                                                        was_set = true;
                                                    else if (content == "~")
-                                                       node->value.metadata.my_tags.clear();
+                                                       node->metadata.my_tags.clear();
                                                    else if (content[0] == '~')
-                                                       node->value.metadata.my_tags.erase(content.substr(1));
+                                                       node->metadata.my_tags.erase(content.substr(1));
                                                    else
-                                                       node->value.metadata.my_tags.insert(content);
+                                                       node->metadata.my_tags.insert(content);
                                                    break;
             }
             if (was_set)

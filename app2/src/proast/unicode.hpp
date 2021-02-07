@@ -9,9 +9,6 @@ namespace proast {
     static constexpr wchar_t ArrowUp = L'\u2191';
     static constexpr wchar_t ArrowRight = L'\u2192';
     static constexpr wchar_t ArrowDown = L'\u2193';
-
-#define WIDEN_(x) L ## x
-#define WIDEN(x) WIDEN_(x)
 } 
 
 #endif

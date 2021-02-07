@@ -1,6 +1,5 @@
 #include <proast/model/Bookmarks.hpp>
 #include <proast/log.hpp>
-#include <proast/util.hpp>
 #include <gubg/naft/Document.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/mss.hpp>

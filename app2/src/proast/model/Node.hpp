@@ -1,25 +1,22 @@
 #ifndef HEADER_proast_model_Node_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Node_hpp_ALREADY_INCLUDED
 
+#include <proast/model/Metadata.hpp>
+#include <proast/model/Path.hpp>
+#include <proast/dto/List.hpp>
 #include <string>
 #include <filesystem>
 #include <memory>
 #include <vector>
 #include <optional>
-
-namespace gubg { namespace tree { 
-    template <typename Data> class Node;
-} } 
+#include <set>
 
 namespace proast { namespace model { 
-    class Data;
-
-    using Node = gubg::tree::Node<Data>;
-
     class Node_: public std::enable_shared_from_this<Node_>
     {
     public:
         using Ptr = std::shared_ptr<Node_>;
+        using WPtr = std::weak_ptr<Node_>;
 
         static Ptr create();
         static Ptr create(const std::string &);
@@ -28,20 +25,46 @@ namespace proast { namespace model {
         std::filesystem::path path() const;
         std::string name() const;
 
-        Ptr parent;
+        dto::List::Ptr content;
+
+        Metadata metadata;
+
+        WPtr parent;
+        WPtr child;
+        WPtr up;
+        WPtr down;
         std::vector<Ptr> childs;
 
         Ptr append_child();
+        Ptr find(const Path &);
+
+        Path to_path() const;
+
+        void clear_dependencies();
+        void add_dependencies(Ptr);
+        std::size_t dependency_count() const;
+        template <typename Ftor>
+        void each_dependency(Ftor &&ftor) const
+        {
+            for (auto &wptr: all_dependencies_)
+                if (auto ptr = wptr.lock())
+                    ftor(ptr);
+        }
 
         unsigned int node_count() const;
 
     private:
         void append_segment_(std::filesystem::path &) const;
         std::optional<std::string> name_;
+
+        //We cannot keep weak_ptr in a set, but this vector has unique (or nullptr) elements
+        std::vector<WPtr> all_dependencies_;
+        static std::set<Ptr> to_set_(std::vector<WPtr> &);
     };
 
-    using Node2 = Node_::Ptr;
+    using Node = Node_::Ptr;
 
+    //Will only call ftor for valid nodes
     template <typename NodePtr, typename Ftor>
     void depth_first_search(const NodePtr &node, Ftor &&ftor)
     {

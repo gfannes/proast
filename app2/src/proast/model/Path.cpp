@@ -1,6 +1,4 @@
 #include <proast/model/Path.hpp>
-#include <proast/model/Tree.hpp>
-#include <proast/util.hpp>
 #include <sstream>
 #include <string_view>
 
@@ -40,20 +38,6 @@ namespace proast { namespace model {
         }
 
         return path;
-    }
-    Path to_path(Node *node)
-    {
-        Path p;
-        while (node)
-        {
-            auto parent = node->value.navigation.parent;
-            if (parent)
-                //We do not include the root node name
-                p.push_back(node->value.name);
-            node = parent;
-        }
-        std::reverse(p.begin(), p.end());
-        return p;
     }
 
     bool pop_if(Path &path, const Path &needle)
