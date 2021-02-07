@@ -2,6 +2,8 @@
 #define HEADER_proast_model_Bookmarks_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Path.hpp>
+#include <gubg/naft/Node.hpp>
+#include <gubg/naft/Range.hpp>
 #include <filesystem>
 #include <map>
 
@@ -10,21 +12,24 @@ namespace proast { namespace model {
     class Bookmarks
     {
     public:
-        bool load(const std::filesystem::path &fn);
         bool save(const std::filesystem::path &fn) const;
+        bool load(const std::filesystem::path &fn);
 
-        bool get(Path &, wchar_t) const;
-        void set(wchar_t, const Path &);
+        bool get(Path &, char) const;
+        void set(char, const Path &);
 
         template <typename Ftor>
         void each(Ftor &&ftor)
         {
-            for (auto &[wchar, path]: ch__path_)
-                ftor(wchar, path);
+            for (auto &[ch, path]: ch__path_)
+                ftor(ch, path);
         }
 
     private:
-        std::map<wchar_t, Path> ch__path_;
+        bool stream_(gubg::naft::Node &) const;
+        bool parse_(gubg::naft::Range &);
+
+        std::map<char, Path> ch__path_;
     };
 
 } } 

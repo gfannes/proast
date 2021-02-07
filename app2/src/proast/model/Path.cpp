@@ -6,39 +6,35 @@
 
 namespace proast { namespace model { 
 
-    std::wstring to_wstring(const Path &path)
+    std::string to_string(const Path &path)
     {
-        std::basic_ostringstream<wchar_t> oss;
+        std::ostringstream oss;
         for (const auto &e: path)
-            oss << L'/' << e;
+            oss << '/' << e;
         return oss.str();
     }
-    std::string to_utf8(const Path &path)
+    Path to_path(const std::string &str)
     {
-        return proast::to_utf8(to_wstring(path));
-    }
-    Path to_path(const std::wstring &wstr)
-    {
-        const auto sep = L'/';
+        const auto sep = '/';
 
         Path path;
 
-        std::wstring_view wstrv{wstr};
+        std::string_view sv{str};
 
         auto pop_sep = [&](){
-            if (wstrv.starts_with(sep))
-                wstrv.remove_prefix(1);
+            if (sv.starts_with(sep))
+                sv.remove_prefix(1);
         };
 
-        for (std::wstring part; (pop_sep(), !wstrv.empty()); path.push_back(part))
+        for (std::string part; (pop_sep(), !sv.empty()); path.push_back(part))
         {
             auto pop_part = [&](std::size_t count){
-                part = wstrv.substr(0, count);
-                wstrv.remove_prefix(count);
+                part = sv.substr(0, count);
+                sv.remove_prefix(count);
             };
 
-            if (const auto ix = wstrv.find(sep); ix == wstrv.npos)
-                pop_part(wstrv.size());
+            if (const auto ix = sv.find(sep); ix == sv.npos)
+                pop_part(sv.size());
             else
                 pop_part(ix);
         }

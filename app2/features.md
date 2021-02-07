@@ -70,7 +70,6 @@ Features for proast
 
 ## UI
 
-* Only ui uses `wchar_t`, all the rest uses utf8 stored as a `std::string`.
 * Support for colored output with `ui::List`
 
 ## Planning

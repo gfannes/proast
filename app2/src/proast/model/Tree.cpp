@@ -13,7 +13,7 @@
 namespace proast { namespace model { 
     Tree::Tree()
     {
-        root.value.name = L"<ROOT>";
+        root.value.name = "<ROOT>";
     }
 
     Tree::Config::Config()
@@ -31,7 +31,7 @@ namespace proast { namespace model {
         MSS(std::filesystem::is_directory(path), log::ostream() << "Cannot add " << path << ", this is not a directory" << std::endl);
 
         auto &child = root.childs.append();
-        child.value.name = path.filename().wstring();
+        child.value.name = path.filename().string();
         child.value.path = path;
 
         MSS(add_(child, path, config));
@@ -109,7 +109,7 @@ namespace proast { namespace model {
         if (node.value.metadata.has_local_data())
         {
             auto n = doc.node("Metadata");
-            n.attr("path", to_utf8(to_path(&node)));
+            n.attr("path", to_string(to_path(&node)));
             node.value.metadata.stream(n);
         }
         for (auto &child: node.childs.nodes)
@@ -132,8 +132,7 @@ namespace proast { namespace model {
         {
             MSS(range.pop_attr(key, value));
             MSS(key == "path");
-            const auto &path_utf8 = value;
-            const auto path = to_path(proast::to_wstring(path_utf8));
+            const auto path = to_path(value);
             auto &md = path__metadata_[path];
             gubg::naft::Range subrange;
             MSS(range.pop_block(subrange));
@@ -178,7 +177,7 @@ namespace proast { namespace model {
         {
             auto &child = node.childs.append();
             child.value.path = path;
-            child.value.name = path.filename().wstring();
+            child.value.name = path.filename().string();
             if (is_folder)
                 MSS(add_(child, path, config));
         }

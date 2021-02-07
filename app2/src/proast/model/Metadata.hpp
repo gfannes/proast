@@ -13,12 +13,13 @@ namespace proast { namespace model {
     class Metadata
     {
     public:
-        using Tag = std::wstring;
+        using Tag = std::string;
         using Tags = std::set<Tag>;
 
         std::optional<double>       my_effort;
-        std::optional<std::wstring> my_live;
-        std::optional<std::wstring> my_dead;
+        std::optional<std::string>  my_live;
+        std::optional<std::string>  my_due;
+        std::optional<std::string>  my_dead;
         std::optional<double>       my_completion_pct;
         std::optional<double>       my_volume_db;
         std::optional<double>       my_impact;

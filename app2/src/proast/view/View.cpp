@@ -1,5 +1,6 @@
 #include <proast/view/View.hpp>
 #include <proast/unicode.hpp>
+#include <proast/util.hpp>
 #include <proast/ui/List.hpp>
 #include <proast/log.hpp>
 
@@ -24,7 +25,7 @@ namespace proast { namespace view {
         const unsigned int small_height = small_frac*height;
         const unsigned int large_height = large_frac*height;
         return vbox({
-                text(header) | border,
+                text(to_wstring(header)) | border,
                 hbox({
                         vbox({
                                 ui::list(metadata, equal_height),
@@ -42,7 +43,7 @@ namespace proast { namespace view {
                                 ui::list(n00b, small_height),
                                 }) | flex,
                         }) | flex,
-                text(footer) | border,
+                text(to_wstring(footer)) | border,
                 });
     }
     bool View::OnEvent(ftxui::Event event)

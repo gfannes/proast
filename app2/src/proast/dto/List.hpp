@@ -8,8 +8,8 @@
 namespace proast { namespace dto { 
     struct List
     {
-        std::wstring name;
-        std::vector<std::wstring> items;
+        std::string name;
+        std::vector<std::string> items;
         int ix = -1;
 
         using Ptr = std::shared_ptr<List>;

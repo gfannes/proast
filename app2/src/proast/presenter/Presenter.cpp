@@ -41,11 +41,11 @@ namespace proast { namespace presenter {
         auto s = log::Scope{"Presenter::refresh_view_()"};
 
         {
-            oss_.str(L"");
+            oss_.str("");
             if (auto n = model_.node())
-                oss_ << n->value.path.wstring();
+                oss_ << n->value.path.string();
             else
-                oss_ << L"<no valid node>";
+                oss_ << "<no valid node>";
             view_.header = oss_.str();
         }
 
@@ -69,7 +69,7 @@ namespace proast { namespace presenter {
                     lst = dto::List::create();
                     for (auto &n: node->childs.nodes)
                     {
-                        oss_.str(L"");
+                        oss_.str("");
                         if (show_metadata_field_)
                         {
                             switch (*show_metadata_field_)
@@ -79,24 +79,24 @@ namespace proast { namespace presenter {
                                     if (auto effort = n.value.metadata.effort(); effort > 0)
                                         oss_ << effort;
                                     else
-                                        oss_ << L' ';
-                                    oss_ << L' ';
+                                        oss_ << ' ';
+                                    oss_ << ' ';
                                     break;
                                 case MetadataField::Dependency:
                                     oss_ << std::fixed << std::setprecision(1) << std::setw(4);
-                                    oss_ << n.value.metadata.dependencies.size() << L" ";
+                                    oss_ << n.value.metadata.dependencies.size() << " ";
                                     break;
                             }
                         }
                         else
-                            oss_ << L' ';
+                            oss_ << ' ';
                         oss_ << n.value.name;
                         lst->items.emplace_back(oss_.str());
                     }
                     lst->ix = model::Tree::selected_ix(*node);
                 }
 
-                lst->name = model::to_wstring(to_path(node));
+                lst->name = model::to_string(to_path(node));
             };
             set_view_dto(view_.n0,   model_.node_0());
             set_view_dto(view_.n0a,  model_.node_0a());
@@ -110,7 +110,7 @@ namespace proast { namespace presenter {
                 auto lst = dto::List::create();
                 if (auto node = model_.node())
                 {
-                    lst->name = model::to_wstring(to_path(node));
+                    lst->name = model::to_string(to_path(node));
 
                     const unsigned int align = 15;
                     auto as_number = [](auto &os, const auto &effort){
@@ -120,17 +120,17 @@ namespace proast { namespace presenter {
                         os << container.size();
                     };
                     auto as_volume = [](auto &os, const auto &volume){
-                        os << std::fixed << std::setprecision(0) << volume << L"dB";
+                        os << std::fixed << std::setprecision(0) << volume << "dB";
                     };
                     auto as_pct = [](auto &os, const auto &pct){
-                        os << std::fixed << std::setprecision(0) << pct << L"%";
+                        os << std::fixed << std::setprecision(0) << pct << "%";
                     };
                     auto as_date = [](auto &os, const auto &date){
                         os << date;
                     };
                     auto add_field = [&](const auto &value, const auto descr, auto &&streamer){
-                        oss_.str(L"");
-                        oss_ << std::setw(align) << descr << L": ";
+                        oss_.str("");
+                        oss_ << std::setw(align) << descr << ": ";
                         streamer(oss_, value);
                         lst->items.push_back(oss_.str());
                     };
@@ -143,24 +143,24 @@ namespace proast { namespace presenter {
                     {
                         if (tags.size())
                         {
-                            oss_.str(L"");
-                            oss_ << std::setw(align) << descr << L": ";
+                            oss_.str("");
+                            oss_ << std::setw(align) << descr << ": ";
                             for (const auto &tag: tags)
-                                oss_ << tag << L" ";
+                                oss_ << tag << " ";
                             lst->items.push_back(oss_.str());
                         }
                     };
-                    add_field(node->value.metadata.dependencies, L"dependencies", as_size);
-                    add_field(node->value.metadata.effort(), L"effort", as_number);
-                    add_tags(node->value.metadata.tags(), L"tags");
+                    add_field(node->value.metadata.dependencies, "dependencies", as_size);
+                    add_field(node->value.metadata.effort(), "effort", as_number);
+                    add_tags(node->value.metadata.tags(), "tags");
 
-                    add_field_opt(node->value.metadata.my_effort, L"my effort", as_number);
-                    add_field_opt(node->value.metadata.my_impact, L"my impact", as_number);
-                    add_field_opt(node->value.metadata.my_completion_pct, L"my completion", as_pct);
-                    add_field_opt(node->value.metadata.my_volume_db, L"my volume", as_volume);
-                    add_field_opt(node->value.metadata.my_live, L"my live", as_date);
-                    add_field_opt(node->value.metadata.my_dead, L"my dead", as_date);
-                    add_tags(node->value.metadata.my_tags, L"my tags");
+                    add_field_opt(node->value.metadata.my_effort, "my effort", as_number);
+                    add_field_opt(node->value.metadata.my_impact, "my impact", as_number);
+                    add_field_opt(node->value.metadata.my_completion_pct, "my completion", as_pct);
+                    add_field_opt(node->value.metadata.my_volume_db, "my volume", as_volume);
+                    add_field_opt(node->value.metadata.my_live, "my live", as_date);
+                    add_field_opt(node->value.metadata.my_dead, "my dead", as_date);
+                    add_tags(node->value.metadata.my_tags, "my tags");
                 }
                 view_.metadata = lst;
             }
@@ -172,38 +172,38 @@ namespace proast { namespace presenter {
                     {
                         case State::BookmarkRegister:
                         case State::BookmarkJump:
-                            lst->name = L"Bookmarks";
-                            model_.each_bookmark([&](auto wchar, const auto &path){
-                                    oss_.str(L"");
-                                    oss_ << wchar << L" => " << model::to_wstring(path);
+                            lst->name = "Bookmarks";
+                            model_.each_bookmark([&](auto ch, const auto &path){
+                                    oss_.str("");
+                                    oss_ << ch << " => " << model::to_string(path);
                                     lst->items.emplace_back(oss_.str());
                                     });
                             break;
                         case State::SetMetadataField:
                         case State::ShowMetadataField:
-                            lst->name = L"Metadata fields";
-                            for (auto wchar: {L'e', L'v', L'i', L'c', L'l', L'd', L't', L'D'})
+                            lst->name = "Metadata fields";
+                            for (auto ch: {'e', 'v', 'i', 'c', 'l', 'd', 't', 'D'})
                             {
-                                oss_.str(L"");
-                                oss_ << wchar << L": ";
-                                if (auto mf = to_metadata_field(wchar))
-                                    oss_ << to_wstring(*mf);
+                                oss_.str("");
+                                oss_ << ch << ": ";
+                                if (auto mf = to_metadata_field(ch))
+                                    oss_ << to_string(*mf);
                                 lst->items.emplace_back(oss_.str());
                             }
                             break;
                         case State::Create:
                             {
-                                lst->name = L"Create";
-                                auto add_help = [&](auto wchar, auto descr)
+                                lst->name = "Create";
+                                auto add_help = [&](auto ch, auto descr)
                                 {
-                                    oss_.str(L"");
-                                    oss_ << wchar << L": " << descr;
+                                    oss_.str("");
+                                    oss_ << ch << ": " << descr;
                                     lst->items.emplace_back(oss_.str());
                                 };
-                                add_help(L'f', L"Create file in parent");
-                                add_help(L'F', L"Create file in self");
-                                add_help(L'd', L"Create directory in parent");
-                                add_help(L'D', L"Create directory in self");
+                                add_help('f', "Create file in parent");
+                                add_help('F', "Create file in self");
+                                add_help('d', "Create directory in parent");
+                                add_help('D', "Create directory in self");
                             }
                             break;
                         default: break;
@@ -213,23 +213,23 @@ namespace proast { namespace presenter {
         }
 
         {
-            oss_.str(L"");
+            oss_.str("");
             if (Commander::state)
                 switch (*Commander::state)
                 {
-                    case State::BookmarkRegister:  oss_ << L"Registering bookmark"; break;
-                    case State::BookmarkJump:      oss_ << L"Jump to bookmark"; break;
+                    case State::BookmarkRegister:  oss_ << "Registering bookmark"; break;
+                    case State::BookmarkJump:      oss_ << "Jump to bookmark"; break;
                     case State::SetMetadataField:
                                                    if (!Commander::metadata_field)
-                                                       oss_ << L"Choose metadata field";
+                                                       oss_ << "Choose metadata field";
                                                    else
-                                                       oss_ << L"Metadata for " << to_wstring(*Commander::metadata_field) << L": " << Commander::content;
+                                                       oss_ << "Metadata for " << to_string(*Commander::metadata_field) << ": " << Commander::content;
                                                    break;
-                    case State::ShowMetadataField: oss_ << L"Show metadata field"; break;
+                    case State::ShowMetadataField: oss_ << "Show metadata field"; break;
                     case State::Create:            if (!Commander::create_what)
-                                                       oss_ << L"Create new file or directory";
+                                                       oss_ << "Create new file or directory";
                                                    else
-                                                       oss_ << L"Name: " << Commander::content;
+                                                       oss_ << "Name: " << Commander::content;
                                                    break;
                     default: break;
                 }
@@ -288,14 +288,14 @@ namespace proast { namespace presenter {
             view_.quit();
         }
     }
-    void Presenter::commander_bookmark(wchar_t wchar, bool do_register)
+    void Presenter::commander_bookmark(char ch, bool do_register)
     {
         if (do_register)
-            model_.register_bookmark(wchar);
+            model_.register_bookmark(ch);
         else
-            model_.jump_to_bookmark(wchar);
+            model_.jump_to_bookmark(ch);
     }
-    void Presenter::commander_set_metadata(MetadataField field, const std::wstring &content)
+    void Presenter::commander_set_metadata(MetadataField field, const std::string &content)
     {
         if (auto node = model_.node())
         {
@@ -306,7 +306,7 @@ namespace proast { namespace presenter {
                 {
                     if (content.empty())
                         dst = default_value;
-                    else if (content[0] == L'~')
+                    else if (content[0] == '~')
                         dst.reset();
                     else
                         dst = std::stod(content);
@@ -316,8 +316,8 @@ namespace proast { namespace presenter {
             auto as_date = [&](auto &dst)
             {
                 if (content.empty())
-                    dst = L"now";
-                else if (content[0] == L'~')
+                    dst = "now";
+                else if (content[0] == '~')
                     dst.reset();
                 else
                     dst = content;
@@ -333,9 +333,9 @@ namespace proast { namespace presenter {
                 case MetadataField::Tag:
                                                    if (content.empty())
                                                        was_set = true;
-                                                   else if (content == L"~")
+                                                   else if (content == "~")
                                                        node->value.metadata.my_tags.clear();
-                                                   else if (content[0] == L'~')
+                                                   else if (content[0] == '~')
                                                        node->value.metadata.my_tags.erase(content.substr(1));
                                                    else
                                                        node->value.metadata.my_tags.insert(content);
@@ -352,12 +352,12 @@ namespace proast { namespace presenter {
     {
         show_metadata_field_ = mf_opt;
     }
-    void Presenter::commander_create(const std::wstring &name, bool create_file, bool in_parent)
+    void Presenter::commander_create(const std::string &name, bool create_file, bool in_parent)
     {
         if (create_file)
-            model_.create_file(proast::to_utf8(name), in_parent);
+            model_.create_file(name, in_parent);
         else
-            model_.create_folder(proast::to_utf8(name), in_parent);
+            model_.create_folder(name, in_parent);
     }
     void Presenter::commander_delete()
     {

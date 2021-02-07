@@ -1,4 +1,5 @@
 #include <proast/ui/List.hpp>
+#include <proast/util.hpp>
 #include <ftxui/component/component.hpp>
 
 namespace proast { namespace ui { 
@@ -37,7 +38,7 @@ namespace proast { namespace ui {
         const int offset = selected_item_ix - selected_row_ix;
 
         {
-            const auto &name = list_->name;
+            const auto name = to_wstring(list_->name);
             for (auto col_ix = 0u; col_ix < name.size() && col_ix < x_size; ++col_ix)
             {
                 auto &pxl = screen.PixelAt(box_.x_min+col_ix, box_.y_min);
@@ -52,7 +53,7 @@ namespace proast { namespace ui {
             const int item_ix = row_ix + offset;
             if (0 <= item_ix && item_ix < list_->items.size())
             {
-                const auto &item = list_->items[item_ix];
+                const auto item = to_wstring(list_->items[item_ix]);
                 for (auto col_ix = 0u; col_ix < item.size() && col_ix < x_size; ++col_ix)
                 {
                     auto &pxl = screen.PixelAt(box_.x_min+x_margin+col_ix, box_.y_min+1+row_ix);

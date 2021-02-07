@@ -7,11 +7,10 @@
 
 namespace proast { namespace model { 
 
-    using Path = std::vector<std::wstring>;
+    using Path = std::vector<std::string>;
 
-    std::wstring to_wstring(const Path &);
-    std::string to_utf8(const Path &);
-    Path to_path(const std::wstring &);
+    std::string to_string(const Path &);
+    Path to_path(const std::string &);
     Path to_path(Node *);
 
     bool pop_if(Path &path, const Path &needle);

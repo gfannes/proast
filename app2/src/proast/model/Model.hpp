@@ -20,8 +20,8 @@ namespace proast { namespace model {
 
         bool reload();
         
-        bool register_bookmark(wchar_t wchar);
-        bool jump_to_bookmark(wchar_t wchar);
+        bool register_bookmark(char ch);
+        bool jump_to_bookmark(char ch);
         template <typename Ftor>
         void each_bookmark(Ftor &&ftor){bookmarks_.each(ftor);}
 

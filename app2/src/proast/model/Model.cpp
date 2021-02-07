@@ -155,23 +155,23 @@ namespace proast { namespace model {
     }
 
 
-    bool Model::register_bookmark(wchar_t wchar)
+    bool Model::register_bookmark(char ch)
     {
         MSS_BEGIN(bool);
 
         auto n = node();
         MSS(!!n);
 
-        bookmarks_.set(wchar, to_path(n));
+        bookmarks_.set(ch, to_path(n));
 
         MSS_END();
     }
-    bool Model::jump_to_bookmark(wchar_t wchar)
+    bool Model::jump_to_bookmark(char ch)
     {
         MSS_BEGIN(bool);
 
         Path path;
-        MSS(bookmarks_.get(path, wchar));
+        MSS(bookmarks_.get(path, ch));
 
         MSS(focus(path));
 
@@ -325,7 +325,7 @@ namespace proast { namespace model {
 
         std::ofstream fo{current_location_fn_};
         if (auto n = node())
-            fo << to_utf8(to_path(n));
+            fo << to_string(to_path(n));
 
         MSS_END();
     }
@@ -338,7 +338,7 @@ namespace proast { namespace model {
         std::string content;
         MSS(gubg::file::read(content, current_location_fn_));
 
-        for (auto p = to_path(proast::to_wstring(content)); !p.empty(); p.pop_back())
+        for (auto p = to_path(content); !p.empty(); p.pop_back())
             if (focus(p))
                 break;
 

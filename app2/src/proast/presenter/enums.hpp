@@ -1,25 +1,24 @@
 #ifndef HEADER_proast_presenter_enums_hpp_ALREADY_INCLUDED
 #define HEADER_proast_presenter_enums_hpp_ALREADY_INCLUDED
 
-#include <proast/unicode.hpp>
 #include <string>
 
 namespace proast { namespace presenter { 
 #define ftor_value_(t,v) v,
-#define ftor_case_(t,v) case t::v: return WIDEN(#v);
+#define ftor_case_(t,v) case t::v: return #v;
 #define define_enum_(type, each_value) \
     enum class type \
     { \
         each_value(type, ftor_value_) \
     }; \
-    inline std::wstring to_wstring(type v) \
+    inline std::string to_string(type v) \
     { \
         switch (v) \
         { \
             each_value(type, ftor_case_) \
             default: break; \
         } \
-        return L"<unknown value>"; \
+        return "<unknown value>"; \
     } \
 
 #define my_each_value_(type, ftor) \

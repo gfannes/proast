@@ -9,18 +9,18 @@
 
 namespace proast { namespace presenter { 
 
-    inline std::optional<MetadataField> to_metadata_field(wchar_t wchar)
+    inline std::optional<MetadataField> to_metadata_field(char ch)
     {
-        switch (wchar)
+        switch (ch)
         {
-            case L'e': return MetadataField::Effort;
-            case L'v': return MetadataField::Volume;
-            case L'i': return MetadataField::Impact;
-            case L'c': return MetadataField::CompletionPct;
-            case L'l': return MetadataField::Live;
-            case L'd': return MetadataField::Dead;
-            case L't': return MetadataField::Tag;
-            case L'D': return MetadataField::Dependency;
+            case 'e': return MetadataField::Effort;
+            case 'v': return MetadataField::Volume;
+            case 'i': return MetadataField::Impact;
+            case 'c': return MetadataField::CompletionPct;
+            case 'l': return MetadataField::Live;
+            case 'd': return MetadataField::Dead;
+            case 't': return MetadataField::Tag;
+            case 'D': return MetadataField::Dependency;
             default: break;
         }
         return std::nullopt;
@@ -32,8 +32,8 @@ namespace proast { namespace presenter {
     public:
         std::optional<State> state;
         std::optional<MetadataField> metadata_field;
-        std::wstring content;
-        std::optional<wchar_t> create_what;
+        std::string content;
+        std::optional<char> create_what;
 
         void process(wchar_t wchar)
         {
@@ -97,10 +97,10 @@ namespace proast { namespace presenter {
                         {
                             switch (wchar)
                             {
-                                case L'f':
-                                case L'F':
-                                case L'd':
-                                case L'D':
+                                case 'f':
+                                case 'F':
+                                case 'd':
+                                case 'D':
                                     create_what = wchar;
                                     break;
                                 default:
@@ -112,8 +112,8 @@ namespace proast { namespace presenter {
                             {
                                 case Return:
                                     {
-                                        const auto wch = *create_what;
-                                        r.commander_create(content, wch==L'f'||wch==L'F', wch==L'f'||wch==L'd');
+                                        const auto ch = *create_what;
+                                        r.commander_create(content, ch=='f'||ch=='F', ch=='f'||ch=='d');
                                         content.clear();
                                         state.reset();
                                         create_what.reset();
@@ -135,7 +135,7 @@ namespace proast { namespace presenter {
                     case State::Delete:
                         switch (wchar)
                         {
-                            case L'd': r.commander_delete(); break;
+                            case 'd': r.commander_delete(); break;
                             default: break;
                         }
                         state.reset();
@@ -146,36 +146,36 @@ namespace proast { namespace presenter {
             {
                 switch (wchar)
                 {
-                    case L'q': r.commander_quit(); break;
+                    case 'q': r.commander_quit(); break;
 
-                    case L'j':
+                    case 'j':
                     case ArrowDown: r.commander_move(Direction::Down, true); break;
 
-                    case L'J': r.commander_move(Direction::Down, false); break;
+                    case 'J': r.commander_move(Direction::Down, false); break;
 
-                    case L'k':
+                    case 'k':
                     case ArrowUp: r.commander_move(Direction::Up, true); break;
 
-                    case L'K': r.commander_move(Direction::Up, false); break;
+                    case 'K': r.commander_move(Direction::Up, false); break;
 
-                    case L'h': 
+                    case 'h': 
                     case ArrowLeft: r.commander_move(Direction::Left, true); break;
 
-                    case L'l':
+                    case 'l':
                     case ArrowRight: r.commander_move(Direction::Right, true); break;
 
                     case Return: r.commander_open(Open::View); break;
-                    case L'e': r.commander_open(Open::Edit); break;
-                    case L'S':   r.commander_open(Open::Shell); break;
+                    case 'e': r.commander_open(Open::Edit); break;
+                    case 'S':   r.commander_open(Open::Shell); break;
 
-                    case L'm':  state = State::BookmarkRegister; break;
-                    case L'\'': state = State::BookmarkJump; break;
-                    case L's':  state = State::SetMetadataField; break;
-                    case L'M':  state = State::ShowMetadataField; break;
-                    case L'c':  state = State::Create; break;
-                    case L'd':  state = State::Delete; break;
+                    case 'm':  state = State::BookmarkRegister; break;
+                    case '\'': state = State::BookmarkJump; break;
+                    case 's':  state = State::SetMetadataField; break;
+                    case 'M':  state = State::ShowMetadataField; break;
+                    case 'c':  state = State::Create; break;
+                    case 'd':  state = State::Delete; break;
 
-                    case L'r': r.commander_reload(); break;
+                    case 'r': r.commander_reload(); break;
                 }
             }
         }

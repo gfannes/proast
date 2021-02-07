@@ -19,7 +19,7 @@ namespace proast { namespace model {
     {
     public:
         Navigation navigation;
-        std::wstring name;
+        std::string name;
         std::filesystem::path path;
         dto::List::Ptr content;
         Metadata metadata;

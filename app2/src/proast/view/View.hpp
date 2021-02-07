@@ -16,8 +16,8 @@ namespace proast { namespace view {
         };
         Events *events = nullptr;
 
-        std::wstring header;
-        std::wstring footer;
+        std::string header;
+        std::string footer;
         proast::dto::List::Ptr metadata;
         proast::dto::List::Ptr n0;
         proast::dto::List::Ptr details;
