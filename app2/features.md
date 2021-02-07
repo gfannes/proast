@@ -17,7 +17,6 @@ Features for proast
 ## ui::List
 
 * Show name in border
-* Fix scrolling down issue
 * Support for colors
 
 ## Metadata
