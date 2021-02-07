@@ -97,6 +97,64 @@ namespace proast { namespace model {
         MSS_END();
     }
 
+    bool Model::create_file(const std::string &name, bool in_parent)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        //TODO: rework into index when !in_parent
+        auto fp = n->value.path;
+        if (in_parent || std::filesystem::is_regular_file(fp))
+            fp = fp.parent_path();
+        fp /= name;
+
+        std::ofstream touch{fp};
+
+        MSS(reload());
+
+        MSS_END();
+    }
+    bool Model::create_folder(const std::string &name, bool in_parent)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        //TODO: rework into index when !in_parent
+        auto fp = n->value.path;
+        if (in_parent || std::filesystem::is_regular_file(fp))
+            fp = fp.parent_path();
+        fp /= name;
+
+        std::filesystem::create_directories(fp);
+
+        MSS(reload());
+
+        MSS_END();
+    }
+    bool Model::delete_current()
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        //TODO: move to scratchpad iso actually deleting
+        const auto path = n->value.path;
+        if (std::filesystem::is_regular_file(path))
+            std::filesystem::remove(path);
+        else
+            std::filesystem::remove_all(path);
+
+        MSS(reload());
+
+        MSS_END();
+    }
+
+
     bool Model::register_bookmark(wchar_t wchar)
     {
         MSS_BEGIN(bool);

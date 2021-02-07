@@ -29,6 +29,10 @@ namespace proast { namespace model {
 
         bool focus(const Path &);
 
+        bool create_file(const std::string &name, bool in_parent);
+        bool create_folder(const std::string &name, bool in_parent);
+        bool delete_current();
+
         Node *node();
         Node *node_0();
         Node *node_00();

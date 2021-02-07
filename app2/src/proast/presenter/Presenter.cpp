@@ -1,4 +1,5 @@
 #include <proast/presenter/Presenter.hpp>
+#include <proast/util.hpp>
 #include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <fstream>
@@ -353,35 +354,14 @@ namespace proast { namespace presenter {
     }
     void Presenter::commander_create(const std::wstring &name, bool create_file, bool in_parent)
     {
-        //TODO:: move this functionality to the model
-        if (auto n = model_.node())
-        {
-            auto fp = n->value.path;
-            if (in_parent || std::filesystem::is_regular_file(fp))
-                fp = fp.parent_path();
-            fp /= name;
-
-            if (create_file)
-                std::ofstream touch{fp};
-            else
-                std::filesystem::create_directories(fp);
-
-            model_.reload();
-        }
+        if (create_file)
+            model_.create_file(proast::to_utf8(name), in_parent);
+        else
+            model_.create_folder(proast::to_utf8(name), in_parent);
     }
     void Presenter::commander_delete()
     {
-        //TODO: move this functionality to the model, and do not actually delete but rather move to scratch
-        if (auto n = model_.node())
-        {
-            const auto path = n->value.path;
-            if (std::filesystem::is_regular_file(path))
-                std::filesystem::remove(path);
-            else
-                std::filesystem::remove_all(path);
-
-            model_.reload();
-        }
+        model_.delete_current();
     }
     void Presenter::commander_reload()
     {
