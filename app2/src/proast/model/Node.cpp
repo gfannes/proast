@@ -92,6 +92,23 @@ namespace proast { namespace model {
         return p;
     }
 
+    double Node_::total_effort() const
+    {
+        double sum = metadata.effort.value_or(0.0);
+        for (auto &wptr: all_dependencies_)
+            if (auto ptr = wptr.lock())
+                sum += ptr->metadata.effort.value_or(0.0);
+        return sum;
+    }
+    Tags Node_::all_tags() const
+    {
+        Tags tags = metadata.tags;
+        for (auto &wptr: all_dependencies_)
+            if (auto ptr = wptr.lock())
+                tags.insert(ptr->metadata.tags.begin(), ptr->metadata.tags.end());
+        return tags;
+    }
+
     //Privates
     void Node_::append_segment_(std::filesystem::path &path) const
     {

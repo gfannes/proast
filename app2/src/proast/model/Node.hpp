@@ -51,6 +51,9 @@ namespace proast { namespace model {
                     ftor(ptr);
         }
 
+        double total_effort() const;
+        Tags all_tags() const;
+
         unsigned int node_count() const;
 
     private:

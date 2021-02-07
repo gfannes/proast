@@ -8,14 +8,14 @@ namespace proast { namespace model {
     {
         bool b = false;
         auto check = [&](auto &opt){if (opt) b = true;};
-        check(my_effort);
-        check(my_live);
-        check(my_due);
-        check(my_dead);
-        check(my_completion_pct);
-        check(my_volume_db);
-        check(my_impact);
-        if (my_tags.size())
+        check(effort);
+        check(live);
+        check(due);
+        check(dead);
+        check(completion_pct);
+        check(volume_db);
+        check(impact);
+        if (tags.size())
             b = true;
         return b;
     }
@@ -41,18 +41,18 @@ namespace proast { namespace model {
             return res;
         };
 
-        stream_item_2("Effort", my_effort);
-        if (my_tags.size())
+        stream_item_2("Effort", effort);
+        if (tags.size())
         {
             auto n = body.node("Tags");
-            n.attr("value", piped(my_tags));
+            n.attr("value", piped(tags));
         }
-        stream_item_2("Live", my_live);
-        stream_item_2("Due", my_due);
-        stream_item_2("Dead", my_dead);
-        stream_item_2("Completion_pct", my_completion_pct);
-        stream_item_2("Volume_db", my_volume_db);
-        stream_item_2("Impact", my_impact);
+        stream_item_2("Live", live);
+        stream_item_2("Due", due);
+        stream_item_2("Dead", dead);
+        stream_item_2("Completion_pct", completion_pct);
+        stream_item_2("Volume_db", volume_db);
+        stream_item_2("Impact", impact);
     }
     bool Metadata::parse(gubg::naft::Range &range)
     {
@@ -63,20 +63,20 @@ namespace proast { namespace model {
             MSS(range.pop_attr(key, value));
             MSS(key == "value");
             if (false) {}
-            else if (tag == "Effort") my_effort = std::stod(value);
-            else if (tag == "Volume_db") my_volume_db = std::stod(value);
-            else if (tag == "Impact") my_impact = std::stod(value);
-            else if (tag == "Completion_pct") my_completion_pct = std::stod(value);
-            else if (tag == "Live") my_dead = value;
-            else if (tag == "Due") my_due = value;
-            else if (tag == "Dead") my_dead = value;
+            else if (tag == "Effort") effort = std::stod(value);
+            else if (tag == "Volume_db") volume_db = std::stod(value);
+            else if (tag == "Impact") impact = std::stod(value);
+            else if (tag == "Completion_pct") completion_pct = std::stod(value);
+            else if (tag == "Live") dead = value;
+            else if (tag == "Due") due = value;
+            else if (tag == "Dead") dead = value;
             else if (tag == "Tags")
             {
                 for (std::string_view sv{value}; !sv.empty();)
                     if (auto ix = sv.find('|'))
                     {
                         const std::string str = std::string{sv.substr(0, ix)};
-                        my_tags.emplace(str);
+                        tags.emplace(str);
                         sv.remove_prefix(str.size());
 
                         if (ix != sv.npos)
@@ -90,13 +90,13 @@ namespace proast { namespace model {
 
     void Metadata::set_when_unset(const Metadata &other)
     {
-        if (!my_effort) my_effort = other.my_effort;
-        if (!my_volume_db) my_volume_db = other.my_volume_db;
-        if (!my_impact) my_impact = other.my_impact;
-        if (!my_completion_pct) my_completion_pct = other.my_completion_pct;
-        if (!my_dead) my_dead = other.my_dead;
-        if (!my_live) my_live = other.my_live;
-        if (!my_due) my_due = other.my_due;
-        if (!my_tags.size()) my_tags = other.my_tags;
+        if (!effort) effort = other.effort;
+        if (!volume_db) volume_db = other.volume_db;
+        if (!impact) impact = other.impact;
+        if (!completion_pct) completion_pct = other.completion_pct;
+        if (!dead) dead = other.dead;
+        if (!live) live = other.live;
+        if (!due) due = other.due;
+        if (!tags.size()) tags = other.tags;
     }
 } } 

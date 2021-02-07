@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 
+#include <proast/types.hpp>
 #include <gubg/naft/Node.hpp>
 #include <gubg/naft/Range.hpp>
 #include <optional>
@@ -12,17 +13,14 @@ namespace proast { namespace model {
     class Metadata
     {
     public:
-        using Tag = std::string;
-        using Tags = std::set<Tag>;
-
-        std::optional<double>       my_effort;
-        std::optional<std::string>  my_live;
-        std::optional<std::string>  my_due;
-        std::optional<std::string>  my_dead;
-        std::optional<double>       my_completion_pct;
-        std::optional<double>       my_volume_db;
-        std::optional<double>       my_impact;
-        Tags                        my_tags;
+        std::optional<double>       effort;
+        std::optional<std::string>  live;
+        std::optional<std::string>  due;
+        std::optional<std::string>  dead;
+        std::optional<double>       completion_pct;
+        std::optional<double>       volume_db;
+        std::optional<double>       impact;
+        Tags                        tags;
 
         bool has_local_data() const;
 

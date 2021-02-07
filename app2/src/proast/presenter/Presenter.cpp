@@ -78,8 +78,8 @@ namespace proast { namespace presenter {
                             {
                                 case MetadataField::Effort:
                                     oss_ << std::fixed << std::setprecision(1) << std::setw(5);
-                                    if (auto &effort = child->metadata.my_effort)
-                                        oss_ << *effort;
+                                    if (auto effort = child->total_effort(); effort > 0)
+                                        oss_ << effort;
                                     else
                                         oss_ << ' ';
                                     oss_ << ' ';
@@ -114,7 +114,7 @@ namespace proast { namespace presenter {
                 {
                     lst->name = model::to_string(node->to_path());
 
-                    const unsigned int align = 15;
+                    const unsigned int align = 10;
                     auto as_number = [](auto &os, const auto &effort){
                         os << std::fixed << std::setprecision(1) << effort;
                     };
@@ -152,13 +152,14 @@ namespace proast { namespace presenter {
                             lst->items.push_back(oss_.str());
                         }
                     };
-                    add_field_opt(node->metadata.my_effort, "my effort", as_number);
-                    add_field_opt(node->metadata.my_impact, "my impact", as_number);
-                    add_field_opt(node->metadata.my_completion_pct, "my completion", as_pct);
-                    add_field_opt(node->metadata.my_volume_db, "my volume", as_volume);
-                    add_field_opt(node->metadata.my_live, "my live", as_date);
-                    add_field_opt(node->metadata.my_dead, "my dead", as_date);
-                    add_tags(node->metadata.my_tags, "my tags");
+                    add_field_opt(node->metadata.effort, "effort", as_number);
+                    add_field_opt(node->metadata.impact, "impact", as_number);
+                    add_field_opt(node->metadata.completion_pct, "completion", as_pct);
+                    add_field_opt(node->metadata.volume_db, "volume", as_volume);
+                    add_field_opt(node->metadata.live, "live", as_date);
+                    add_field_opt(node->metadata.dead, "dead", as_date);
+                    add_tags(node->metadata.tags, "tags");
+                    add_tags(node->all_tags(), "All tags");
                 }
                 view_.metadata = lst;
             }
@@ -187,13 +188,9 @@ namespace proast { namespace presenter {
                         case State::ShowMetadataField:
                             lst->name = "Metadata fields";
                             for (auto ch: {'e', 'v', 'i', 'c', 'l', 'd', 't', 'D'})
-                            {
-                                oss_.str("");
-                                oss_ << ch << ": ";
                                 if (auto mf = to_metadata_field(ch))
-                                    oss_ << to_string(*mf);
-                                lst->items.emplace_back(oss_.str());
-                            }
+                                    add_help(ch, to_string(*mf));
+                            add_help('~', "Erase metadata field");
                             break;
                         case State::Create:
                             lst->name = "Create";
@@ -331,21 +328,21 @@ namespace proast { namespace presenter {
             };
             switch (field)
             {
-                case MetadataField::Effort:        as_number(node->metadata.my_effort, 1.0); break;
-                case MetadataField::Volume:        as_number(node->metadata.my_volume_db, -20.0); break;
-                case MetadataField::Impact:        as_number(node->metadata.my_impact, 1); break;
-                case MetadataField::CompletionPct: as_number(node->metadata.my_completion_pct, 0.0); break;
-                case MetadataField::Live:          as_date(node->metadata.my_live); break;
-                case MetadataField::Dead:          as_date(node->metadata.my_dead); break;
+                case MetadataField::Effort:        as_number(node->metadata.effort, 1.0); break;
+                case MetadataField::Volume:        as_number(node->metadata.volume_db, -20.0); break;
+                case MetadataField::Impact:        as_number(node->metadata.impact, 1); break;
+                case MetadataField::CompletionPct: as_number(node->metadata.completion_pct, 0.0); break;
+                case MetadataField::Live:          as_date(node->metadata.live); break;
+                case MetadataField::Dead:          as_date(node->metadata.dead); break;
                 case MetadataField::Tag:
                                                    if (content.empty())
                                                        was_set = true;
                                                    else if (content == "~")
-                                                       node->metadata.my_tags.clear();
+                                                       node->metadata.tags.clear();
                                                    else if (content[0] == '~')
-                                                       node->metadata.my_tags.erase(content.substr(1));
+                                                       node->metadata.tags.erase(content.substr(1));
                                                    else
-                                                       node->metadata.my_tags.insert(content);
+                                                       node->metadata.tags.insert(content);
                                                    break;
             }
             if (was_set)
