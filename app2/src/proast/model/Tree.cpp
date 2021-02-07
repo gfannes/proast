@@ -14,6 +14,7 @@ namespace proast { namespace model {
     Tree::Tree()
     {
         root.value.name = "<ROOT>";
+        root2 = Node_::create("<ROOT>");
     }
 
     Tree::Config::Config()
@@ -29,6 +30,13 @@ namespace proast { namespace model {
         MSS_BEGIN(bool);
 
         MSS(std::filesystem::is_directory(path), log::ostream() << "Cannot add " << path << ", this is not a directory" << std::endl);
+
+        auto child2 = root2->append_child();
+        //TODO: allow base node to have a different name than path.filename()
+        child2->segment = path;
+
+        MSS(add_(child2, path, config));
+        log::raw([&](auto &os){os << "Loaded " << child2->node_count() << " nodes from \"" << path << "\"" << std::endl;});
 
         auto &child = root.childs.append();
         child.value.name = path.filename().string();
@@ -178,6 +186,43 @@ namespace proast { namespace model {
             auto &child = node.childs.append();
             child.value.path = path;
             child.value.name = path.filename().string();
+            if (is_folder)
+                MSS(add_(child, path, config));
+        }
+
+        MSS_END();
+    }
+    bool Tree::add_(Node2 node, const std::filesystem::path &path, const Tree::Config &config)
+    {
+        MSS_BEGIN(bool);
+
+        MSS(!!node);
+
+        std::map<std::filesystem::path, bool> path__is_folder;
+
+        for (auto &entry: std::filesystem::directory_iterator(path))
+        {
+            const auto path = entry.path();
+            const auto fn = path.filename().string();
+            const auto ext = path.extension();
+            const auto is_hidden = fn.empty() ? true : fn[0]=='.';
+            if (is_hidden || config.names_to_skip.count(fn) || config.extensions_to_skip.count(ext))
+            {
+            }
+            else if (std::filesystem::is_regular_file(path))
+            {
+                path__is_folder[path] = false;
+            }
+            else if (std::filesystem::is_directory(path))
+            {
+                path__is_folder[path] = true;
+            }
+        }
+
+        for (const auto &[path, is_folder]: path__is_folder)
+        {
+            auto child = node->append_child();
+            child->segment = path.filename().string();
             if (is_folder)
                 MSS(add_(child, path, config));
         }

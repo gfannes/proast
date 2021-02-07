@@ -30,6 +30,7 @@ namespace proast { namespace model {
         bool add(const std::filesystem::path &, const Config &);
 
         Node root;
+        Node2 root2;
 
         Node *find(const Path &);
 
@@ -40,6 +41,7 @@ namespace proast { namespace model {
 
     private:
         bool add_(Node &, const std::filesystem::path &, const Config &);
+        bool add_(Node2, const std::filesystem::path &, const Config &);
         static void compute_navigation_(Node &);
 
         static bool stream_metadata_(std::ostream &, Node &);
