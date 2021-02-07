@@ -165,6 +165,12 @@ namespace proast { namespace presenter {
 
             {
                 auto lst = dto::List::create();
+                auto add_help = [&](auto ch, auto descr)
+                {
+                    oss_.str("");
+                    oss_ << ch << ": " << descr;
+                    lst->items.emplace_back(oss_.str());
+                };
                 if (Commander::state)
                     switch (*Commander::state)
                     {
@@ -190,19 +196,19 @@ namespace proast { namespace presenter {
                             }
                             break;
                         case State::Create:
-                            {
-                                lst->name = "Create";
-                                auto add_help = [&](auto ch, auto descr)
-                                {
-                                    oss_.str("");
-                                    oss_ << ch << ": " << descr;
-                                    lst->items.emplace_back(oss_.str());
-                                };
-                                add_help('f', "Create file in parent");
-                                add_help('F', "Create file in self");
-                                add_help('d', "Create directory in parent");
-                                add_help('D', "Create directory in self");
-                            }
+                            lst->name = "Create";
+                            add_help('f', "Create file");
+                            add_help('d', "Create directory");
+                            add_help('i', "Create file/directory in node");
+                            add_help('n', "Create file/directory next to node");
+                            break;
+                        case State::Rename:
+                            lst->name = "Rename";
+                            break;
+                        case State::Delete:
+                            lst->name = "Delete";
+                            add_help('d', "Delete single file/directory");
+                            add_help('D', "Delete recursively");
                             break;
                         default: break;
                     }
@@ -224,11 +230,14 @@ namespace proast { namespace presenter {
                                                        oss_ << "Metadata for " << to_string(*Commander::metadata_field) << ": " << Commander::content;
                                                    break;
                     case State::ShowMetadataField: oss_ << "Show metadata field"; break;
-                    case State::Create:            if (!Commander::create_what)
-                                                       oss_ << "Create new file or directory";
+                    case State::Create:            if (!Commander::create_file_dir)
+                                                       oss_ << "Create new file or directory?";
+                                                   else if (!Commander::create_in_next)
+                                                       oss_ << "Create in or next to current node?";
                                                    else
                                                        oss_ << "Name: " << Commander::content;
                                                    break;
+                    case State::Rename:            oss_ << "Name: " << Commander::content;
                     default: break;
                 }
             view_.footer = oss_.str();
@@ -350,12 +359,13 @@ namespace proast { namespace presenter {
     {
         show_metadata_field_ = mf_opt;
     }
-    void Presenter::commander_create(const std::string &name, bool create_file, bool in_parent)
+    void Presenter::commander_create(const std::string &name, bool create_file, bool create_in)
     {
-        if (create_file)
-            model_.create_file(name, in_parent);
-        else
-            model_.create_folder(name, in_parent);
+        model_.create(name, create_file, create_in);
+    }
+    void Presenter::commander_rename(const std::string &name)
+    {
+        model_.rename(name);
     }
     void Presenter::commander_delete()
     {

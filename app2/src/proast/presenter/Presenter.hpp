@@ -29,6 +29,7 @@ namespace proast { namespace presenter {
         void commander_set_metadata(MetadataField, const std::string &content);
         void commander_show_metadata(std::optional<MetadataField>);
         void commander_create(const std::string &name, bool create_file, bool in_parent);
+        void commander_rename(const std::string &name);
         void commander_delete();
         void commander_reload();
 

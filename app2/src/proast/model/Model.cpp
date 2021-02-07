@@ -129,41 +129,36 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Model::create_file(const std::string &name, bool in_parent)
+    bool Model::create(const std::string &name, bool create_file, bool create_in)
     {
         MSS_BEGIN(bool);
 
         auto n = node();
         MSS(!!n);
 
-        //TODO: rework into index when !in_parent
-        auto fp = n->path();
-        if (in_parent || std::filesystem::is_regular_file(fp))
-            fp = fp.parent_path();
-        fp /= name;
-
-        std::ofstream touch{fp};
-
-        MSS(reload());
+        if (create_in)
+            MSS(create_(n, name, create_file));
+        else
+        {
+            auto parent = n->parent.lock();
+            MSS(!!parent);
+            MSS(create_(parent, name, create_file));
+        }
 
         MSS_END();
     }
-    bool Model::create_folder(const std::string &name, bool in_parent)
+    bool Model::rename(const std::string &name)
     {
         MSS_BEGIN(bool);
 
         auto n = node();
         MSS(!!n);
 
-        //TODO: rework into index when !in_parent
-        auto fp = n->path();
-        if (in_parent || std::filesystem::is_regular_file(fp))
-            fp = fp.parent_path();
-        fp /= name;
+        const auto orig_fp = n->path();
+        n->segment = name;
+        const auto new_fp = n->path();
 
-        std::filesystem::create_directories(fp);
-
-        MSS(reload());
+        std::filesystem::rename(orig_fp, new_fp);
 
         MSS_END();
     }
@@ -531,6 +526,59 @@ namespace proast { namespace model {
     std::filesystem::path Model::metadata_fn_(const std::filesystem::path &base_dir)
     {
         return base_dir / "proast-metadata.naft";
+    }
+
+    bool Model::rework_into_directory_(Node node)
+    {
+        assert(!!node);
+
+        MSS_BEGIN(bool);
+
+        MSS(node->childs.empty());
+
+        const auto orig_fp = node->path();
+        MSS(!std::filesystem::is_directory(orig_fp));
+
+        const auto stem = orig_fp.stem();
+        const auto ext = orig_fp.extension();
+        const auto dir = orig_fp.parent_path()/stem;
+        std::filesystem::create_directory(dir);
+        auto new_fp = dir/"index";
+        new_fp.replace_extension(ext);
+        std::filesystem::rename(orig_fp, new_fp);
+
+        auto child = node->append_child();
+        child->segment = new_fp.filename();
+
+        node->segment = stem;
+
+        MSS_END();
+    }
+    bool Model::create_(Node node, const std::string &name, bool create_file)
+    {
+        assert(!!node);
+
+        MSS_BEGIN(bool);
+
+        if (!std::filesystem::is_directory(node->path()))
+            MSS(rework_into_directory_(node));
+        MSS(std::filesystem::is_directory(node->path()));
+
+        const auto new_fp = node->path()/name;
+        if (create_file)
+        {
+            std::ofstream touch{new_fp};
+        }
+        else
+        {
+            std::filesystem::create_directory(new_fp);
+        }
+        auto child = node->append_child();
+        child->segment = name;
+
+        focus(child->to_path());
+
+        MSS_END();
     }
 
 } } 

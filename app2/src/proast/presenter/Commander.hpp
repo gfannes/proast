@@ -33,7 +33,8 @@ namespace proast { namespace presenter {
         std::optional<State> state;
         std::optional<MetadataField> metadata_field;
         std::string content;
-        std::optional<char> create_what;
+        std::optional<bool> create_file_dir;
+        std::optional<bool> create_in_next;
 
         void process(wchar_t wchar)
         {
@@ -93,18 +94,15 @@ namespace proast { namespace presenter {
                         state.reset();
                         break;
                     case State::Create:
-                        if (!create_what)
+                        if (!create_file_dir || !create_in_next)
                         {
                             switch (wchar)
                             {
-                                case 'f':
-                                case 'F':
-                                case 'd':
-                                case 'D':
-                                    create_what = wchar;
-                                    break;
-                                default:
-                                    break;
+                                case 'f': create_file_dir = true; break;
+                                case 'd': create_file_dir = false; break;
+                                case 'i': create_in_next = true; break;
+                                case 'n': create_in_next = false; break;
+                                default: break;
                             }
                         }
                         else
@@ -112,11 +110,11 @@ namespace proast { namespace presenter {
                             {
                                 case Return:
                                     {
-                                        const auto ch = *create_what;
-                                        r.commander_create(content, ch=='f'||ch=='F', ch=='f'||ch=='d');
+                                        r.commander_create(content, *create_file_dir, *create_in_next);
                                         content.clear();
                                         state.reset();
-                                        create_what.reset();
+                                        create_file_dir.reset();
+                                        create_in_next.reset();
                                     }
                                     break;
                                 case Backspace:
@@ -139,6 +137,29 @@ namespace proast { namespace presenter {
                             default: break;
                         }
                         state.reset();
+                        break;
+                    case State::Rename:
+                        switch (wchar)
+                        {
+                            case Return:
+                                {
+                                    r.commander_rename(content);
+                                    content.clear();
+                                    state.reset();
+                                }
+                                break;
+                            case Backspace:
+                                if (!content.empty())
+                                    content.pop_back();
+                                break;
+                            case Escape:
+                                //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
+                                content.clear();
+                                break;
+                            default:
+                                content.push_back(wchar);
+                                break;
+                        }
                         break;
                 }
             }
@@ -174,8 +195,9 @@ namespace proast { namespace presenter {
                     case 'M':  state = State::ShowMetadataField; break;
                     case 'c':  state = State::Create; break;
                     case 'd':  state = State::Delete; break;
+                    case 'r':  state = State::Rename; break;
 
-                    case 'r': r.commander_reload(); break;
+                    case 'R': r.commander_reload(); break;
                 }
             }
         }

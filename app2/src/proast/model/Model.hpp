@@ -37,8 +37,8 @@ namespace proast { namespace model {
 
         bool focus(const Path &);
 
-        bool create_file(const std::string &name, bool in_parent);
-        bool create_folder(const std::string &name, bool in_parent);
+        bool create(const std::string &name, bool create_file, bool create_in);
+        bool rename(const std::string &name);
         bool delete_current();
 
         Node node();
@@ -80,6 +80,9 @@ namespace proast { namespace model {
         bool append_metadata_(const std::filesystem::path &);
         void set_metadata_();
         static std::filesystem::path metadata_fn_(const std::filesystem::path &base_dir);
+
+        bool rework_into_directory_(Node);
+        bool create_(Node, const std::string &name, bool create_file);
     };
 } } 
 

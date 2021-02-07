@@ -36,6 +36,7 @@ namespace proast { namespace presenter {
     ftor(type, ShowMetadataField) \
     ftor(type, Create) \
     ftor(type, Delete) \
+    ftor(type, Rename) \
 
     define_enum_(State, my_each_value_);
 #undef my_each_value_
