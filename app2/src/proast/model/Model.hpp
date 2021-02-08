@@ -33,13 +33,15 @@ namespace proast { namespace model {
         template <typename Ftor>
         void each_bookmark(Ftor &&ftor){bookmarks_.each(ftor);}
 
-        bool move(Direction, bool me);
+        bool move(Direction, bool me, bool move_node);
 
         bool focus(const Path &);
+        bool focus(Node);
 
         bool create(const std::string &name, bool create_file, bool create_in);
         bool rename(const std::string &name);
         bool delete_current();
+        bool paste(bool paste_in);
 
         Node node();
         Node node_0();
@@ -57,12 +59,14 @@ namespace proast { namespace model {
     private:
         Node root_;
         Node current_node_;
+        Node cut_;
 
         bool add_(Node, const std::filesystem::path &, const Config &);
         void recompute_metadata_(Node);
 
         std::vector<std::tuple<std::filesystem::path, Config>> root_config_ary_;
         std::filesystem::path home_dir_;
+        std::filesystem::path scratchpad_dir_;
 
         std::filesystem::path bookmarks_fp_;
         Bookmarks bookmarks_;
@@ -83,6 +87,10 @@ namespace proast { namespace model {
 
         bool rework_into_directory_(Node);
         bool create_(Node, const std::string &name, bool create_file);
+
+        bool erase_node_(Node);
+        bool paste_(Node dst, Node src, const std::filesystem::path &);
+        void setup_up_down_(Node &);
     };
 } } 
 

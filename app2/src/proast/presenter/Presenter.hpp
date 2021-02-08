@@ -19,11 +19,11 @@ namespace proast { namespace presenter {
         bool run();
 
         //View::Events API
-        void received(wchar_t) override;
+        void received(wchar_t, bool alt) override;
 
         //Commander API
         void commander_quit();
-        void commander_move(Direction, bool me);
+        void commander_move(Direction, bool me, bool move_node);
         void commander_open(Open);
         void commander_bookmark(char ch, bool do_register);
         void commander_set_metadata(MetadataField, const std::string &content);
@@ -31,6 +31,7 @@ namespace proast { namespace presenter {
         void commander_create(const std::string &name, bool create_file, bool in_parent);
         void commander_rename(const std::string &name);
         void commander_delete();
+        void commander_paste(bool paste_in);
         void commander_reload();
 
     private:

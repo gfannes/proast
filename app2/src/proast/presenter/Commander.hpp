@@ -36,7 +36,7 @@ namespace proast { namespace presenter {
         std::optional<bool> create_file_dir;
         std::optional<bool> create_in_next;
 
-        void process(wchar_t wchar)
+        void process(wchar_t wchar, bool alt)
         {
             auto &r = receiver_();
             //TODO: integrate the `chain of responsibility` pattern
@@ -133,10 +133,18 @@ namespace proast { namespace presenter {
                     case State::Delete:
                         switch (wchar)
                         {
-                            case 'd': r.commander_delete(); break;
+                            case 'd': r.commander_delete(); state.reset(); break;
                             default: break;
                         }
-                        state.reset();
+                        
+                        break;
+                    case State::Paste:
+                        switch (wchar)
+                        {
+                            case 'i': r.commander_paste(true);  state.reset(); break;
+                            case 'n': r.commander_paste(false); state.reset(); break;
+                            default: break;
+                        }
                         break;
                     case State::Rename:
                         switch (wchar)
@@ -170,20 +178,18 @@ namespace proast { namespace presenter {
                     case 'q': r.commander_quit(); break;
 
                     case 'j':
-                    case ArrowDown: r.commander_move(Direction::Down, true); break;
-
-                    case 'J': r.commander_move(Direction::Down, false); break;
+                    case ArrowDown:  r.commander_move(Direction::Down, true, alt); break;
+                    case 'J':        r.commander_move(Direction::Down, false, alt); break;
 
                     case 'k':
-                    case ArrowUp: r.commander_move(Direction::Up, true); break;
-
-                    case 'K': r.commander_move(Direction::Up, false); break;
+                    case ArrowUp:    r.commander_move(Direction::Up, true, alt); break;
+                    case 'K':        r.commander_move(Direction::Up, false, alt); break;
 
                     case 'h': 
-                    case ArrowLeft: r.commander_move(Direction::Left, true); break;
+                    case ArrowLeft:  r.commander_move(Direction::Left, true, alt); break;
 
                     case 'l':
-                    case ArrowRight: r.commander_move(Direction::Right, true); break;
+                    case ArrowRight: r.commander_move(Direction::Right, true, alt); break;
 
                     case Return: r.commander_open(Open::View); break;
                     case 'e': r.commander_open(Open::Edit); break;
@@ -195,6 +201,7 @@ namespace proast { namespace presenter {
                     case 'M':  state = State::ShowMetadataField; break;
                     case 'c':  state = State::Create; break;
                     case 'd':  state = State::Delete; break;
+                    case 'p':  state = State::Paste; break;
                     case 'r':  state = State::Rename; break;
 
                     case 'R': r.commander_reload(); break;

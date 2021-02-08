@@ -12,7 +12,7 @@ namespace proast { namespace view {
         struct Events
         {
             virtual ~Events() {}
-            virtual void received(wchar_t) = 0;
+            virtual void received(wchar_t, bool alt) = 0;
         };
         Events *events = nullptr;
 
@@ -39,6 +39,7 @@ namespace proast { namespace view {
         bool OnEvent(ftxui::Event event) override;
 
     private:
+        std::string prev_input_;
     };
 } } 
 

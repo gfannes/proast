@@ -48,19 +48,42 @@ namespace proast { namespace view {
     }
     bool View::OnEvent(ftxui::Event event)
     {
-        auto s = log::Scope{"View::OnEvent()"};
+        auto s = log::Scope{"View::OnEvent()", [&](auto &hdr){
+            hdr.attr("input.size", event.input().size()).attr("is_character", event.is_character());
+            for (auto ch: event.input())
+                hdr.attr("ch", (int)ch);
+        }};
 
         if (events)
         {
             if (false) {}
-            else if (event == ftxui::Event::ArrowLeft)  events->received(ArrowLeft);
-            else if (event == ftxui::Event::ArrowUp)    events->received(ArrowUp);
-            else if (event == ftxui::Event::ArrowRight) events->received(ArrowRight);
-            else if (event == ftxui::Event::ArrowDown)  events->received(ArrowDown);
-            else if (event == ftxui::Event::Return)     events->received(Return);
-            else if (event == ftxui::Event::Escape)     events->received(Escape);
-            else if (event == ftxui::Event::Backspace)  events->received(Backspace);
-            else events->received(event.character());
+            else if (event == ftxui::Event::ArrowLeft)  events->received(ArrowLeft, false);
+            else if (event == ftxui::Event::ArrowUp)    events->received(ArrowUp, false);
+            else if (event == ftxui::Event::ArrowRight) events->received(ArrowRight, false);
+            else if (event == ftxui::Event::ArrowDown)  events->received(ArrowDown, false);
+            else if (event == ftxui::Event::Return)     events->received(Return, false);
+            else if (event == ftxui::Event::Escape)     events->received(Escape, false);
+            else if (event == ftxui::Event::Backspace)  events->received(Backspace, false);
+            else
+            {
+                prev_input_ += event.input();
+                while (!prev_input_.empty())
+                {
+                    if (prev_input_[0] == 27)//Alt
+                    {
+                        if (prev_input_.size() < 2)
+                            //We did not receive the actual key yet
+                            break;
+                        events->received(prev_input_[1], true);
+                        prev_input_ = prev_input_.substr(2);
+                    }
+                    else
+                    {
+                        events->received(prev_input_[0], false);
+                        prev_input_ = prev_input_.substr(1);
+                    }
+                }
+            }
         }
         return true;
     }

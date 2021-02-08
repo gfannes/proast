@@ -39,6 +39,9 @@ namespace proast { namespace model {
         MSS(std::filesystem::is_directory(home_dir));
 
         home_dir_ = home_dir;
+        scratchpad_dir_ = home_dir_ / "scratchpad";
+        if (!std::filesystem::is_directory(scratchpad_dir_))
+            std::filesystem::create_directories(scratchpad_dir_);
 
         {
             bookmarks_fp_ = home_dir/"bookmarks.naft";
@@ -128,6 +131,13 @@ namespace proast { namespace model {
 
         MSS_END();
     }
+    bool Model::focus(Node n)
+    {
+        MSS_BEGIN(bool);
+        MSS(!!n);
+        MSS(focus(n->to_path()));
+        MSS_END();
+    }
 
     bool Model::create(const std::string &name, bool create_file, bool create_in)
     {
@@ -169,14 +179,42 @@ namespace proast { namespace model {
         auto n = node();
         MSS(!!n);
 
-        //TODO: move to scratchpad iso actually deleting
-        const auto path = n->path();
-        if (std::filesystem::is_regular_file(path))
-            std::filesystem::remove(path);
-        else
-            std::filesystem::remove_all(path);
+        const auto orig_fp = n->path();
+        MSS(erase_node_(n));
+        auto new_fp = scratchpad_dir_/orig_fp.filename();
 
-        MSS(reload());
+        //Remove whatever is in the scratchpad in this location
+        if (std::filesystem::is_directory(new_fp) || std::filesystem::is_regular_file(new_fp))
+            std::filesystem::remove_all(new_fp);
+
+        //Move file/folder to scratchpad
+        std::filesystem::rename(orig_fp, new_fp);
+
+        //Indicate full-path in node to make sure we find it back
+        n->parent.reset();
+        n->segment = new_fp;
+        cut_ = n;
+
+        MSS_END();
+    }
+    bool Model::paste(bool paste_in)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        if (!paste_in)
+            n = n->parent.lock();
+
+        MSS(!!cut_);
+        auto cut = cut_;
+        cut_.reset();
+
+        //When deleting the node, its segment was reworked into an absolute path
+        //Hence cut->path() should be OK
+        MSS(paste_(n, cut, cut->path()));
+        MSS(focus(cut));
 
         MSS_END();
     }
@@ -269,82 +307,153 @@ namespace proast { namespace model {
         return 0;
     }
 
-    bool Model::move(Direction direction, bool me)
+    bool Model::move(Direction direction, bool me, bool move_node)
     {
         MSS_BEGIN(bool);
 
         MSS(!!current_node_);
 
-        switch (direction)
+        if (move_node)
         {
-            case Direction::Down:
-                if (me)
-                {
-                    if (auto child = current_node_->child.lock())
-                        if (auto ptr = child->child.lock())
+            switch (direction)
+            {
+                case Direction::Down:
+                    if (me)
+                    {
+                        if (auto child = current_node_->child.lock())
+                            if (auto ix = selected_ix(child); ix+1 < child->childs.size())
+                            {
+                                std::swap(child->childs[ix], child->childs[ix+1]);
+                                setup_up_down_(child);
+                            }
+                    }
+                    else
+                    {
+                        if (auto ix = selected_ix(current_node_); ix+1 < current_node_->childs.size())
                         {
-                            if (auto down = ptr->down.lock())
-                                child->child = down;
+                            std::swap(current_node_->childs[ix], current_node_->childs[ix+1]);
+                            setup_up_down_(current_node_);
                         }
-                        else if (auto content = child->content)
+                    }
+                    break;
+                case Direction::Up:
+                    if (me)
+                    {
+                        if (auto child = current_node_->child.lock())
+                            if (auto ix = selected_ix(child); ix > 0)
+                            {
+                                std::swap(child->childs[ix], child->childs[ix-1]);
+                                setup_up_down_(child);
+                            }
+                    }
+                    else
+                    {
+                        if (auto ix = selected_ix(current_node_); ix > 0)
+                        {
+                            std::swap(current_node_->childs[ix], current_node_->childs[ix-1]);
+                            setup_up_down_(current_node_);
+                        }
+                    }
+                    break;
+                case Direction::Left:
+                    if (me)
+                    {
+                        if (auto child = current_node_->child.lock())
+                            if (auto ptr = child->child.lock())
+                            {
+                                MSS(erase_node_(ptr));
+                                MSS(paste_(current_node_, ptr, ptr->path()));
+                                MSS(focus(ptr));
+                            }
+                    }
+                    break;
+                case Direction::Right:
+                    if (me)
+                    {
+                        if (auto child = current_node_->child.lock())
+                            if (auto ptr = child->child.lock())
+                                if (!std::filesystem::is_directory(ptr->path()))
+                                {
+                                    MSS(rework_into_directory_(ptr));
+                                    current_node_ = child;
+                                }
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (direction)
+            {
+                case Direction::Down:
+                    if (me)
+                    {
+                        if (auto child = current_node_->child.lock())
+                            if (auto ptr = child->child.lock())
+                            {
+                                if (auto down = ptr->down.lock())
+                                    child->child = down;
+                            }
+                            else if (auto content = child->content)
+                            {
+                                if (content->ix+1 < content->items.size())
+                                    ++content->ix;
+                            }
+                    }
+                    else
+                    {
+                        if (auto child = current_node_->child.lock())
+                        {
+                            if (auto down = child->down.lock())
+                            {
+                                current_node_->child = down;
+                            }
+                        }
+                        else if (auto content = current_node_->content)
                         {
                             if (content->ix+1 < content->items.size())
                                 ++content->ix;
                         }
-                }
-                else
-                {
-                    if (auto child = current_node_->child.lock())
-                    {
-                        if (auto down = child->down.lock())
-                        {
-                            current_node_->child = down;
-                        }
                     }
-                    else if (auto content = current_node_->content)
+                    break;
+                case Direction::Up:
+                    if (me)
                     {
-                        if (content->ix+1 < content->items.size())
-                            ++content->ix;
+                        if (auto child = current_node_->child.lock())
+                            if (auto ptr = child->child.lock())
+                            {
+                                if (auto up = ptr->up.lock())
+                                    child->child = up;
+                            }
+                            else if (auto content = child->content)
+                            {
+                                if (content->ix > 0)
+                                    --content->ix;
+                            }
                     }
-                }
-                break;
-            case Direction::Up:
-                if (me)
-                {
-                    if (auto child = current_node_->child.lock())
-                        if (auto ptr = child->child.lock())
+                    else
+                    {
+                        if (auto child = current_node_->child.lock())
                         {
-                            if (auto up = ptr->up.lock())
-                                child->child = up;
+                            if (auto up = child->up.lock())
+                                current_node_->child = up;
                         }
-                        else if (auto content = child->content)
+                        else if (auto content = current_node_->content)
                         {
                             if (content->ix > 0)
                                 --content->ix;
                         }
-                }
-                else
-                {
-                    if (auto child = current_node_->child.lock())
-                    {
-                        if (auto up = child->up.lock())
-                            current_node_->child = up;
                     }
-                    else if (auto content = current_node_->content)
-                    {
-                        if (content->ix > 0)
-                            --content->ix;
-                    }
-                }
-                break;
-            case Direction::Left:
-                if (auto ptr = current_node_->parent.lock())
-                    current_node_ = ptr;
-                break;
-            case Direction::Right:
-                if (auto ptr = current_node_->child.lock())
-                    current_node_ = ptr;
-                break;
+                    break;
+                case Direction::Left:
+                    if (auto ptr = current_node_->parent.lock())
+                        current_node_ = ptr;
+                    break;
+                case Direction::Right:
+                    if (auto ptr = current_node_->child.lock())
+                        current_node_ = ptr;
+                    break;
+            }
         }
         MSS_END();
     }
@@ -547,10 +656,12 @@ namespace proast { namespace model {
         new_fp.replace_extension(ext);
         std::filesystem::rename(orig_fp, new_fp);
 
+        //Create new child for the "index" file
         auto child = node->append_child();
         child->segment = new_fp.filename();
 
         node->segment = stem;
+        node->child = child;
 
         MSS_END();
     }
@@ -576,9 +687,91 @@ namespace proast { namespace model {
         auto child = node->append_child();
         child->segment = name;
 
-        focus(child->to_path());
+        focus(child);
 
         MSS_END();
+    }
+    bool Model::erase_node_(Node n)
+    {
+        MSS_BEGIN(bool);
+
+        auto parent = n->parent.lock();
+        MSS(!!parent);
+        auto ix = selected_ix(parent);
+        auto &childs = parent->childs;
+
+        //Remove ptr from childs
+        childs.erase(childs.begin()+ix);
+
+        //Set new child selection
+        if (ix >= childs.size() && ix > 0)
+            --ix;
+        if (ix >= childs.size())
+            parent->child.reset();
+        else
+            parent->child = childs[ix];
+
+        setup_up_down_(parent);
+
+        MSS_END();
+    }
+    bool Model::paste_(Node dst, Node src, const std::filesystem::path &orig_fp)
+    {
+        assert(!!dst);
+        assert(!!src);
+
+        MSS_BEGIN(bool);
+
+        if (!std::filesystem::is_directory(dst->path()))
+            MSS(rework_into_directory_(dst));
+
+        auto orig_parent = src->parent.lock();
+        src->parent = dst;
+        std::string suffix;
+        for (bool ok = false; !ok; suffix += '_')
+        {
+            MSS(suffix.size() < 10, src->parent = orig_parent);
+
+            //Create segment name as original filename with a few '_' for the retries when the
+            //name is already occupied
+            src->segment = orig_fp.filename();
+            src->segment += suffix;
+
+            const auto new_fp = src->path();
+            if (!std::filesystem::is_directory(new_fp) && !std::filesystem::is_regular_file(new_fp))
+            {
+                std::filesystem::rename(orig_fp, new_fp);
+                ok = true;
+            }
+        }
+
+        src->down.reset();
+        src->up.reset();
+        if (!dst->childs.empty())
+            if (auto bottom = dst->childs.back())
+            {
+                bottom->down = src;
+                src->up = bottom;
+            }
+        dst->childs.push_back(src);
+
+        MSS_END();
+    }
+    void Model::setup_up_down_(Node &n)
+    {
+        assert(!!n);
+
+        Node prev;
+        for (auto &child: n->childs)
+        {
+            if (!child)
+                continue;
+            child->up = prev;
+            child->down.reset();
+            if (prev)
+                prev->down = child;
+            prev = child;
+        }
     }
 
 } } 

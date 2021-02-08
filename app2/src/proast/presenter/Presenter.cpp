@@ -199,13 +199,18 @@ namespace proast { namespace presenter {
                             add_help('i', "Create file/directory in node");
                             add_help('n', "Create file/directory next to node");
                             break;
-                        case State::Rename:
-                            lst->name = "Rename";
-                            break;
                         case State::Delete:
                             lst->name = "Delete";
                             add_help('d', "Delete single file/directory");
                             add_help('D', "Delete recursively");
+                            break;
+                        case State::Paste:
+                            lst->name = "Paste";
+                            add_help('i', "Paste file/directory in node");
+                            add_help('n', "Paste file/directory next to node");
+                            break;
+                        case State::Rename:
+                            lst->name = "Rename";
                             break;
                         default: break;
                     }
@@ -248,9 +253,9 @@ namespace proast { namespace presenter {
     {
         view_.quit();
     }
-    void Presenter::commander_move(Direction direction, bool me)
+    void Presenter::commander_move(Direction direction, bool me, bool move_node)
     {
-        model_.move(direction, me);
+        model_.move(direction, me, move_node);
     }
     void Presenter::commander_open(Open open)
     {
@@ -368,20 +373,24 @@ namespace proast { namespace presenter {
     {
         model_.delete_current();
     }
+    void Presenter::commander_paste(bool paste_in)
+    {
+        model_.paste(paste_in);
+    }
     void Presenter::commander_reload()
     {
         model_.reload();
     }
 
     //View::Events API
-    void Presenter::received(wchar_t wchar)
+    void Presenter::received(wchar_t wchar, bool alt)
     {
         auto s = log::Scope{"Presenter::received()", [=](auto &hdr){
             hdr.attr("uint", (unsigned int)wchar);
             if (32 <= wchar && wchar < 128) hdr.attr("char", (char)wchar);
         }};
 
-        Commander::process(wchar);
+        Commander::process(wchar, alt);
         refresh_view_();
     }
 } } 
