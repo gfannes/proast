@@ -1,0 +1,5 @@
+[Order](path:/app2/features)(name:structure)(name:ui)(name:FileManagement.md)(name:Help.md)(name:Metadata.md)(name:Planning.md)(name:Priority.md)
+[Metadata](path:/naming.md){
+  [Effort](value:12)
+}
+[Order](path:)(name:@design)(name:@input)(name:@model)(name:@sprint)(name:app)(name:app2)(name:file_format)(name:proast-metadata.naft)(name:proast.log)(name:proast.mm)(name:rakefile.rb)(name:readme.md)(name:recipes.chai)(name:schema)(name:site)(name:naming.md)

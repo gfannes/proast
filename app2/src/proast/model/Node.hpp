@@ -39,6 +39,7 @@ namespace proast { namespace model {
         Ptr find(const Path &);
 
         Path to_path() const;
+        Path to_path(Ptr &root) const;
 
         void clear_dependencies();
         void add_dependencies(Ptr);

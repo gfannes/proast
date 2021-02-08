@@ -13,6 +13,7 @@ namespace proast { namespace model {
     {
         root_ = Node_::create("<ROOT>");
         current_node_ = root_;
+        metadata_filename_ = "proast-metadata.naft";
     }
     Model::~Model()
     {
@@ -20,6 +21,8 @@ namespace proast { namespace model {
             log::ostream() << "Warning: could not save bookmarks to " << bookmarks_fp_ << std::endl;
         if (!save_current_location_())
             log::ostream() << "Warning: could not save the current location to " << current_location_fn_ << std::endl;
+        if (!save_metadata())
+            log::ostream() << "Warning: could not save metadata" << std::endl;
     }
 
     Model::Config::Config()
@@ -39,6 +42,7 @@ namespace proast { namespace model {
         MSS(std::filesystem::is_directory(home_dir));
 
         home_dir_ = home_dir;
+
         scratchpad_dir_ = home_dir_ / "scratchpad";
         if (!std::filesystem::is_directory(scratchpad_dir_))
             std::filesystem::create_directories(scratchpad_dir_);
@@ -71,11 +75,7 @@ namespace proast { namespace model {
 
         compute_navigation_(root_);
 
-        if (auto fn = metadata_fn_(child->path()); !std::filesystem::is_regular_file(fn))
-            log::raw([&](auto &os){os << "Warning: could not load metadata from " << fn << ", this file does not exist." << std::endl;});
-        else if (append_metadata_(fn))
-            set_metadata_();
-
+        load_metadata_(child);
         recompute_metadata();
 
         //TODO: rework into adding all roots at once so we know when we can set the current location
@@ -94,7 +94,6 @@ namespace proast { namespace model {
         MSS(set_home(home_dir_));
 
         depth_first_search(root_, [](auto &n){n->clear_dependencies();});
-        path__metadata_.clear();
         root_ = Node_::create("<ROOT>");
 
         //Copy root_config_ary_ because it will be updated during calls to add_root()
@@ -380,6 +379,9 @@ namespace proast { namespace model {
                     }
                     break;
             }
+
+            //Node order is actual metadata and should be saved
+            save_metadata();
         }
         else
         {
@@ -463,18 +465,37 @@ namespace proast { namespace model {
         if (root_)
             recompute_metadata_(root_);
     }
-    bool Model::sync_metadata()
+    bool Model::save_metadata()
     {
         MSS_BEGIN(bool);
 
         MSS(!!root_);
+        unsigned int nr_problems = 0;
         for (auto &child: root_->childs)
         {
             if (!child)
                 continue;
-            std::ofstream fo{metadata_fn_(child->path())};
-            stream_metadata_(fo, child);
+            if (!save_metadata_(child))
+                ++nr_problems;
         }
+        MSS(nr_problems == 0);
+
+        MSS_END();
+    }
+    bool Model::load_metadata()
+    {
+        MSS_BEGIN(bool);
+
+        MSS(!!root_);
+        unsigned int nr_problems = 0;
+        for (auto &child: root_->childs)
+        {
+            if (!child)
+                continue;
+            if (!load_metadata_(child))
+                ++nr_problems;
+        }
+        MSS(nr_problems == 0);
 
         MSS_END();
     }
@@ -558,25 +579,6 @@ namespace proast { namespace model {
             node->add_dependencies(child);
         }
     }
-    void Model::stream_metadata_(std::ostream &os, Node &node)
-    {
-        assert(!!node);
-
-        gubg::naft::Document doc{os};
-        if (node->metadata.has_local_data())
-        {
-            auto n = doc.node("Metadata");
-            n.attr("path", to_string(node->to_path()));
-            node->metadata.stream(n);
-        }
-        for (auto &child: node->childs)
-        {
-            if (!child)
-                continue;
-            //Depth-first search
-            stream_metadata_(os, child);
-        }
-    }
     void Model::compute_navigation_(Node &node)
     {
         assert(!!node);
@@ -600,41 +602,6 @@ namespace proast { namespace model {
 
             prev = child;
         }
-    }
-
-    bool Model::append_metadata_(const std::filesystem::path &fp)
-    {
-        MSS_BEGIN(bool);
-
-        std::string content;
-        MSS(gubg::file::read(content, fp));
-        gubg::naft::Range range{content};
-
-        std::string key, value;
-        while (range.pop_tag("Metadata"))
-        {
-            MSS(range.pop_attr(key, value));
-            MSS(key == "path");
-            const auto path = to_path(value);
-            auto &md = path__metadata_[path];
-            gubg::naft::Range subrange;
-            MSS(range.pop_block(subrange));
-            MSS(md.parse(subrange));
-        }
-
-        MSS_END();
-    }
-    void Model::set_metadata_()
-    {
-        if (!root_)
-            return;
-        for (const auto &[path,md]: path__metadata_)
-            if (auto n = root_->find(path))
-                n->metadata.set_when_unset(md);
-    }
-    std::filesystem::path Model::metadata_fn_(const std::filesystem::path &base_dir)
-    {
-        return base_dir / "proast-metadata.naft";
     }
 
     bool Model::rework_into_directory_(Node node)
@@ -772,6 +739,135 @@ namespace proast { namespace model {
                 prev->down = child;
             prev = child;
         }
+    }
+
+    bool Model::save_metadata_(Node base)
+    {
+        assert(!!base);
+
+        MSS_BEGIN(bool);
+
+        const auto fp = base->path()/metadata_filename_;
+        auto s = log::Scope{"save_metadata_()", [&](auto &hdr){hdr.attr("name", base->name()).attr("filepath", fp.string());}};
+
+        std::ofstream fo{fp};
+        gubg::naft::Document doc{fo};
+
+        std::vector<std::string> default_order, actual_order;
+        auto ftor = [&](const Node &node)
+        {
+            //Metadata
+            if (node->metadata.has_local_data())
+            {
+                log::ostream() << "Saving MD for " << node->path() << std::endl;
+                auto n = doc.node("Metadata");
+                n.attr("path", to_string(node->to_path(base)));
+                node->metadata.stream(n);
+            }
+
+            //Order
+            {
+                auto &childs = node->childs;
+                const auto size = childs.size();
+
+                //Collect actual order of names
+                actual_order.resize(size);
+                for (auto ix = 0u; ix < size; ++ix)
+                {
+                    auto &child = childs[ix];
+                    actual_order[ix] = child ? child->name() : "";
+                }
+
+                //Default order is sorted on name
+                default_order = actual_order;
+                std::sort(default_order.begin(), default_order.end());
+
+                if (actual_order != default_order)
+                {
+                    auto n = doc.node("Order");
+                    n.attr("path", to_string(node->to_path(base)));
+                    for (auto &name: actual_order)
+                        n.attr("name", name);
+                }
+            }
+        };
+        depth_first_search(base, ftor);
+
+        MSS_END();
+    }
+    bool Model::load_metadata_(Node base)
+    {
+        assert(!!base);
+
+        MSS_BEGIN(bool);
+
+        const auto fp = base->path()/metadata_filename_;
+        auto s = log::Scope{"load_metadata_()", [&](auto &hdr){hdr.attr("name", base->name()).attr("filename", fp);}};
+
+        std::string content;
+        MSS(gubg::file::read(content, fp));
+
+        std::string tag, key, value;
+        Path path;
+        std::map<std::string, std::optional<std::size_t>> name__ix;
+        for (gubg::naft::Range range{content}; range.pop_tag(tag);)
+        {
+            if (false) { }
+            else if (tag == "Metadata")
+            {
+                MSS(range.pop_attr(key, value));
+                MSS(key == "path");
+                path = to_path(value);
+
+                gubg::naft::Range subrange;
+                MSS(range.pop_block(subrange));
+                Metadata md;
+                MSS(md.parse(subrange));
+
+                if (auto n = base->find(path); !n)
+                    log::ostream() << "Error: could not find node " << to_string(path) << std::endl;
+                else
+                    n->metadata.set_when_unset(md);
+            }
+            else if (tag == "Order")
+            {
+                MSS(range.pop_attr(key, value));
+                MSS(key == "path");
+                path = to_path(value);
+
+                name__ix.clear();
+                for (auto ix = 0u; range.pop_attr(key, value); ++ix)
+                {
+                    MSS(key == "name");
+                    name__ix[value] = ix;
+                }
+
+                if (auto n = base->find(path); !n)
+                    log::ostream() << "Error: could not find node " << to_string(path) << std::endl;
+                else
+                {
+                    auto cmp = [&](const Node &a, const Node &b)
+                    {
+                        auto aix = name__ix[a ? a->name() : ""];
+                        auto bix = name__ix[b ? b->name() : ""];
+                        if (aix && bix)
+                            return *aix < *bix;
+                        if (aix)
+                            return true;
+                        return false;
+                    };
+                    std::sort(n->childs.begin(), n->childs.end(), cmp);
+
+                    setup_up_down_(n);
+                }
+            }
+            else
+            {
+                MSS(false, log::ostream() << "Error: unknown item [" << tag << "] found in " << fp << std::endl);
+            }
+        }
+
+        MSS_END();
     }
 
 } } 

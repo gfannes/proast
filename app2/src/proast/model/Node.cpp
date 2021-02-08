@@ -83,9 +83,28 @@ namespace proast { namespace model {
         for (auto node = shared_from_this(); node; )
         {
             auto parent = node->parent.lock();
-            if (parent)
+            if (!parent)
                 //We do not include the root node name
-                p.push_back(node->name());
+                break;
+            p.push_back(node->name());
+            node = parent;
+        }
+        std::reverse(p.begin(), p.end());
+        return p;
+    }
+    Path Node_::to_path(Ptr &root) const
+    {
+        Path p;
+        for (auto node = shared_from_this(); node; )
+        {
+            auto parent = node->parent.lock();
+            if (!parent)
+                //We do not include the root node name
+                break;
+            if (node == root)
+                //We are at a pseudo-root and stop as well
+                break;
+            p.push_back(node->name());
             node = parent;
         }
         std::reverse(p.begin(), p.end());

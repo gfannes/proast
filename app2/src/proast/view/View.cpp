@@ -66,6 +66,9 @@ namespace proast { namespace view {
             else if (event == ftxui::Event::Backspace)  events->received(Backspace, false);
             else
             {
+                //When alt-key is pressed, it is signalled as 27-X. With key-repeat together with alt
+                //event.input() is sometimes a bit wrong: `27-X-27` `X` `27-X`. This is why we detect
+                //alt ourselves and keep track of an already received alt.
                 prev_input_ += event.input();
                 while (!prev_input_.empty())
                 {

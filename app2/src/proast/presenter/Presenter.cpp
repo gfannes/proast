@@ -352,7 +352,7 @@ namespace proast { namespace presenter {
             }
             if (was_set)
             {
-                model_.sync_metadata();
+                model_.save_metadata();
                 model_.recompute_metadata();
             }
         }

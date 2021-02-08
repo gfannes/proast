@@ -54,7 +54,8 @@ namespace proast { namespace model {
         static std::size_t selected_ix(Node &);
 
         void recompute_metadata();
-        bool sync_metadata();
+        bool save_metadata();
+        bool load_metadata();
 
     private:
         Node root_;
@@ -75,15 +76,12 @@ namespace proast { namespace model {
         std::filesystem::path current_location_fn_;
         bool save_current_location_();
         bool load_current_location_();
-        static void stream_metadata_(std::ostream &, Node &);
 
         static void compute_navigation_(Node &);
 
-        using Path__Metadata = std::map<Path, Metadata>;
-        Path__Metadata path__metadata_;
-        bool append_metadata_(const std::filesystem::path &);
-        void set_metadata_();
-        static std::filesystem::path metadata_fn_(const std::filesystem::path &base_dir);
+        std::filesystem::path metadata_filename_;
+        bool save_metadata_(Node base);
+        bool load_metadata_(Node base);
 
         bool rework_into_directory_(Node);
         bool create_(Node, const std::string &name, bool create_file);
