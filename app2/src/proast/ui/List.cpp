@@ -3,6 +3,20 @@
 #include <ftxui/component/component.hpp>
 
 namespace proast { namespace ui { 
+    namespace  { 
+        ftxui::Color attention__color(int attention)
+        {
+            switch (attention)
+            {
+                case 0: return ftxui::Color::GrayDark;
+                case 1: return ftxui::Color::GrayLight;
+                case 2: return ftxui::Color::Magenta;
+                case 3: return ftxui::Color::Green;
+                case 4: return ftxui::Color::Blue;
+            }
+            return ftxui::Color::White;
+        }
+    } 
     void List::ComputeRequirement()
     {
         if (list_)
@@ -38,13 +52,13 @@ namespace proast { namespace ui {
         const int offset = selected_item_ix - selected_row_ix;
 
         {
-            const auto name = to_wstring(list_->name);
+            const auto name = to_wstring(list_->name.str);
             for (auto col_ix = 0u; col_ix < name.size() && col_ix < x_size; ++col_ix)
             {
                 auto &pxl = screen.PixelAt(box_.x_min+col_ix, box_.y_min);
                 pxl.character = name[col_ix];
-                pxl.bold = true;
-                pxl.foreground_color = ftxui::Color::DarkSeaGreen;
+                pxl.bold = list_->name.bold(col_ix);
+                pxl.foreground_color = attention__color(list_->name.attention(col_ix));
             }
         }
 

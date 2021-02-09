@@ -60,7 +60,8 @@ namespace proast { namespace presenter {
                 }
 
                 const auto path = node->path();
-                if (std::filesystem::is_regular_file(path))
+                const auto is_file = std::filesystem::is_regular_file(path);
+                if (is_file)
                 {
                     if (!node->content)
                         node->content = content_mgr_.load(path);
@@ -101,6 +102,8 @@ namespace proast { namespace presenter {
                 }
 
                 lst->name = model::to_string(node->to_path());
+                lst->name.ix__bold[0] = true;
+                lst->name.ix__attention[0] = is_file ? 3 : 4;
             };
             set_view_dto(view_.n0,   model_.node_0());
             set_view_dto(view_.n0a,  model_.node_0a());
@@ -113,6 +116,8 @@ namespace proast { namespace presenter {
             //Metadata
             {
                 auto lst = dto::List::create();
+                lst->name.ix__attention[0] = 2;
+                lst->name.ix__bold[0] = true;
                 if (auto node = model_.node())
                 {
                     lst->name = model::to_string(node->to_path());
@@ -170,6 +175,8 @@ namespace proast { namespace presenter {
             //Details
             {
                 auto lst = dto::List::create();
+                lst->name.ix__attention[0] = 2;
+                lst->name.ix__bold[0] = true;
                 auto add_help = [&](auto ch, auto descr)
                 {
                     oss_.str("");
