@@ -11,8 +11,9 @@ namespace proast { namespace ui {
                 case 0: return ftxui::Color::GrayDark;
                 case 1: return ftxui::Color::GrayLight;
                 case 2: return ftxui::Color::Magenta;
-                case 3: return ftxui::Color::Green;
-                case 4: return ftxui::Color::Blue;
+                case 3: return ftxui::Color::Yellow;
+                case 4: return ftxui::Color::BlueLight;
+                case 5: return ftxui::Color::Red;
             }
             return ftxui::Color::White;
         }
@@ -67,12 +68,15 @@ namespace proast { namespace ui {
             const int item_ix = row_ix + offset;
             if (0 <= item_ix && item_ix < list_->items.size())
             {
-                const auto item = to_wstring(list_->items[item_ix]);
-                for (auto col_ix = 0u; col_ix < item.size() && col_ix < x_size; ++col_ix)
+                const auto &item = list_->items[item_ix];
+                const auto item_str = to_wstring(item.str);
+                for (auto col_ix = 0u; col_ix < item_str.size() && col_ix < x_size; ++col_ix)
                 {
                     auto &pxl = screen.PixelAt(box_.x_min+x_margin+col_ix, box_.y_min+1+row_ix);
-                    pxl.character = item[col_ix];
+                    pxl.character = item_str[col_ix];
                     pxl.inverted = (item_ix == selected_item_ix);
+                    pxl.bold = item.bold(col_ix);
+                    pxl.foreground_color = attention__color(item.attention(col_ix));
                 }
             }
         }

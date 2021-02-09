@@ -1,3 +1,6 @@
+[Metadata](path:/app2/features){
+  [Effort](value:12)
+}
 [Order](path:/app2/features)(name:structure)(name:ui)(name:FileManagement.md)(name:Help.md)(name:Metadata.md)(name:Planning.md)(name:Priority.md)
 [Metadata](path:/naming.md){
   [Effort](value:12)

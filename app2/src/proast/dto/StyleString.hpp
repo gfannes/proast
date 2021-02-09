@@ -12,6 +12,9 @@ namespace proast { namespace dto {
         std::map<unsigned int, int> ix__attention;
         std::map<unsigned int, bool> ix__bold;
 
+        StyleString(){}
+        StyleString(const std::string &str): str(str) {}
+
         void operator=(const std::string &str) {this->str = str;}
 
         int attention(unsigned int ix) const;

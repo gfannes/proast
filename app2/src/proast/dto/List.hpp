@@ -10,7 +10,7 @@ namespace proast { namespace dto {
     struct List
     {
         StyleString name;
-        std::vector<std::string> items;
+        std::vector<StyleString> items;
         int ix = -1;
 
         using Ptr = std::shared_ptr<List>;

@@ -17,12 +17,13 @@ namespace proast { namespace model {
             for (std::string line; std::getline(fi, line);)
             {
                 //TODO: Convert tab into double-space
-                ptr->items.push_back(line);
+                ptr->items.emplace_back(line);
             }
         }
         else
         {
-            ptr->items.push_back("This extension is not supported");
+            ptr->items.emplace_back("This extension is not supported");
+            ptr->items.back().ix__attention[0] = 5;
         }
         ptr->ix = 0;
         return ptr;

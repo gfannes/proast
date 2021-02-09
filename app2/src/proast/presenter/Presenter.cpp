@@ -74,13 +74,16 @@ namespace proast { namespace presenter {
                     {
                         if (!child)
                             continue;
+                        const auto is_child_file = std::filesystem::is_regular_file(child->path());
                         oss_.str("");
+                        unsigned int width = 0;
                         if (show_metadata_field_)
                         {
                             switch (*show_metadata_field_)
                             {
                                 case MetadataField::Effort:
-                                    oss_ << std::fixed << std::setprecision(1) << std::setw(5);
+                                    width = 5;
+                                    oss_ << std::fixed << std::setprecision(1) << std::setw(width);
                                     if (auto effort = child->total_effort(); effort > 0)
                                         oss_ << effort;
                                     else
@@ -88,7 +91,8 @@ namespace proast { namespace presenter {
                                     oss_ << ' ';
                                     break;
                                 case MetadataField::Dependency:
-                                    oss_ << std::fixed << std::setprecision(1) << std::setw(4);
+                                    width = 4;
+                                    oss_ << std::fixed << std::setprecision(1) << std::setw(width);
                                     oss_ << child->dependency_count() << " ";
                                     break;
                             }
@@ -97,6 +101,7 @@ namespace proast { namespace presenter {
                             oss_ << ' ';
                         oss_ << child->name();
                         lst->items.emplace_back(oss_.str());
+                        lst->items.back().ix__attention[width] = is_child_file ? 3 : 4;
                     }
                     lst->ix = model::Model::selected_ix(node);
                 }
