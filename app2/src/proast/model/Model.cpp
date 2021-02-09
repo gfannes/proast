@@ -642,9 +642,11 @@ namespace proast { namespace model {
             MSS(rework_into_directory_(node));
         MSS(std::filesystem::is_directory(node->path()));
 
-        const auto new_fp = node->path()/name;
+        auto new_fp = node->path()/name;
         if (create_file)
         {
+            if (new_fp.extension().empty())
+                new_fp += ".md";
             std::ofstream touch{new_fp};
         }
         else
@@ -652,8 +654,9 @@ namespace proast { namespace model {
             std::filesystem::create_directory(new_fp);
         }
         auto child = node->append_child();
-        child->segment = name;
+        child->segment = new_fp.filename();
 
+        setup_up_down_(node);
         focus(child);
 
         MSS_END();

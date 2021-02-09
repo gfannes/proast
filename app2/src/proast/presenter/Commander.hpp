@@ -32,9 +32,9 @@ namespace proast { namespace presenter {
     public:
         std::optional<State> state;
         std::optional<MetadataField> metadata_field;
-        std::string content;
         std::optional<bool> create_file_dir;
         std::optional<bool> create_in_next;
+        std::string content;
 
         void process(wchar_t wchar, bool alt)
         {
@@ -44,6 +44,10 @@ namespace proast { namespace presenter {
             if (wchar == Escape)
             {
                 state.reset();
+                metadata_field.reset();
+                create_file_dir.reset();
+                create_in_next.reset();
+                content.clear();
             }
             else if (state)
             {
