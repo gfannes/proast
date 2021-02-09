@@ -39,6 +39,7 @@ namespace proast { namespace presenter {
 
         auto s = log::Scope{"Presenter::refresh_view_()"};
 
+        //Header
         {
             oss_.str("");
             if (auto n = model_.node())
@@ -48,6 +49,7 @@ namespace proast { namespace presenter {
             view_.header = oss_.str();
         }
 
+        //Panes
         {
             auto set_view_dto = [&](auto &lst, auto node)
             {
@@ -108,6 +110,7 @@ namespace proast { namespace presenter {
             set_view_dto(view_.n000, model_.node_000());
             set_view_dto(view_.n00b, model_.node_00b());
 
+            //Metadata
             {
                 auto lst = dto::List::create();
                 if (auto node = model_.node())
@@ -164,6 +167,7 @@ namespace proast { namespace presenter {
                 view_.metadata = lst;
             }
 
+            //Details
             {
                 auto lst = dto::List::create();
                 auto add_help = [&](auto ch, auto descr)
@@ -202,7 +206,8 @@ namespace proast { namespace presenter {
                         case State::Delete:
                             lst->name = "Delete";
                             add_help('d', "Delete single file/directory");
-                            add_help('D', "Delete recursively");
+                            add_help('a', "Append file/directory to deletes");
+                            add_help('c', "Clear all deletes");
                             break;
                         case State::Paste:
                             lst->name = "Paste";
@@ -214,10 +219,23 @@ namespace proast { namespace presenter {
                             break;
                         default: break;
                     }
+                else
+                {
+                    unsigned int nr_deletes = 0;
+                    model_.each_delete([&](auto &n){++nr_deletes;});
+                    if (nr_deletes > 0)
+                    {
+                        oss_.str("");
+                        oss_ << "Deletes: " << nr_deletes;
+                        lst->name = oss_.str();
+                        model_.each_delete([&](auto &n){lst->items.emplace_back(n->name());});
+                    }
+                }
                 view_.details = lst;
             }
         }
 
+        //Footer
         {
             oss_.str("");
             if (Commander::state)
@@ -369,9 +387,14 @@ namespace proast { namespace presenter {
     {
         model_.rename(name);
     }
-    void Presenter::commander_delete()
+    void Presenter::commander_delete(Delete del)
     {
-        model_.delete_current();
+        switch (del)
+        {
+            case Delete::One:    model_.clear_deletes(); model_.append_to_deletes(); break;
+            case Delete::Append:                         model_.append_to_deletes(); break;
+            case Delete::Clear:  model_.clear_deletes();                             break;
+        }
     }
     void Presenter::commander_paste(bool paste_in)
     {

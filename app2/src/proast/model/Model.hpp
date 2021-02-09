@@ -40,7 +40,8 @@ namespace proast { namespace model {
 
         bool create(const std::string &name, bool create_file, bool create_in);
         bool rename(const std::string &name);
-        bool delete_current();
+        bool append_to_deletes();
+        bool clear_deletes();
         bool paste(bool paste_in);
 
         Node node();
@@ -57,10 +58,18 @@ namespace proast { namespace model {
         bool save_metadata();
         bool load_metadata();
 
+        template <typename Ftor>
+        void each_delete(Ftor &&ftor)
+        {
+            for (auto n: deletes_)
+                if (n)
+                    ftor(n);
+        }
+
     private:
         Node root_;
         Node current_node_;
-        Node cut_;
+        std::list<Node> deletes_;
 
         bool add_(Node, const std::filesystem::path &, const Config &);
         void recompute_metadata_(Node);

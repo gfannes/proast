@@ -137,7 +137,9 @@ namespace proast { namespace presenter {
                     case State::Delete:
                         switch (wchar)
                         {
-                            case 'd': r.commander_delete(); state.reset(); break;
+                            case 'd': r.commander_delete(Delete::One); state.reset(); break;
+                            case 'a': r.commander_delete(Delete::Append); state.reset(); break;
+                            case 'c': r.commander_delete(Delete::Clear); state.reset(); break;
                             default: break;
                         }
                         

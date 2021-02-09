@@ -55,6 +55,14 @@ namespace proast { namespace presenter {
     define_enum_(MetadataField, my_each_value_);
 #undef my_each_value_
 
+#define my_each_value_(type, ftor) \
+    ftor(type, One) \
+    ftor(type, Append) \
+    ftor(type, Clear) \
+
+    define_enum_(Delete, my_each_value_);
+#undef my_each_value_
+
 #undef define_enum_
 #undef ftor_case_
 #undef ftor_value_

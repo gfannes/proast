@@ -30,7 +30,7 @@ namespace proast { namespace presenter {
         void commander_show_metadata(std::optional<MetadataField>);
         void commander_create(const std::string &name, bool create_file, bool in_parent);
         void commander_rename(const std::string &name);
-        void commander_delete();
+        void commander_delete(Delete);
         void commander_paste(bool paste_in);
         void commander_reload();
 

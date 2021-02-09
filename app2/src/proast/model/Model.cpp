@@ -119,13 +119,16 @@ namespace proast { namespace model {
         if (auto node = root_->find(path))
         {
             //Reroute navigation.child for parent and grand_parent
-            for (auto ix = 0u; ix < 2 && node; ++ix)
-                if (auto parent = node->parent.lock())
-                {
+            for (auto ix = 0u; node; ++ix)
+            {
+                if (ix < 3)
+                    //A is two levels deeper than the optimal focus point C
+                    current_node_ = node;
+                auto parent = node->parent.lock();
+                if (parent)
                     parent->child = node;
-                    node = parent;
-                }
-            current_node_ = node;
+                node = parent;
+            }
         }
 
         MSS_END();
@@ -171,7 +174,7 @@ namespace proast { namespace model {
 
         MSS_END();
     }
-    bool Model::delete_current()
+    bool Model::append_to_deletes()
     {
         MSS_BEGIN(bool);
 
@@ -192,8 +195,18 @@ namespace proast { namespace model {
         //Indicate full-path in node to make sure we find it back
         n->parent.reset();
         n->segment = new_fp;
-        cut_ = n;
 
+        deletes_.push_back(n);
+
+        MSS_END();
+    }
+    bool Model::clear_deletes()
+    {
+        MSS_BEGIN(bool);
+        for (auto n: deletes_)
+            if (n)
+                std::filesystem::remove_all(n->path());
+        deletes_.clear();
         MSS_END();
     }
     bool Model::paste(bool paste_in)
@@ -206,14 +219,25 @@ namespace proast { namespace model {
         if (!paste_in)
             n = n->parent.lock();
 
-        MSS(!!cut_);
-        auto cut = cut_;
-        cut_.reset();
+        std::list<Node> problems;
+        Node last_ok;
+        for (auto del: deletes_)
+        {
+            if (!del)
+                continue;
 
-        //When deleting the node, its segment was reworked into an absolute path
-        //Hence cut->path() should be OK
-        MSS(paste_(n, cut, cut->path()));
-        MSS(focus(cut));
+            //When deleting the node, its segment was reworked into an absolute path
+            //Hence del->path() should be OK
+            if (!paste_(n, del, del->path()))
+                problems.push_back(del);
+            else
+                last_ok = del;
+        }
+        deletes_.swap(problems);
+
+        MSS(focus(last_ok));
+
+        MSS(deletes_.empty());
 
         MSS_END();
     }
@@ -715,15 +739,8 @@ namespace proast { namespace model {
             }
         }
 
-        src->down.reset();
-        src->up.reset();
-        if (!dst->childs.empty())
-            if (auto bottom = dst->childs.back())
-            {
-                bottom->down = src;
-                src->up = bottom;
-            }
         dst->childs.push_back(src);
+        setup_up_down_(dst);
 
         MSS_END();
     }
