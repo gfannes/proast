@@ -1,6 +1,6 @@
 #include <proast/model/Path.hpp>
-#include <gubg/Strange.hpp>
 #include <sstream>
+#include <string_view>
 
 namespace proast { namespace model { 
 
@@ -13,11 +13,30 @@ namespace proast { namespace model {
     }
     Path to_path(const std::string &str)
     {
+        const auto sep = '/';
+
         Path path;
-        gubg::Strange strange{str};
-        strange.pop_if('/');
-        for (std::string part; !strange.empty(); path.push_back(part))
-            strange.pop_until(part, '/') || strange.pop_all(part);
+
+        std::string_view sv{str};
+
+        auto pop_sep = [&](){
+            if (sv.starts_with(sep))
+                sv.remove_prefix(1);
+        };
+
+        for (std::string part; (pop_sep(), !sv.empty()); path.push_back(part))
+        {
+            auto pop_part = [&](std::size_t count){
+                part = sv.substr(0, count);
+                sv.remove_prefix(count);
+            };
+
+            if (const auto ix = sv.find(sep); ix == sv.npos)
+                pop_part(sv.size());
+            else
+                pop_part(ix);
+        }
+
         return path;
     }
 

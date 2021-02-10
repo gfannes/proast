@@ -1,0 +1,3 @@
+* Support for operating on parts of a markdown file as well
+  * Navigation
+  * Deleting, moving, ...

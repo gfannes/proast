@@ -1,23 +1,16 @@
 include("../gubg/recipes.chai")
 
-root.recipe("termbox/func", fun(rcp){
-    rcp.add(".extern/termbox/src", "termbox.[hc]")
-})
 root.recipe("ftxui/func", fun(rcp){
     rcp.add(".extern/ftxui/include", "ftxui/**/*.hpp")
     rcp.add(".extern/ftxui/src", "ftxui/**/*.[hc]pp")
     rcp.remove(".extern/ftxui/src", "ftxui/**/*_test.cpp")
     rcp.library("pthread")
 })
-root.recipe("ftxui/app", TargetType.Executable, fun(rcp){
-    rcp.add(".extern/ftxui/examples", "dom/spinner.cpp")
-    rcp.depends_on("ftxui/func")
-})
 
 root.book("proast", fun(b){
     b.recipe("func", fun(rcp){
         rcp.add("app/src", "proast/**.[hc]pp")
-        rcp.depends_on("termbox/func")
+        rcp.depends_on("ftxui/func")
         rcp.depends_on("gubg/std/func")
         rcp.depends_on("gubg/algo/func")
     })
@@ -30,26 +23,6 @@ root.book("proast", fun(b){
     b.recipe("ut", TargetType.Executable, fun(rcp){
         rcp.add("app/unit_test/src/proast", "**.[hc]pp")
         rcp.depends_on("proast/func")
-        rcp.depends_on("catch/main")
-    })
-})
-
-root.book("proast2", fun(b){
-    b.recipe("func", fun(rcp){
-        rcp.add("app2/src", "proast/**.[hc]pp")
-        rcp.depends_on("ftxui/func")
-        rcp.depends_on("gubg/std/func")
-        rcp.depends_on("gubg/algo/func")
-    })
-
-    b.recipe("app", TargetType.Executable, fun(rcp){
-        rcp.add("app2/src", "main.cpp")
-        rcp.depends_on("proast2/func")
-    })
-
-    b.recipe("ut", TargetType.Executable, fun(rcp){
-        rcp.add("app2/unit_test/src/proast", "**.[hc]pp")
-        rcp.depends_on("proast2/func")
         rcp.depends_on("catch/func")
         rcp.depends_on("catch/main")
     })

@@ -1,50 +1,25 @@
-<!--
-[proast]
--->
-# Proast title
+# ProAst
 
 Proast is a project assistant.
 
-## Requirements
+## Overview
 
-### Requirement without prio
+It currently provides:
 
-
-### Must
-
-* support tracking of personal todos
-  * Priorities
-  *  Deadlines
-* support personal and professional projects
-
-### Should
-
-* provide dedicated tools for
-  * Refactoring
-  * Execution
-  * Reporting
-
-### Must
-
-* be extendible using commonly available tools
-
-## Design
-
-* Create CLI application, no GUI
-* Store all data in markdown files with limited amount of metadata
-
-## Features
-
-* [external](key:file_format)
-* [external](key:schema)
-* [external](path:/proast/@design)
-* Develop CLI application
-* [external](key:app)
-
-## Deliverables
-
-* CLI application
-
-## Questions
-
-* How big should the difference between a Requirement and a Feature be?
+* A specification of adding metadata to a file system tree in a non-intrusive manner to support project management. Metadata items are:
+  * Effort
+  * Completion percentage
+  * Deadline
+  * Tags
+  * Inter-dependencies
+  * ...
+  This metadata is stored in the root of the file system tree and can easily be versionned with a source code versionning system like [git](https://git-scm.com).
+* A terminal application that can
+  * Update the metadata
+  * Rework and refine the file system tree containing the project information
+  * Export to various formats
+  * Assist with tracking priorities
+  * Perform basic planning
+* Best practices on how ProAst can be used
+  * In a professional environment to provide project management
+  * At home to manage personal TODO's and store heterogeneous information

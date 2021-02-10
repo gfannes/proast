@@ -28,3 +28,13 @@ Install via `yay final cut` and link with `-lfinal`
 
 * Pro
   * Simple API
+
+### [ftxui](https://github.com/ArthurSonzogni/FTXUI)
+
+* Pro
+  * Supports utf8
+  * Supports widgets
+  * Code is readable, developer is responsive
+  * No dependencies, modern C++
+* Con
+  * Does not emit Ctrl
