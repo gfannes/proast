@@ -12,9 +12,11 @@ namespace proast { namespace ui {
                 case 1: return ftxui::Color::GrayLight;
                 case 2: return ftxui::Color::Magenta;
                 case 3: return ftxui::Color::Yellow;
-                case 4: return ftxui::Color::BlueLight;
-                case 5: return ftxui::Color::Green;
-                case 6: return ftxui::Color::Red;
+                case 4: return ftxui::Color::Gold1;
+                case 5: return ftxui::Color::BlueLight;
+                case 6: return ftxui::Color::Turquoise2;
+                case 7: return ftxui::Color::Green;
+                case 8: return ftxui::Color::Red;
             }
             return ftxui::Color::White;
         }

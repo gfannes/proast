@@ -49,7 +49,7 @@ end
 
 desc "Install proast"
 task :install => :build do
-    sh "cp proast.app /usr/local/bin/proast"
+    sh "sudo cp proast.app /usr/local/bin/proast"
 end
 
 desc "Run unit tests, filter is colon-separated selection filter"

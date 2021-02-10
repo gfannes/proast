@@ -101,14 +101,14 @@ namespace proast { namespace presenter {
                             oss_ << ' ';
                         oss_ << child->name();
                         lst->items.emplace_back(oss_.str());
-                        lst->items.back().ix__attention[width] = is_child_file ? 3 : 4;
+                        lst->items.back().ix__attention[width] = is_child_file ? 3 : 5;
                     }
                     lst->ix = model::Model::selected_ix(node);
                 }
 
                 lst->name = model::to_string(node->to_path());
                 lst->name.ix__bold[0] = true;
-                lst->name.ix__attention[0] = is_file ? 3 : 4;
+                lst->name.ix__attention[0] = is_file ? 4 : 6;
             };
             set_view_dto(view_.n0,   model_.node_0());
             set_view_dto(view_.n0a,  model_.node_0a());
@@ -189,7 +189,7 @@ namespace proast { namespace presenter {
                         oss_ << ch << ": ";
                     oss_ << descr;
                     lst->items.emplace_back(oss_.str());
-                    lst->items.back().ix__attention[0] = 5;
+                    lst->items.back().ix__attention[0] = 7;
                 };
                 if (Commander::state)
                     switch (*Commander::state)
@@ -237,6 +237,10 @@ namespace proast { namespace presenter {
                             lst->name = "Duplicate";
                             add_help('\0', "Specify the name for the copy");
                             break;
+                        case State::Export:
+                            lst->name = "Export";
+                            add_help('\0', "Specify the name for the export");
+                            break;
                         default: break;
                     }
                 else
@@ -280,6 +284,7 @@ namespace proast { namespace presenter {
                     case State::Rename:            oss_ << "Name: " << Commander::content; break;
                     case State::Run:               oss_ << "Executable: " << Commander::content; break;
                     case State::Duplicate:         oss_ << "Duplicate: " << Commander::content; break;
+                    case State::Export:            oss_ << "Export: " << Commander::content; break;
                     default: break;
                 }
             view_.footer = oss_.str();
@@ -438,6 +443,10 @@ namespace proast { namespace presenter {
     void Presenter::commander_paste(bool paste_in)
     {
         model_.paste(paste_in);
+    }
+    void Presenter::commander_export(const std::string &name)
+    {
+        model_.do_export(name);
     }
     void Presenter::commander_reload()
     {

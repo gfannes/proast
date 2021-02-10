@@ -44,6 +44,7 @@ namespace proast { namespace model {
         bool append_to_deletes();
         bool clear_deletes();
         bool paste(bool paste_in);
+        bool do_export(const std::string &name);
 
         Node node();
         Node node_0();

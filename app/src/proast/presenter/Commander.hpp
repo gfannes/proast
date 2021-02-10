@@ -51,6 +51,31 @@ namespace proast { namespace presenter {
             }
             else if (state)
             {
+                auto read_content = [&](auto &&ftor)
+                {
+                    switch (wchar)
+                    {
+                        case Return:
+                            {
+                                ftor();
+                                content.clear();
+                                state.reset();
+                            }
+                            break;
+                        case Backspace:
+                            if (!content.empty())
+                                content.pop_back();
+                            break;
+                        case Escape:
+                            //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
+                            content.clear();
+                            break;
+                        default:
+                            content.push_back(wchar);
+                            break;
+                    }
+                };
+
                 switch (*state)
                 {
                     case State::BookmarkRegister:
@@ -73,8 +98,8 @@ namespace proast { namespace presenter {
                             {
                                 case Return:
                                     r.commander_set_metadata(*metadata_field, content);
-                                    content.clear();
                                     metadata_field.reset();
+                                    content.clear();
                                     state.reset();
                                     break;
                                 case Backspace:
@@ -110,29 +135,11 @@ namespace proast { namespace presenter {
                             }
                         }
                         else
-                            switch (wchar)
-                            {
-                                case Return:
-                                    {
-                                        r.commander_create(content, *create_file_dir, *create_in_next);
-                                        content.clear();
-                                        state.reset();
-                                        create_file_dir.reset();
-                                        create_in_next.reset();
-                                    }
-                                    break;
-                                case Backspace:
-                                    if (!content.empty())
-                                        content.pop_back();
-                                    break;
-                                case Escape:
-                                    //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
-                                    content.clear();
-                                    break;
-                                default:
-                                    content.push_back(wchar);
-                                    break;
-                            }
+                            read_content([&](){
+                                    r.commander_create(content, *create_file_dir, *create_in_next);
+                                    create_file_dir.reset();
+                                    create_in_next.reset();
+                                    });
                         break;
                     case State::Delete:
                         switch (wchar)
@@ -142,7 +149,7 @@ namespace proast { namespace presenter {
                             case 'c': r.commander_delete(Delete::Clear); state.reset(); break;
                             default: break;
                         }
-                        
+
                         break;
                     case State::Paste:
                         switch (wchar)
@@ -153,73 +160,16 @@ namespace proast { namespace presenter {
                         }
                         break;
                     case State::Rename:
-                        switch (wchar)
-                        {
-                            case Return:
-                                {
-                                    r.commander_rename(content);
-                                    content.clear();
-                                    state.reset();
-                                }
-                                break;
-                            case Backspace:
-                                if (!content.empty())
-                                    content.pop_back();
-                                break;
-                            case Escape:
-                                //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
-                                content.clear();
-                                break;
-                            default:
-                                content.push_back(wchar);
-                                break;
-                        }
+                        read_content([&](){r.commander_rename(content);});
                         break;
                     case State::Run:
-                        switch (wchar)
-                        {
-                            case Return:
-                                {
-                                    r.commander_open(Open::Run, content);
-                                    content.clear();
-                                    state.reset();
-                                }
-                                break;
-                            case Backspace:
-                                if (!content.empty())
-                                    content.pop_back();
-                                break;
-                            case Escape:
-                                //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
-                                content.clear();
-                                break;
-                            default:
-                                content.push_back(wchar);
-                                break;
-                        }
+                        read_content([&](){r.commander_open(Open::Run, content);});
                         break;
                     case State::Duplicate:
-                        switch (wchar)
-                        {
-                            case Return:
-                                {
-                                    r.commander_duplicate(content);
-                                    content.clear();
-                                    state.reset();
-                                }
-                                break;
-                            case Backspace:
-                                if (!content.empty())
-                                    content.pop_back();
-                                break;
-                            case Escape:
-                                //Does not work, requires `chain of responsibility`: Escape is handled too soon and will reset the `state`
-                                content.clear();
-                                break;
-                            default:
-                                content.push_back(wchar);
-                                break;
-                        }
+                        read_content([&](){r.commander_duplicate(content);});
+                        break;
+                    case State::Export:
+                        read_content([&](){r.commander_export(content);});
                         break;
                 }
             }
@@ -257,6 +207,7 @@ namespace proast { namespace presenter {
                     case 'D':  state = State::Duplicate; break;
                     case 'p':  state = State::Paste; break;
                     case 'r':  state = State::Rename; break;
+                    case 'x':  state = State::Export; break;
 
                     case 'R': r.commander_reload(); break;
                 }

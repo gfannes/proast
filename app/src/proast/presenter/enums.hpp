@@ -40,6 +40,7 @@ namespace proast { namespace presenter {
     ftor(type, Duplicate) \
     ftor(type, Paste) \
     ftor(type, Rename) \
+    ftor(type, Export) \
     ftor(type, Run) \
 
     define_enum_(State, my_each_value_);

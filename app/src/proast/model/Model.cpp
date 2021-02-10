@@ -213,6 +213,36 @@ namespace proast { namespace model {
 
         MSS_END();
     }
+    bool Model::do_export(const std::string &name)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        auto p = n->parent.lock();
+        MSS(!!p);
+        auto fp = p->path()/name;
+        MSS(!std::filesystem::is_regular_file(fp));
+
+        {
+            std::ofstream fo{fp};
+            auto append_row = [&](auto &node)
+            {
+                if (auto e = node->metadata.effort)
+                    fo << to_string(node->to_path(n)) << '\t' << *e << std::endl;
+            };
+            depth_first_search(n, append_row);
+        }
+
+        auto child = p->append_child();
+        child->segment = fp.filename();
+
+
+        setup_up_down_(p);
+
+        MSS_END();
+    }
     bool Model::append_to_deletes()
     {
         MSS_BEGIN(bool);
