@@ -143,6 +143,15 @@ namespace proast { namespace presenter {
                     auto as_date = [](auto &os, const auto &date){
                         os << date;
                     };
+                    auto as_state = [](auto &os, const auto &state){
+                        os << state;
+                    };
+                    auto as_bool = [](auto &os, bool done){
+                        os << (done ? "yes" : "no");
+                    };
+                    auto as_order = [](auto &os, bool order_sequential){
+                        os << (order_sequential ? "Sequential" : "Random");
+                    };
                     auto add_field = [&](const auto &value, const auto descr, auto &&streamer){
                         oss_.str("");
                         oss_ << std::setw(align) << descr << ": ";
@@ -171,6 +180,10 @@ namespace proast { namespace presenter {
                     add_field_opt(node->metadata.volume_db, "volume", as_volume);
                     add_field_opt(node->metadata.live, "live", as_date);
                     add_field_opt(node->metadata.dead, "dead", as_date);
+                    add_field_opt(node->metadata.state, "state", as_state);
+                    add_field(node->metadata.done, "done", as_bool);
+                    add_field(node->metadata.order_sequential, "order", as_order);
+                    add_field_opt(node->priority(), "prio", as_number);
                     add_tags(node->metadata.tags, "tags");
                     add_tags(node->all_tags(), "All tags");
                 }
@@ -199,13 +212,38 @@ namespace proast { namespace presenter {
                             lst->name = "Bookmarks";
                             model_.each_bookmark([&](auto ch, const auto &path){add_help(ch, model::to_string(path));});
                             break;
-                        case State::SetMetadataField:
-                        case State::ShowMetadataField:
+                        case State::SetData:
+                            lst->name = "Data";
+                            add_help('m', "Metadata");
+                            add_help('s', "State");
+                            add_help('o', "Order");
+                            break;
+                        case State::SetMetadata:
+                        case State::ShowMetadata:
                             lst->name = "Metadata fields";
                             for (auto ch: {'e', 'v', 'i', 'c', 'l', 'd', 't', 'D'})
-                                if (auto mf = to_metadata_field(ch))
+                                if (auto mf = to_metadata(ch))
                                     add_help(ch, to_string(*mf));
                             add_help('~', "Erase metadata field");
+                            break;
+                        case State::SetState:
+                            {
+                                std::optional<model::State> state;
+                                bool done;
+                                lst->name = "State";
+                                for (auto ch: {'c','C', 'd','D', 's','S', 'i','I', 'v','V'})
+                                    if (to_node_state(state, done, ch))
+                                        if (state)
+                                            add_help(ch, std::string(done ? "DONE " : "WIP  ")+to_string(*state));
+                                add_help('~', "Erase state field");
+                            }
+                            break;
+                        case State::SetOrder:
+                            lst->name = "Order";
+                            for (auto ch: {'r', 's'})
+                                if (auto o = to_order_sequential(ch))
+                                    if (o)
+                                        add_help(ch, std::string(*o ? "Sequential" : "Random"));
                             break;
                         case State::Create:
                             lst->name = "Create";
@@ -267,13 +305,14 @@ namespace proast { namespace presenter {
                 {
                     case State::BookmarkRegister:  oss_ << "Registering bookmark"; break;
                     case State::BookmarkJump:      oss_ << "Jump to bookmark"; break;
-                    case State::SetMetadataField:
+                    case State::SetData:           oss_ << "Choose data type to set"; break;
+                    case State::SetMetadata:
                                                    if (!Commander::metadata_field)
                                                        oss_ << "Choose metadata field";
                                                    else
                                                        oss_ << "Metadata for " << to_string(*Commander::metadata_field) << ": " << Commander::content;
                                                    break;
-                    case State::ShowMetadataField: oss_ << "Show metadata field"; break;
+                    case State::ShowMetadata:      oss_ << "Show metadata field"; break;
                     case State::Create:            if (!Commander::create_file_dir)
                                                        oss_ << "Create new file or directory?";
                                                    else if (!Commander::create_in_next)
@@ -447,6 +486,14 @@ namespace proast { namespace presenter {
     void Presenter::commander_export(const std::string &name)
     {
         model_.do_export(name);
+    }
+    void Presenter::commander_set_node_state(std::optional<model::State> state, bool done)
+    {
+        model_.set_node_state(state, done);
+    }
+    void Presenter::commander_set_order(bool order_sequential)
+    {
+        model_.set_order_sequential(order_sequential);
     }
     void Presenter::commander_reload()
     {

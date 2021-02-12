@@ -13,6 +13,7 @@
 * `jkhl` for window B
 * `JKHL` for window A
 * `g` and `G` for start and end
+* Show root in B
 
 ## Moving node
 

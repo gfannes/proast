@@ -1,4 +1,5 @@
 #include <proast/model/Node.hpp>
+#include <cmath>
 
 namespace proast { namespace model { 
     Node_::Ptr Node_::create()
@@ -119,6 +120,18 @@ namespace proast { namespace model {
                 sum += ptr->metadata.effort.value_or(0.0);
         return sum;
     }
+    std::optional<double> Node_::priority() const
+    {
+        std::optional<double> prio;
+        if (auto effort = metadata.effort)
+        {
+            double overdue_days = -7.0;
+            double total_volume_db = metadata.get_volume_db() + 6.0*std::max(overdue_days+7, 0.0);
+            prio = metadata.get_age()*std::pow(10.0, total_volume_db/20.0)*metadata.get_impact()/(*effort);
+        }
+        return prio;
+    }
+
     Tags Node_::all_tags() const
     {
         Tags tags = metadata.tags;

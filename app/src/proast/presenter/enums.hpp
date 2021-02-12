@@ -20,6 +20,10 @@ namespace proast { namespace presenter {
         } \
         return "<unknown value>"; \
     } \
+    inline std::ostream &operator<<(std::ostream &os, type v) \
+    { \
+        return os << to_string(v); \
+    } \
 
 #define my_each_value_(type, ftor) \
     ftor(type, View) \
@@ -33,8 +37,11 @@ namespace proast { namespace presenter {
 #define my_each_value_(type, ftor) \
     ftor(type, BookmarkRegister) \
     ftor(type, BookmarkJump) \
-    ftor(type, SetMetadataField) \
-    ftor(type, ShowMetadataField) \
+    ftor(type, SetData) \
+    ftor(type, SetMetadata) \
+    ftor(type, SetState) \
+    ftor(type, SetOrder) \
+    ftor(type, ShowMetadata) \
     ftor(type, Create) \
     ftor(type, Delete) \
     ftor(type, Duplicate) \

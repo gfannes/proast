@@ -1,5 +1,4 @@
-Metadata
-========
+# Metadata
 
 ## Items
 
@@ -7,6 +6,11 @@ Metadata
 * `Order`: `Random` or `Ordered`
 * `Status`: `Open`, `Design`, `Estimated`, `InProgress`, `Done`
   * Old info: split state in {Describing, Designing, Implementing} and {Waiting, WIP, Blocked, Done}
+* `Type`:
+  * `File`:
+  * `Folder`:
+  * `Virtual`: not synced in file system, eg used for search results
+  * `Link`:
 
 ## File types
 

@@ -1,4 +1,8 @@
 [Order](path:/app/features/order)(name:support_sorting_based_on_state.md)(name:Place index first in default order.md)
+[Metadata](path:/app/features/priority/Show prio for nodes with effort.md){
+  [Effort](value:1)
+  [Impact](value:1)
+}
 [Metadata](path:/naming){
   [Effort](value:12)
 }

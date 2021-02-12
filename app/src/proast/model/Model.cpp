@@ -243,6 +243,29 @@ namespace proast { namespace model {
 
         MSS_END();
     }
+    bool Model::set_node_state(std::optional<State> state, bool done)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        n->metadata.state = state;
+        n->metadata.done = done;
+
+        MSS_END();
+    }
+    bool Model::set_order_sequential(bool order_sequential)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+        
+        n->metadata.order_sequential = order_sequential;
+
+        MSS_END();
+    }
     bool Model::append_to_deletes()
     {
         MSS_BEGIN(bool);

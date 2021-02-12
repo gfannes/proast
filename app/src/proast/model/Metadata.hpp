@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Metadata_hpp_ALREADY_INCLUDED
 
+#include <proast/model/enums.hpp>
 #include <proast/types.hpp>
 #include <gubg/naft/Node.hpp>
 #include <gubg/naft/Range.hpp>
@@ -21,6 +22,13 @@ namespace proast { namespace model {
         std::optional<double>       volume_db;
         std::optional<double>       impact;
         Tags                        tags;
+        std::optional<State>        state;
+        bool                        done = false;
+        bool                        order_sequential = false;
+
+        double get_volume_db() const;
+        double get_impact() const;
+        double get_age() const;
 
         bool has_local_data() const;
 

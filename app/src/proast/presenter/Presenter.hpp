@@ -34,6 +34,8 @@ namespace proast { namespace presenter {
         void commander_duplicate(const std::string &name);
         void commander_delete(Delete);
         void commander_paste(bool paste_in);
+        void commander_set_node_state(std::optional<model::State>, bool done);
+        void commander_set_order(bool order_sequential);
         void commander_reload();
 
     private:

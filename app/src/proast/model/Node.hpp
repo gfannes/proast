@@ -1,6 +1,7 @@
 #ifndef HEADER_proast_model_Node_hpp_ALREADY_INCLUDED
 #define HEADER_proast_model_Node_hpp_ALREADY_INCLUDED
 
+#include <proast/model/enums.hpp>
 #include <proast/model/Metadata.hpp>
 #include <proast/model/Path.hpp>
 #include <proast/dto/List.hpp>
@@ -28,11 +29,13 @@ namespace proast { namespace model {
         dto::List::Ptr content;
 
         Metadata metadata;
+        Type type = Type::Virtual;
 
         WPtr parent;
         WPtr child;
         WPtr up;
         WPtr down;
+        WPtr link;
         std::vector<Ptr> childs;
 
         Ptr append_child();
@@ -54,6 +57,7 @@ namespace proast { namespace model {
 
         double total_effort() const;
         Tags all_tags() const;
+        std::optional<double> priority() const;
 
         unsigned int node_count() const;
 

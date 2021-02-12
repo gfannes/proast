@@ -2,6 +2,7 @@
 #define HEADER_proast_presenter_Commander_hpp_ALREADY_INCLUDED
 
 #include <proast/presenter/enums.hpp>
+#include <proast/model/enums.hpp>
 #include <proast/types.hpp>
 #include <proast/unicode.hpp>
 #include <string>
@@ -9,7 +10,7 @@
 
 namespace proast { namespace presenter { 
 
-    inline std::optional<MetadataField> to_metadata_field(char ch)
+    inline std::optional<MetadataField> to_metadata(char ch)
     {
         switch (ch)
         {
@@ -21,6 +22,38 @@ namespace proast { namespace presenter {
             case 'd': return MetadataField::Dead;
             case 't': return MetadataField::Tag;
             case 'D': return MetadataField::Dependency;
+            default: break;
+        }
+        return std::nullopt;
+    }
+    inline bool to_node_state(std::optional<model::State> &state, bool &done, char ch)
+    {
+        switch (ch)
+        {
+            case '~': done = false; state = std::nullopt; break;
+
+            case 'c': done = false; state = model::State::Collecting; break;
+            case 'd': done = false; state = model::State::Designing; break;
+            case 's': done = false; state = model::State::Starting; break;
+            case 'i': done = false; state = model::State::Implementing; break;
+            case 'v': done = false; state = model::State::Validating; break;
+
+            case 'C': done = true;  state = model::State::Collecting; break;
+            case 'D': done = true;  state = model::State::Designing; break;
+            case 'S': done = true;  state = model::State::Starting; break;
+            case 'I': done = true;  state = model::State::Implementing; break;
+            case 'V': done = true;  state = model::State::Validating; break;
+
+            default: return false; break;
+        }
+        return true;
+    }
+    inline std::optional<bool> to_order_sequential(char ch)
+    {
+        switch (ch)
+        {
+            case 'r': return false;
+            case 's': return true;
             default: break;
         }
         return std::nullopt;
@@ -86,11 +119,19 @@ namespace proast { namespace presenter {
                         r.commander_bookmark(wchar, false);
                         state.reset();
                         break;
-                    case State::SetMetadataField:
+                    case State::SetData:
+                        switch (wchar)
+                        {
+                            case L'm': state = State::SetMetadata; break;
+                            case L's': state = State::SetState; break;
+                            case L'o': state = State::SetOrder; break;
+                        }
+                        break;
+                    case State::SetMetadata:
                         if (!metadata_field)
                         {
                             content.clear();
-                            if (!(metadata_field = to_metadata_field(wchar)))
+                            if (!(metadata_field = to_metadata(wchar)))
                                 state.reset();
                         }
                         else
@@ -118,8 +159,24 @@ namespace proast { namespace presenter {
                                     break;
                             }
                         break;
-                    case State::ShowMetadataField:
-                        r.commander_show_metadata(to_metadata_field(wchar));
+                    case State::ShowMetadata:
+                        r.commander_show_metadata(to_metadata(wchar));
+                        state.reset();
+                        break;
+                    case State::SetState:
+                        {
+                            std::optional<model::State> node_state;
+                            bool done;
+                            if (to_node_state(node_state, done, wchar))
+                                r.commander_set_node_state(node_state, done);
+                            state.reset();
+                        }
+                        break;
+                    case State::SetOrder:
+                        if (auto o = to_order_sequential(wchar))
+                        {
+                            r.commander_set_order(*o);
+                        }
                         state.reset();
                         break;
                     case State::Create:
@@ -200,8 +257,8 @@ namespace proast { namespace presenter {
 
                     case 'm':  state = State::BookmarkRegister; break;
                     case '\'': state = State::BookmarkJump; break;
-                    case 's':  state = State::SetMetadataField; break;
-                    case 'M':  state = State::ShowMetadataField; break;
+                    case 's':  state = State::SetData; break;
+                    case 'M':  state = State::ShowMetadata; break;
                     case 'c':  state = State::Create; break;
                     case 'd':  state = State::Delete; break;
                     case 'D':  state = State::Duplicate; break;

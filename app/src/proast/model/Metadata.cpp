@@ -2,6 +2,7 @@
 #include <gubg/OnlyOnce.hpp>
 #include <gubg/mss.hpp>
 #include <string>
+#include <set>
 
 namespace proast { namespace model { 
     bool Metadata::has_local_data() const
@@ -18,6 +19,20 @@ namespace proast { namespace model {
         if (tags.size())
             b = true;
         return b;
+    }
+
+    double Metadata::get_volume_db() const
+    {
+        return volume_db.value_or(-20.0);
+    }
+    double Metadata::get_impact() const
+    {
+        return impact.value_or(1.0);
+    }
+    double Metadata::get_age() const
+    {
+        //TODO: compute actual age as new-live
+        return 1.0;
     }
 
     void Metadata::stream(gubg::naft::Node &body)
@@ -58,6 +73,10 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
         std::string key, value;
+        static std::set<std::string> yesses = {"yes", "Yes", "y", "Y", "1", "true", "True"};
+        auto yesno = [&](const auto &str){
+            return yesses.count(str) > 0;
+        };
         for (std::string tag; range.pop_tag(tag);)
         {
             MSS(range.pop_attr(key, value));
@@ -70,6 +89,8 @@ namespace proast { namespace model {
             else if (tag == "Live") dead = value;
             else if (tag == "Due") due = value;
             else if (tag == "Dead") dead = value;
+            else if (tag == "State") state = to_State(value);
+            else if (tag == "Done") done = yesno(value);
             else if (tag == "Tags")
             {
                 for (std::string_view sv{value}; !sv.empty();)
