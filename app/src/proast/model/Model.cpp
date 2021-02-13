@@ -238,7 +238,6 @@ namespace proast { namespace model {
         auto child = p->append_child();
         child->segment = fp.filename();
 
-
         setup_up_down_(p);
 
         MSS_END();
@@ -253,6 +252,8 @@ namespace proast { namespace model {
         n->metadata.state = state;
         n->metadata.done = done;
 
+        save_metadata();
+
         MSS_END();
     }
     bool Model::set_order_sequential(bool order_sequential)
@@ -263,6 +264,8 @@ namespace proast { namespace model {
         MSS(!!n);
         
         n->metadata.order_sequential = order_sequential;
+
+        save_metadata();
 
         MSS_END();
     }

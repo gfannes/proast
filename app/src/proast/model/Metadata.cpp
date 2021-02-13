@@ -16,6 +16,11 @@ namespace proast { namespace model {
         check(completion_pct);
         check(volume_db);
         check(impact);
+        check(state);
+        if (done)
+            b = true;
+        if (order_sequential)
+            b = true;
         if (tags.size())
             b = true;
         return b;
@@ -37,11 +42,15 @@ namespace proast { namespace model {
 
     void Metadata::stream(gubg::naft::Node &body)
     {
-        auto stream_item_2 = [&](auto name, auto &item)
+        auto stream_item = [&](auto name, const auto &item)
+        {
+            auto n = body.node(name);
+            n.attr("value", item);
+        };
+        auto stream_item_if = [&](auto name, auto &item)
         {
             if (!item) return;
-            auto n = body.node(name);
-            n.attr("value", *item);
+            stream_item(name, *item);
         };
         auto piped = [&](const auto &tags)
         {
@@ -56,24 +65,35 @@ namespace proast { namespace model {
             return res;
         };
 
-        stream_item_2("Effort", effort);
+        stream_item_if("Effort", effort);
         if (tags.size())
         {
             auto n = body.node("Tags");
             n.attr("value", piped(tags));
         }
-        stream_item_2("Live", live);
-        stream_item_2("Due", due);
-        stream_item_2("Dead", dead);
-        stream_item_2("Completion_pct", completion_pct);
-        stream_item_2("Volume_db", volume_db);
-        stream_item_2("Impact", impact);
+        stream_item_if("Live", live);
+        stream_item_if("Due", due);
+        stream_item_if("Dead", dead);
+        stream_item_if("Completion_pct", completion_pct);
+        stream_item_if("Volume_db", volume_db);
+        stream_item_if("Impact", impact);
+        if (state)
+        {
+            auto n = body.node("State");
+            n.attr("value", model::to_string(*state));
+            n.attr("done", (done ? "yes" : "no"));
+        }
+        if (order_sequential)
+        {
+            auto n = body.node("Order");
+            n.attr("value", (order_sequential ? "Sequential" : "Random"));
+        }
     }
     bool Metadata::parse(gubg::naft::Range &range)
     {
         MSS_BEGIN(bool);
         std::string key, value;
-        static std::set<std::string> yesses = {"yes", "Yes", "y", "Y", "1", "true", "True"};
+        static const std::set<std::string> yesses = {"yes", "Yes", "y", "Y", "1", "true", "True"};
         auto yesno = [&](const auto &str){
             return yesses.count(str) > 0;
         };
@@ -89,8 +109,23 @@ namespace proast { namespace model {
             else if (tag == "Live") dead = value;
             else if (tag == "Due") due = value;
             else if (tag == "Dead") dead = value;
-            else if (tag == "State") state = to_State(value);
-            else if (tag == "Done") done = yesno(value);
+            else if (tag == "State")
+            {
+                state = to_State(value);
+                MSS(range.pop_attr(key, value));
+                MSS(key == "done");
+                done = yesno(value);
+            }
+            else if (tag == "Order")
+            {
+                if (false) {}
+                else if (value == "Sequential")
+                    order_sequential = true;
+                else if (value == "Random")
+                    order_sequential = false;
+                else
+                    MSS(false);
+            }
             else if (tag == "Tags")
             {
                 for (std::string_view sv{value}; !sv.empty();)
@@ -118,6 +153,9 @@ namespace proast { namespace model {
         if (!dead) dead = other.dead;
         if (!live) live = other.live;
         if (!due) due = other.due;
+        if (!state) state = other.state;
+        done = other.done;
+        order_sequential = other.order_sequential;
         if (!tags.size()) tags = other.tags;
     }
 } } 
