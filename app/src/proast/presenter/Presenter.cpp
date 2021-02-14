@@ -59,56 +59,70 @@ namespace proast { namespace presenter {
                     return;
                 }
 
-                const auto path = node->path();
-                const auto is_file = std::filesystem::is_regular_file(path);
-                if (is_file)
-                {
-                    if (!node->content)
-                        node->content = content_mgr_.load(path);
-                    lst = node->content;
-                }
-                else
-                {
-                    lst = dto::List::create();
-                    for (auto &child: node->childs)
+                auto type__attention = [](auto t){
+                    switch (t)
                     {
-                        if (!child)
-                            continue;
-                        const auto is_child_file = std::filesystem::is_regular_file(child->path());
-                        oss_.str("");
-                        unsigned int width = 0;
-                        if (show_metadata_field_)
-                        {
-                            switch (*show_metadata_field_)
-                            {
-                                case MetadataField::Effort:
-                                    width = 5;
-                                    oss_ << std::fixed << std::setprecision(1) << std::setw(width);
-                                    if (auto effort = child->total_effort(); effort > 0)
-                                        oss_ << effort;
-                                    else
-                                        oss_ << ' ';
-                                    oss_ << ' ';
-                                    break;
-                                case MetadataField::Dependency:
-                                    width = 4;
-                                    oss_ << std::fixed << std::setprecision(1) << std::setw(width);
-                                    oss_ << child->dependency_count() << " ";
-                                    break;
-                            }
-                        }
-                        else
-                            oss_ << ' ';
-                        oss_ << child->name();
-                        lst->items.emplace_back(oss_.str());
-                        lst->items.back().ix__attention[width] = is_child_file ? 3 : 5;
+                        case model::Type::File: return 3;
+                        case model::Type::Directory: return 5;
+                        case model::Type::Virtual: return 4;
+                        case model::Type::Link: return 6;
+                        default: break;
                     }
-                    lst->ix = model::Model::selected_ix(node);
+                    return 0;
+                };
+
+                const auto path = node->path();
+                switch (node->type)
+                {
+                    case model::Type::File:
+                        if (!node->content)
+                            node->content = content_mgr_.load(path);
+                        lst = node->content;
+                        break;
+                    case model::Type::Link:
+                        break;
+                    case model::Type::Directory:
+                    case model::Type::Virtual:
+                        lst = dto::List::create();
+                        for (auto &child: node->childs)
+                        {
+                            if (!child)
+                                continue;
+                            oss_.str("");
+                            unsigned int width = 0;
+                            if (show_metadata_field_)
+                            {
+                                switch (*show_metadata_field_)
+                                {
+                                    case MetadataField::Effort:
+                                        width = 5;
+                                        oss_ << std::fixed << std::setprecision(1) << std::setw(width);
+                                        if (auto effort = child->total_effort(); effort > 0)
+                                            oss_ << effort;
+                                        else
+                                            oss_ << ' ';
+                                        oss_ << ' ';
+                                        break;
+                                    case MetadataField::Dependency:
+                                        width = 4;
+                                        oss_ << std::fixed << std::setprecision(1) << std::setw(width);
+                                        oss_ << child->dependency_count() << " ";
+                                        break;
+                                }
+                            }
+                            else
+                                oss_ << ' ';
+                            oss_ << child->name();
+                            lst->items.emplace_back(oss_.str());
+                            lst->items.back().ix__attention[width] = type__attention(child->type);
+                        }
+                        lst->ix = model::Model::selected_ix(node);
+                        break;
                 }
 
                 lst->name = model::to_string(node->to_path());
                 lst->name.ix__bold[0] = true;
-                lst->name.ix__attention[0] = is_file ? 4 : 6;
+                lst->name.ix__attention[0] = type__attention(node->type);
             };
             set_view_dto(view_.n0,   model_.node_0());
             set_view_dto(view_.n0a,  model_.node_0a());
@@ -279,6 +293,11 @@ namespace proast { namespace presenter {
                             lst->name = "Export";
                             add_help('\0', "Specify the name for the export");
                             break;
+                        case State::Search:
+                            lst->name = "Search";
+                            add_help('\0', "^/: Search pattern for file and folder names");
+                            add_help('/', "Search pattern for file content");
+                            break;
                         default: break;
                     }
                 else
@@ -324,6 +343,12 @@ namespace proast { namespace presenter {
                     case State::Run:               oss_ << "Executable: " << Commander::content; break;
                     case State::Duplicate:         oss_ << "Duplicate: " << Commander::content; break;
                     case State::Export:            oss_ << "Export: " << Commander::content; break;
+                    case State::Search:            if (Commander::content.empty() || Commander::content[0] != '/')
+                                                       oss_ << "Search in names: ";
+                                                   else
+                                                       oss_ << "Search in content: ";
+                                                   oss_ << Commander::content;
+                                                   break;
                     default: break;
                 }
             view_.footer = oss_.str();
@@ -486,6 +511,10 @@ namespace proast { namespace presenter {
     void Presenter::commander_export(const std::string &name)
     {
         model_.do_export(name);
+    }
+    void Presenter::commander_search(const std::string &pattern, bool in_content)
+    {
+        model_.search(pattern, in_content);
     }
     void Presenter::commander_set_node_state(std::optional<model::State> state, bool done)
     {

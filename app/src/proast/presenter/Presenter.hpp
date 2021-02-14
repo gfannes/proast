@@ -32,6 +32,7 @@ namespace proast { namespace presenter {
         void commander_rename(const std::string &name);
         void commander_export(const std::string &name);
         void commander_duplicate(const std::string &name);
+        void commander_search(const std::string &pattern, bool in_content);
         void commander_delete(Delete);
         void commander_paste(bool paste_in);
         void commander_set_node_state(std::optional<model::State>, bool done);

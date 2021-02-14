@@ -45,6 +45,7 @@ namespace proast { namespace model {
         bool clear_deletes();
         bool paste(bool paste_in);
         bool do_export(const std::string &name);
+        bool search(const std::string &pattern, bool in_content);
         bool set_node_state(std::optional<State>, bool done);
         bool set_order_sequential(bool order_sequential);
 

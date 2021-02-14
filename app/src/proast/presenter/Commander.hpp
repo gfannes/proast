@@ -228,6 +228,14 @@ namespace proast { namespace presenter {
                     case State::Export:
                         read_content([&](){r.commander_export(content);});
                         break;
+                    case State::Search:
+                        read_content([&](){
+                                if (content.empty())
+                                r.commander_search(content, false);
+                                auto pattern = content.substr(1);
+                                r.commander_search(pattern, content[0] == '/');
+                                });
+                        break;
                 }
             }
             else
@@ -265,6 +273,7 @@ namespace proast { namespace presenter {
                     case 'p':  state = State::Paste; break;
                     case 'r':  state = State::Rename; break;
                     case 'x':  state = State::Export; break;
+                    case '/':  state = State::Search; break;
 
                     case 'R': r.commander_reload(); break;
                 }

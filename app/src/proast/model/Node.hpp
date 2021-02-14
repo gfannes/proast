@@ -19,12 +19,13 @@ namespace proast { namespace model {
         using Ptr = std::shared_ptr<Node_>;
         using WPtr = std::weak_ptr<Node_>;
 
-        static Ptr create();
-        static Ptr create(const std::string &);
+        static Ptr create(Type);
+        static Ptr create(Type, const std::string &name);
 
         std::filesystem::path segment;
         std::filesystem::path path() const;
         std::string name() const;
+        void set_name(const std::string &);
 
         dto::List::Ptr content;
 
@@ -38,7 +39,7 @@ namespace proast { namespace model {
         WPtr link;
         std::vector<Ptr> childs;
 
-        Ptr append_child();
+        Ptr append_child(Type);
         Ptr find(const Path &);
 
         Path to_path() const;
@@ -62,6 +63,8 @@ namespace proast { namespace model {
         unsigned int node_count() const;
 
     private:
+        Node_(Type);
+
         void append_segment_(std::filesystem::path &) const;
         std::optional<std::string> name_;
 

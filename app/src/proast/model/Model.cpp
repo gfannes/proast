@@ -11,7 +11,7 @@
 namespace proast { namespace model { 
     Model::Model()
     {
-        root_ = Node_::create("<ROOT>");
+        root_ = Node_::create(Type::Virtual, "<ROOT>");
         current_node_ = root_;
         metadata_filename_ = "proast-metadata.naft";
     }
@@ -66,7 +66,12 @@ namespace proast { namespace model {
         root_config_ary_.emplace_back(path, config);
 
         MSS(!!root_);
-        auto child = root_->append_child();
+        Type t;
+        if (false) {}
+        else if (std::filesystem::is_regular_file(path)) t = Type::File;
+        else if (std::filesystem::is_directory(path)) t = Type::Directory;
+        else MSS(false);
+        auto child = root_->append_child(t);
         //TODO: allow base node to have a different name than path.filename()
         child->segment = path;
 
@@ -94,7 +99,7 @@ namespace proast { namespace model {
         MSS(set_home(home_dir_));
 
         depth_first_search(root_, [](auto &n){n->clear_dependencies();});
-        root_ = Node_::create("<ROOT>");
+        root_ = Node_::create(Type::Virtual, "<ROOT>");
 
         //Copy root_config_ary_ because it will be updated during calls to add_root()
         auto root_config_ary_copy = root_config_ary_;
@@ -199,7 +204,7 @@ namespace proast { namespace model {
                 new_fp += '_';
             }
 
-            auto copy = p->append_child();
+            auto copy = p->append_child(n->type);
             copy->segment = new_fp.filename();
 
             std::filesystem::copy(orig_fp, new_fp, std::filesystem::copy_options::recursive);
@@ -235,8 +240,25 @@ namespace proast { namespace model {
             depth_first_search(n, append_row);
         }
 
-        auto child = p->append_child();
+        auto child = p->append_child(Type::File);
         child->segment = fp.filename();
+
+        setup_up_down_(p);
+
+        MSS_END();
+    }
+    bool Model::search(const std::string &pattern, bool in_content)
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        auto p = n->parent.lock();
+        MSS(!!p);
+
+        auto child = p->append_child(Type::Virtual);
+        child->set_name(std::string("SEARCH:")+pattern);
 
         setup_up_down_(p);
 
@@ -275,6 +297,14 @@ namespace proast { namespace model {
 
         auto n = node();
         MSS(!!n);
+
+        switch (n->type)
+        {
+            case Type::File:
+            case Type::Directory:
+                break;
+            default: return false; break;
+        }
 
         const auto orig_fp = n->path();
         MSS(erase_node_(n));
@@ -674,7 +704,7 @@ namespace proast { namespace model {
 
         for (const auto &[path, is_folder]: path__is_folder)
         {
-            auto child = node->append_child();
+            auto child = node->append_child(is_folder ? Type::Directory : Type::File);
             child->segment = path.filename().string();
             if (is_folder)
                 MSS(add_(child, path, config));
@@ -743,12 +773,13 @@ namespace proast { namespace model {
         std::filesystem::rename(orig_fp, new_fp);
 
         //Create new child for the "index" file
-        auto child = node->append_child();
+        auto child = node->append_child(Type::File);
         child->segment = new_fp.filename();
         setup_up_down_(child);
 
         node->segment = stem;
         node->child = child;
+        node->type = Type::Directory;
 
         if (auto p = node->parent.lock())
             setup_up_down_(node);
@@ -776,7 +807,7 @@ namespace proast { namespace model {
         {
             std::filesystem::create_directory(new_fp);
         }
-        auto child = node->append_child();
+        auto child = node->append_child(create_file ? Type::File : Type::Directory);
         child->segment = new_fp.filename();
 
         setup_up_down_(node);

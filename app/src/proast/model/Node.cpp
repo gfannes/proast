@@ -2,19 +2,23 @@
 #include <cmath>
 
 namespace proast { namespace model { 
-    Node_::Ptr Node_::create()
+    Node_::Node_(Type t): type(t)
     {
-        return Ptr{new Node_};
     }
-    Node_::Ptr Node_::create(const std::string &str)
+    Node_::Ptr Node_::create(Type t)
     {
-        auto ptr = create();
-        ptr->name_ = str;
+        return Ptr{new Node_{t}};
+    }
+    Node_::Ptr Node_::create(Type t, const std::string &name)
+    {
+        auto ptr = create(t);
+        ptr->name_ = name;
         return ptr;
     }
-    Node_::Ptr Node_::append_child()
+
+    Node_::Ptr Node_::append_child(Type t)
     {
-        auto ptr = create();
+        auto ptr = create(t);
         ptr->parent = shared_from_this();
         childs.push_back(ptr);
         return ptr;
@@ -30,6 +34,10 @@ namespace proast { namespace model {
         if (name_)
             return *name_;
         return segment.filename().string();
+    }
+    void Node_::set_name(const std::string &name)
+    {
+        name_ = name;
     }
     unsigned int Node_::node_count() const
     {
