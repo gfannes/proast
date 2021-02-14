@@ -232,8 +232,9 @@ namespace proast { namespace presenter {
                         read_content([&](){
                                 if (content.empty())
                                 r.commander_search(content, false);
-                                auto pattern = content.substr(1);
-                                r.commander_search(pattern, content[0] == '/');
+                                const bool search_in_content = content[0] == '/';
+                                auto pattern = search_in_content ? content.substr(1) : content;
+                                r.commander_search(pattern, search_in_content);
                                 });
                         break;
                 }

@@ -7,6 +7,7 @@
 #include <fstream>
 #include <map>
 #include <cassert>
+#include <regex>
 
 namespace proast { namespace model { 
     Model::Model()
@@ -260,6 +261,31 @@ namespace proast { namespace model {
         auto child = p->append_child(Type::Virtual);
         child->set_name(std::string("SEARCH:")+pattern);
 
+        std::regex re{pattern};
+
+        auto append_if_matches = [&](auto &node)
+        {
+            switch (node->type)
+            {
+                case Type::File:
+                case Type::Directory:
+                    if (in_content)
+                    {
+                    }
+                    else
+                    {
+                        if (std::regex_search(node->name(), re))
+                        {
+                            auto link = child->append_child(Type::Link);
+                            link->link = node;
+                        }
+                    }
+                    break;
+                default: break;
+            }
+        };
+        depth_first_search(n, append_if_matches);
+        setup_up_down_(child);
         setup_up_down_(p);
 
         MSS_END();
@@ -284,7 +310,7 @@ namespace proast { namespace model {
 
         auto n = node();
         MSS(!!n);
-        
+
         n->metadata.order_sequential = order_sequential;
 
         save_metadata();
@@ -302,26 +328,30 @@ namespace proast { namespace model {
         {
             case Type::File:
             case Type::Directory:
+                {
+                    const auto orig_fp = n->path();
+                    MSS(erase_node_(n));
+                    auto new_fp = scratchpad_dir_/orig_fp.filename();
+
+                    //Remove whatever is in the scratchpad in this location
+                    if (std::filesystem::is_directory(new_fp) || std::filesystem::is_regular_file(new_fp))
+                        std::filesystem::remove_all(new_fp);
+
+                    //Move file/folder to scratchpad
+                    std::filesystem::rename(orig_fp, new_fp);
+
+                    //Indicate full-path in node to make sure we find it back
+                    n->parent.reset();
+                    n->segment = new_fp;
+
+                    deletes_.push_back(n);
+                }
                 break;
-            default: return false; break;
+            default:
+                MSS(erase_node_(n));
+                break;
         }
 
-        const auto orig_fp = n->path();
-        MSS(erase_node_(n));
-        auto new_fp = scratchpad_dir_/orig_fp.filename();
-
-        //Remove whatever is in the scratchpad in this location
-        if (std::filesystem::is_directory(new_fp) || std::filesystem::is_regular_file(new_fp))
-            std::filesystem::remove_all(new_fp);
-
-        //Move file/folder to scratchpad
-        std::filesystem::rename(orig_fp, new_fp);
-
-        //Indicate full-path in node to make sure we find it back
-        n->parent.reset();
-        n->segment = new_fp;
-
-        deletes_.push_back(n);
 
         MSS_END();
     }
@@ -922,10 +952,18 @@ namespace proast { namespace model {
 
                 //Collect actual order of names
                 actual_order.resize(size);
+                actual_order.resize(0);
                 for (auto ix = 0u; ix < size; ++ix)
                 {
                     auto &child = childs[ix];
-                    actual_order[ix] = child ? child->name() : "";
+                    switch (child->type)
+                    {
+                        case Type::File:
+                        case Type::Directory:
+                            actual_order.push_back(child ? child->name() : "");
+                            break;
+                        default: break;
+                    }
                 }
 
                 //Default order is sorted on name

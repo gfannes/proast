@@ -33,7 +33,25 @@ namespace proast { namespace model {
     {
         if (name_)
             return *name_;
-        return segment.filename().string();
+        switch (type)
+        {
+            case Type::File:
+            case Type::Directory:
+                return segment.filename().string();
+                break;
+            case Type::Virtual:
+                return "<unnamed virtual>";
+                break;
+            case Type::Link:
+                if (auto l = link.lock())
+                {
+                    return std::string("=>")+l->name();
+                }
+                else
+                    return "<unlinked link>";
+                break;
+        }
+        return "";
     }
     void Node_::set_name(const std::string &name)
     {
