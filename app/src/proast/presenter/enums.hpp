@@ -50,6 +50,7 @@ namespace proast { namespace presenter {
     ftor(type, Export) \
     ftor(type, Run) \
     ftor(type, Search) \
+    ftor(type, Plan) \
 
     define_enum_(State, my_each_value_);
 #undef my_each_value_

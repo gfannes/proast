@@ -1,1 +1,1 @@
-#define PROAST_GIT_HASH "4adf3c1c"
+#define PROAST_GIT_HASH "1c12e468"

@@ -43,7 +43,7 @@ namespace proast { namespace presenter {
         {
             oss_.str("");
             if (auto n = model_.node())
-                oss_ << n->path().string();
+                oss_ << model::to_string(n->to_path());
             else
                 oss_ << "<no valid node>";
             view_.header = oss_.str();
@@ -71,53 +71,56 @@ namespace proast { namespace presenter {
                     return 0;
                 };
 
-                const auto path = node->path();
-                switch (node->type)
-                {
-                    case model::Type::File:
-                        if (!node->content)
-                            node->content = content_mgr_.load(path);
-                        lst = node->content;
-                        break;
-                    case model::Type::Link:
-                        break;
-                    case model::Type::Directory:
-                    case model::Type::Virtual:
-                        lst = dto::List::create();
-                        for (auto &child: node->childs)
-                        {
-                            if (!child)
-                                continue;
-                            oss_.str("");
-                            unsigned int width = 0;
-                            if (show_metadata_field_)
+                if (auto rnode = node->resolve())
+                    switch (rnode->type)
+                    {
+                        case model::Type::File:
+                            if (!rnode->content)
+                                rnode->content = content_mgr_.load(rnode->path());
+                            lst = rnode->content;
+                            break;
+                        case model::Type::Directory:
+                        case model::Type::Virtual:
+                            lst = dto::List::create();
+                            for (auto &child: rnode->childs)
                             {
-                                switch (*show_metadata_field_)
+                                if (!child)
+                                    continue;
+                                oss_.str("");
+                                unsigned int width = 0;
+                                if (show_metadata_field_)
                                 {
-                                    case MetadataField::Effort:
-                                        width = 5;
-                                        oss_ << std::fixed << std::setprecision(1) << std::setw(width);
-                                        if (auto effort = child->total_effort(); effort > 0)
-                                            oss_ << effort;
-                                        else
+                                    switch (*show_metadata_field_)
+                                    {
+                                        case MetadataField::Effort:
+                                            width = 5;
+                                            oss_ << std::fixed << std::setprecision(1) << std::setw(width);
+                                            if (auto effort = child->total_effort(); effort > 0)
+                                                oss_ << effort;
+                                            else
+                                                oss_ << ' ';
                                             oss_ << ' ';
-                                        oss_ << ' ';
-                                        break;
-                                    case MetadataField::Dependency:
-                                        width = 4;
-                                        oss_ << std::fixed << std::setprecision(1) << std::setw(width);
-                                        oss_ << child->dependency_count() << " ";
-                                        break;
+                                            break;
+                                        case MetadataField::Dependency:
+                                            width = 4;
+                                            oss_ << std::fixed << std::setprecision(1) << std::setw(width);
+                                            oss_ << child->dependency_count() << " ";
+                                            break;
+                                    }
                                 }
+                                else
+                                    oss_ << ' ';
+                                oss_ << child->name();
+                                lst->items.emplace_back(oss_.str());
+                                lst->items.back().ix__attention[width] = type__attention(child->type);
                             }
-                            else
-                                oss_ << ' ';
-                            oss_ << child->name();
-                            lst->items.emplace_back(oss_.str());
-                            lst->items.back().ix__attention[width] = type__attention(child->type);
-                        }
-                        lst->ix = model::Model::selected_ix(node);
-                        break;
+                            lst->ix = model::Model::selected_ix(rnode);
+                            break;
+                    }
+                else
+                {
+                    lst = dto::List::create();
+                    lst->items.emplace_back("<could not resolve node>");
                 }
 
                 lst->name = model::to_string(node->to_path());
@@ -515,6 +518,10 @@ namespace proast { namespace presenter {
     void Presenter::commander_search(const std::string &pattern, bool in_content)
     {
         model_.search(pattern, in_content);
+    }
+    void Presenter::commander_plan()
+    {
+        model_.plan();
     }
     void Presenter::commander_set_node_state(std::optional<model::State> state, bool done)
     {

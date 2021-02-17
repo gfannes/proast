@@ -1,4 +1,5 @@
 #include <proast/model/Node.hpp>
+#include <proast/log.hpp>
 #include <cmath>
 
 namespace proast { namespace model { 
@@ -44,9 +45,7 @@ namespace proast { namespace model {
                 break;
             case Type::Link:
                 if (auto l = link.lock())
-                {
                     return std::string("=>")+l->name();
-                }
                 else
                     return "<unlinked link>";
                 break;
@@ -90,11 +89,14 @@ namespace proast { namespace model {
     {
         if (!other)
             return;
+        auto resolved_other = other->resolve();
+        if (!resolved_other)
+            return;
 
         auto my_set = to_set_(all_dependencies_);
-        auto other_set = to_set_(other->all_dependencies_);
+        auto other_set = to_set_(resolved_other->all_dependencies_);
 
-        my_set.insert(other);
+        my_set.insert(resolved_other);
         my_set.insert(other_set.begin(), other_set.end());
 
         all_dependencies_.resize(my_set.size());
@@ -102,7 +104,9 @@ namespace proast { namespace model {
     }
     std::size_t Node_::dependency_count() const
     {
-        return all_dependencies_.size();
+        if (auto self = shared_from_this()->resolve())
+            return self->all_dependencies_.size();
+        return 0;
     }
     Path Node_::to_path() const
     {
@@ -140,10 +144,14 @@ namespace proast { namespace model {
 
     double Node_::total_effort() const
     {
-        double sum = metadata.effort.value_or(0.0);
-        for (auto &wptr: all_dependencies_)
-            if (auto ptr = wptr.lock())
-                sum += ptr->metadata.effort.value_or(0.0);
+        double sum = 0.0;
+        if (auto self = shared_from_this()->resolve())
+        {
+            sum = self->metadata.effort.value_or(0.0);
+            for (auto &wptr: self->all_dependencies_)
+                if (auto ptr = wptr.lock())
+                    sum += ptr->metadata.effort.value_or(0.0);
+        }
         return sum;
     }
     std::optional<double> Node_::priority() const
@@ -160,11 +168,32 @@ namespace proast { namespace model {
 
     Tags Node_::all_tags() const
     {
-        Tags tags = metadata.tags;
-        for (auto &wptr: all_dependencies_)
-            if (auto ptr = wptr.lock())
-                tags.insert(ptr->metadata.tags.begin(), ptr->metadata.tags.end());
+        Tags tags;
+        if (auto self = shared_from_this()->resolve())
+        {
+            tags = self->metadata.tags;
+            for (auto &wptr: self->all_dependencies_)
+                if (auto ptr = wptr.lock())
+                    tags.insert(ptr->metadata.tags.begin(), ptr->metadata.tags.end());
+        }
         return tags;
+    }
+
+    Node_::Ptr Node_::resolve()
+    {
+        if (type != Type::Link)
+            return shared_from_this();
+        if (auto lnk = link.lock())
+            return lnk->resolve();
+        return Ptr{};
+    }
+    Node_::CPtr Node_::resolve() const
+    {
+        if (type != Type::Link)
+            return shared_from_this();
+        if (auto lnk = link.lock())
+            return lnk->resolve();
+        return CPtr{};
     }
 
     //Privates
@@ -174,7 +203,7 @@ namespace proast { namespace model {
             p->append_segment_(path);
         path /= segment;
     }
-    std::set<Node> Node_::to_set_(std::vector<WPtr> &vec)
+    std::set<Node> Node_::to_set_(const DependenciesVector &vec)
     {
         std::set<Ptr> set;
         for (auto &wptr: vec)

@@ -18,6 +18,7 @@ namespace proast { namespace model {
     public:
         using Ptr = std::shared_ptr<Node_>;
         using WPtr = std::weak_ptr<Node_>;
+        using CPtr = std::shared_ptr<const Node_>;
 
         static Ptr create(Type);
         static Ptr create(Type, const std::string &name);
@@ -41,6 +42,18 @@ namespace proast { namespace model {
 
         Ptr append_child(Type);
         Ptr find(const Path &);
+        template <typename Ftor>
+        Ptr find_child(Ftor &&ftor)
+        {
+            for (auto child: childs)
+            {
+                if (!child)
+                    continue;
+                if (ftor(child))
+                    return child;
+            }
+            return Ptr{};
+        }
 
         Path to_path() const;
         Path to_path(Ptr &root) const;
@@ -51,9 +64,10 @@ namespace proast { namespace model {
         template <typename Ftor>
         void each_dependency(Ftor &&ftor) const
         {
-            for (auto &wptr: all_dependencies_)
-                if (auto ptr = wptr.lock())
-                    ftor(ptr);
+            if (auto self = shared_from_this()->resolve())
+                for (auto &wptr: self->all_dependencies_)
+                    if (auto ptr = wptr.lock())
+                        ftor(ptr);
         }
 
         double total_effort() const;
@@ -62,6 +76,9 @@ namespace proast { namespace model {
 
         unsigned int node_count() const;
 
+        CPtr resolve() const;
+        Ptr resolve();
+
     private:
         Node_(Type);
 
@@ -69,8 +86,9 @@ namespace proast { namespace model {
         std::optional<std::string> name_;
 
         //We cannot keep weak_ptr in a set, but this vector has unique (or nullptr) elements
-        std::vector<WPtr> all_dependencies_;
-        static std::set<Ptr> to_set_(std::vector<WPtr> &);
+        using DependenciesVector = std::vector<WPtr>;
+        DependenciesVector all_dependencies_;
+        static std::set<Ptr> to_set_(const DependenciesVector &);
     };
 
     using Node = Node_::Ptr;

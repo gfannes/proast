@@ -229,13 +229,20 @@ namespace proast { namespace presenter {
                         read_content([&](){r.commander_export(content);});
                         break;
                     case State::Search:
-                        read_content([&](){
+                        {
+                            auto lambda = [&]()
+                            {
                                 if (content.empty())
-                                r.commander_search(content, false);
+                                {
+                                    r.commander_search(content, false);
+                                    return;
+                                }
                                 const bool search_in_content = content[0] == '/';
                                 auto pattern = search_in_content ? content.substr(1) : content;
                                 r.commander_search(pattern, search_in_content);
-                                });
+                            };
+                            read_content(lambda);
+                        }
                         break;
                 }
             }
@@ -275,6 +282,8 @@ namespace proast { namespace presenter {
                     case 'r':  state = State::Rename; break;
                     case 'x':  state = State::Export; break;
                     case '/':  state = State::Search; break;
+
+                    case 'P':  r.commander_plan(); break;
 
                     case 'R': r.commander_reload(); break;
                 }

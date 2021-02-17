@@ -260,6 +260,7 @@ namespace proast { namespace model {
 
         auto child = p->append_child(Type::Virtual);
         child->set_name(std::string("SEARCH:")+pattern);
+        setup_up_down_(p);
 
         std::regex re{pattern};
 
@@ -278,6 +279,7 @@ namespace proast { namespace model {
                         {
                             auto link = child->append_child(Type::Link);
                             link->link = node;
+                            link->child = node;
                         }
                     }
                     break;
@@ -285,7 +287,64 @@ namespace proast { namespace model {
             }
         };
         depth_first_search(n, append_if_matches);
+        for (auto &ch: child->childs)
+            child->add_dependencies(ch);
         setup_up_down_(child);
+        if (!child->childs.empty())
+            child->child = child->childs[0];
+        focus(child);
+
+        MSS_END();
+    }
+    bool Model::plan()
+    {
+        MSS_BEGIN(bool);
+
+        auto n = node();
+        MSS(!!n);
+
+        const auto plan_name = n->name()+":PLAN";
+
+        auto p = n->parent.lock();
+        MSS(!!p);
+
+        Node plan = p->find_child([&](auto child){return child->type == Type::Virtual && child->name() == plan_name;});
+        if (!plan)
+        {
+            plan = p->append_child(Type::Virtual);
+            plan->set_name(plan_name);
+        }
+
+        auto append_if_has_effort = [&](auto &node)
+        {
+            if (!node)
+                return;
+            if (!node->metadata.effort)
+                return;
+            switch (node->type)
+            {
+                case Type::File:
+                case Type::Directory:
+                    {
+                        auto link = plan->append_child(Type::Link);
+                        link->link = node;
+                        link->child = node;
+                    }
+                    break;
+                default: break;
+            }
+        };
+        depth_first_search(n, append_if_has_effort);
+        for (auto &ch: plan->childs)
+        {
+            auto s = log::Scope{"Plan dependencies"};
+            plan->add_dependencies(ch);
+        }
+        setup_up_down_(plan);
+        if (!plan->child.lock() && !plan->childs.empty())
+            plan->child = plan->childs[0];
+        focus(plan);
+
         setup_up_down_(p);
 
         MSS_END();

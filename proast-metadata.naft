@@ -1,3 +1,21 @@
+[Metadata](path:/@design/annotation.md){
+  [Effort](value:1)
+}
+[Metadata](path:/@design/decisions.md){
+  [Effort](value:2)
+}
+[Metadata](path:/@design/markdown.md){
+  [Effort](value:3)
+}
+[Metadata](path:/@design/modes.md){
+  [Effort](value:4)
+}
+[Metadata](path:/@design/proast/architecture.md){
+  [Effort](value:5)
+}
+[Metadata](path:/@design/proast){
+  [Effort](value:6)
+}
 [Metadata](path:/@design){
   [State](value:Implementing)(done:no)
 }
@@ -9,4 +27,4 @@
 [Metadata](path:/naming){
   [Effort](value:12)
 }
-[Order](path:)(name:@design)(name:@input)(name:@model)(name:@sprint)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:readme.md)
+[Order](path:)(name:@design)(name:@input)(name:@model)(name:@sprint)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:readme.md)(name:proast.log)
