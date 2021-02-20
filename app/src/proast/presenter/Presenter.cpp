@@ -263,11 +263,7 @@ namespace proast { namespace presenter {
                                         add_help(ch, std::string(*o ? "Sequential" : "Random"));
                             break;
                         case State::Create:
-                            lst->name = "Create";
-                            add_help('f', "Create file");
-                            add_help('d', "Create directory");
-                            add_help('i', "Create file/directory in node");
-                            add_help('n', "Create file/directory next to node");
+                            lst->name = "Create file/folder";
                             break;
                         case State::Delete:
                             lst->name = "Delete";
@@ -276,9 +272,7 @@ namespace proast { namespace presenter {
                             add_help('c', "Clear all deletes");
                             break;
                         case State::Paste:
-                            lst->name = "Paste";
-                            add_help('i', "Paste file/directory in node");
-                            add_help('n', "Paste file/directory next to node");
+                            lst->name = "Paste deletes";
                             break;
                         case State::Rename:
                             lst->name = "Rename";
@@ -335,13 +329,7 @@ namespace proast { namespace presenter {
                                                        oss_ << "Metadata for " << to_string(*Commander::metadata_field) << ": " << Commander::content;
                                                    break;
                     case State::ShowMetadata:      oss_ << "Show metadata field"; break;
-                    case State::Create:            if (!Commander::create_file_dir)
-                                                       oss_ << "Create new file or directory?";
-                                                   else if (!Commander::create_in_next)
-                                                       oss_ << "Create in or next to current node?";
-                                                   else
-                                                       oss_ << "Name: " << Commander::content;
-                                                   break;
+                    case State::Create:            oss_ << "Name: " << Commander::content; break;
                     case State::Rename:            oss_ << "Name: " << Commander::content; break;
                     case State::Run:               oss_ << "Executable: " << Commander::content; break;
                     case State::Duplicate:         oss_ << "Duplicate: " << Commander::content; break;
@@ -486,9 +474,9 @@ namespace proast { namespace presenter {
     {
         show_metadata_field_ = mf_opt;
     }
-    void Presenter::commander_create(const std::string &name, bool create_file, bool create_in)
+    void Presenter::commander_create(const std::string &name)
     {
-        model_.create(name, create_file, create_in);
+        model_.create(name);
     }
     void Presenter::commander_rename(const std::string &name)
     {
@@ -507,9 +495,9 @@ namespace proast { namespace presenter {
             case Delete::Clear:  model_.clear_deletes();                             break;
         }
     }
-    void Presenter::commander_paste(bool paste_in)
+    void Presenter::commander_paste()
     {
-        model_.paste(paste_in);
+        model_.paste();
     }
     void Presenter::commander_export(const std::string &name)
     {

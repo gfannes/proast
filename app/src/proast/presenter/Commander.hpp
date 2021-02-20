@@ -65,8 +65,6 @@ namespace proast { namespace presenter {
     public:
         std::optional<State> state;
         std::optional<MetadataField> metadata_field;
-        std::optional<bool> create_file_dir;
-        std::optional<bool> create_in_next;
         std::string content;
 
         void process(wchar_t wchar, bool alt)
@@ -78,8 +76,6 @@ namespace proast { namespace presenter {
             {
                 state.reset();
                 metadata_field.reset();
-                create_file_dir.reset();
-                create_in_next.reset();
                 content.clear();
             }
             else if (state)
@@ -174,29 +170,11 @@ namespace proast { namespace presenter {
                         break;
                     case State::SetOrder:
                         if (auto o = to_order_sequential(wchar))
-                        {
                             r.commander_set_order(*o);
-                        }
                         state.reset();
                         break;
                     case State::Create:
-                        if (!create_file_dir || !create_in_next)
-                        {
-                            switch (wchar)
-                            {
-                                case 'f': create_file_dir = true; break;
-                                case 'd': create_file_dir = false; break;
-                                case 'i': create_in_next = true; break;
-                                case 'n': create_in_next = false; break;
-                                default: break;
-                            }
-                        }
-                        else
-                            read_content([&](){
-                                    r.commander_create(content, *create_file_dir, *create_in_next);
-                                    create_file_dir.reset();
-                                    create_in_next.reset();
-                                    });
+                        read_content([&](){r.commander_create(content);});
                         break;
                     case State::Delete:
                         switch (wchar)
@@ -207,14 +185,6 @@ namespace proast { namespace presenter {
                             default: break;
                         }
 
-                        break;
-                    case State::Paste:
-                        switch (wchar)
-                        {
-                            case 'i': r.commander_paste(true);  state.reset(); break;
-                            case 'n': r.commander_paste(false); state.reset(); break;
-                            default: break;
-                        }
                         break;
                     case State::Rename:
                         read_content([&](){r.commander_rename(content);});
@@ -281,10 +251,11 @@ namespace proast { namespace presenter {
                     case 'c':  state = State::Create; break;
                     case 'd':  state = State::Delete; break;
                     case 'D':  state = State::Duplicate; break;
-                    case 'p':  state = State::Paste; break;
                     case 'r':  state = State::Rename; break;
                     case 'x':  state = State::Export; break;
                     case '/':  state = State::Search; break;
+
+                    case 'p':  r.commander_paste(); break;
 
                     case 'P':  r.commander_plan(); break;
 

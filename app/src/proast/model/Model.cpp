@@ -137,21 +137,27 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Model::create(const std::string &name, bool create_file, bool create_in)
+    bool Model::create(const std::string &name)
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
-        MSS(!!n);
+        auto parent = node_b();
+        MSS(!!parent);
 
-        if (create_in)
-            MSS(create_(n, name, create_file));
+        std::string my_name;
+        bool create_file = true;
+        if (name.empty() || name.back() != '/')
+            my_name = name;
         else
         {
-            auto parent = n->parent.lock();
-            MSS(!!parent);
-            MSS(create_(parent, name, create_file));
+            my_name = name.substr(0, name.size()-1);
+            create_file = false;
         }
+
+        Node child;
+        MSS(create_(child, parent, my_name, create_file));
+        parent->child = child;
+        focus_.back() = child;
 
         MSS_END();
     }
@@ -370,8 +376,10 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
+        auto p = node_b();
+        MSS(!!p);
 
         switch (n->type)
         {
@@ -400,7 +408,7 @@ namespace proast { namespace model {
                 MSS(erase_node_(n));
                 break;
         }
-
+        focus_.back() = p->child.lock();
 
         MSS_END();
     }
@@ -413,15 +421,12 @@ namespace proast { namespace model {
         deletes_.clear();
         MSS_END();
     }
-    bool Model::paste(bool paste_in)
+    bool Model::paste()
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
-        MSS(!!n);
-
-        if (!paste_in)
-            n = n->parent.lock();
+        auto p = node_b();
+        MSS(!!p);
 
         std::list<Node> problems;
         Node last_ok;
@@ -432,14 +437,15 @@ namespace proast { namespace model {
 
             //When deleting the node, its segment was reworked into an absolute path
             //Hence del->path() should be OK
-            if (!paste_(n, del, del->path()))
+            if (!paste_(p, del, del->path()))
                 problems.push_back(del);
             else
                 last_ok = del;
         }
         deletes_.swap(problems);
 
-        MSS(focus(last_ok));
+        p->child = last_ok;
+        focus_.back() = last_ok;
 
         MSS(deletes_.empty());
 
@@ -857,7 +863,7 @@ namespace proast { namespace model {
 
         MSS_END();
     }
-    bool Model::create_(Node node, const std::string &name, bool create_file)
+    bool Model::create_(Node &child, Node node, const std::string &name, bool create_file)
     {
         assert(!!node);
 
@@ -878,11 +884,10 @@ namespace proast { namespace model {
         {
             std::filesystem::create_directory(new_fp);
         }
-        auto child = node->append_child(create_file ? Type::File : Type::Directory);
+        child = node->append_child(create_file ? Type::File : Type::Directory);
         child->segment = new_fp.filename();
 
         setup_up_down_(node);
-        focus(child);
 
         MSS_END();
     }

@@ -39,12 +39,12 @@ namespace proast { namespace model {
         bool focus(const StringPath &);
         bool focus(Node);
 
-        bool create(const std::string &name, bool create_file, bool create_in);
+        bool create(const std::string &name);
         bool rename(const std::string &name);
         bool duplicate(const std::string &name);
         bool append_to_deletes();
         bool clear_deletes();
-        bool paste(bool paste_in);
+        bool paste();
         bool do_export(const std::string &name);
         bool search(const std::string &pattern, bool in_content);
         bool plan();
@@ -100,7 +100,7 @@ namespace proast { namespace model {
         bool load_metadata_(Node base);
 
         bool rework_into_directory_(Node);
-        bool create_(Node, const std::string &name, bool create_file);
+        bool create_(Node &, Node, const std::string &name, bool create_file);
 
         bool erase_node_(Node);
         bool paste_(Node dst, Node src, const std::filesystem::path &);

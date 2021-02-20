@@ -28,14 +28,14 @@ namespace proast { namespace presenter {
         void commander_bookmark(char ch, bool do_register);
         void commander_set_metadata(MetadataField, const std::string &content);
         void commander_show_metadata(std::optional<MetadataField>);
-        void commander_create(const std::string &name, bool create_file, bool in_parent);
+        void commander_create(const std::string &name);
         void commander_rename(const std::string &name);
         void commander_export(const std::string &name);
         void commander_duplicate(const std::string &name);
         void commander_search(const std::string &pattern, bool in_content);
         void commander_plan();
         void commander_delete(Delete);
-        void commander_paste(bool paste_in);
+        void commander_paste();
         void commander_set_node_state(std::optional<model::State>, bool done);
         void commander_set_order(bool order_sequential);
         void commander_reload();
