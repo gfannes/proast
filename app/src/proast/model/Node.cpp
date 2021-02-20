@@ -1,5 +1,6 @@
 #include <proast/model/Node.hpp>
 #include <proast/log.hpp>
+#include <gubg/mss.hpp>
 #include <cmath>
 
 namespace proast { namespace model { 
@@ -62,7 +63,7 @@ namespace proast { namespace model {
         depth_first_search(shared_from_this(), [&](auto &){count += 1;});
         return count;
     }
-    Node Node_::find(const Path &path)
+    Node Node_::find(const StringPath &path)
     {
         auto node = shared_from_this();
         for (const auto &part: path)
@@ -108,9 +109,9 @@ namespace proast { namespace model {
             return self->all_dependencies_.size();
         return 0;
     }
-    Path Node_::to_path() const
+    StringPath Node_::to_string_path() const
     {
-        Path p;
+        StringPath p;
         for (auto node = shared_from_this(); node; )
         {
             auto parent = node->parent.lock();
@@ -123,9 +124,9 @@ namespace proast { namespace model {
         std::reverse(p.begin(), p.end());
         return p;
     }
-    Path Node_::to_path(Ptr &root) const
+    StringPath Node_::to_string_path(Ptr &root) const
     {
-        Path p;
+        StringPath p;
         for (auto node = shared_from_this(); node; )
         {
             auto parent = node->parent.lock();
@@ -140,6 +141,42 @@ namespace proast { namespace model {
         }
         std::reverse(p.begin(), p.end());
         return p;
+    }
+    bool Node_::to_node_path(std::vector<Ptr> &node_path, const StringPath &string_path)
+    {
+        MSS_BEGIN(bool);
+
+        node_path = {shared_from_this()};
+
+        for (const auto &name: string_path)
+        {
+            auto &childs = node_path.back()->childs;
+            auto it = std::find_if(childs.begin(), childs.end(), [&](auto &child){return child->name() == name;});
+            MSS(it != childs.end());
+            node_path.push_back(*it);
+        }
+
+        MSS_END();
+    }
+
+    std::size_t Node_::selected_ix() const
+    {
+        if (auto ch = child.lock())
+            for (auto ix = 0u; ix < childs.size(); ++ix)
+                if (ch == childs[ix])
+                    return ix;
+        return 0;
+    }
+
+    bool Node_::get_child_ix(std::size_t &child_ix, const Ptr &child) const
+    {
+        for (auto ix = 0u; ix < childs.size(); ++ix)
+            if (childs[ix] == child)
+            {
+                child_ix = ix;
+                return true;
+            }
+        return false;
     }
 
     double Node_::total_effort() const

@@ -43,7 +43,7 @@ namespace proast { namespace presenter {
         {
             oss_.str("");
             if (auto n = model_.node())
-                oss_ << model::to_string(n->to_path());
+                oss_ << model::to_string(n->to_string_path());
             else
                 oss_ << "<no valid node>";
             view_.header = oss_.str();
@@ -114,7 +114,7 @@ namespace proast { namespace presenter {
                                 lst->items.emplace_back(oss_.str());
                                 lst->items.back().ix__attention[width] = type__attention(child->type);
                             }
-                            lst->ix = model::Model::selected_ix(rnode);
+                            lst->ix = rnode->selected_ix();
                             break;
                     }
                 else
@@ -123,17 +123,17 @@ namespace proast { namespace presenter {
                     lst->items.emplace_back("<could not resolve node>");
                 }
 
-                lst->name = model::to_string(node->to_path());
+                lst->name = model::to_string(node->to_string_path());
                 lst->name.ix__bold[0] = true;
                 lst->name.ix__attention[0] = type__attention(node->type);
             };
-            set_view_dto(view_.n0,   model_.node_0());
-            set_view_dto(view_.n0a,  model_.node_0a());
-            set_view_dto(view_.n00,  model_.node_00());
-            set_view_dto(view_.n0b,  model_.node_0b());
-            set_view_dto(view_.n00a, model_.node_00a());
-            set_view_dto(view_.n000, model_.node_000());
-            set_view_dto(view_.n00b, model_.node_00b());
+            set_view_dto(view_.n0,   model_.node_a());
+            set_view_dto(view_.n0a,  model_.node_b_pre());
+            set_view_dto(view_.n00,  model_.node_b());
+            set_view_dto(view_.n0b,  model_.node_b_post());
+            set_view_dto(view_.n00a, model_.node_c_pre());
+            set_view_dto(view_.n000, model_.node_c());
+            set_view_dto(view_.n00b, model_.node_c_post());
 
             //Metadata
             {
@@ -142,7 +142,7 @@ namespace proast { namespace presenter {
                 lst->name.ix__bold[0] = true;
                 if (auto node = model_.node())
                 {
-                    lst->name = model::to_string(node->to_path());
+                    lst->name = model::to_string(node->to_string_path());
 
                     const unsigned int align = 10;
                     auto as_number = [](auto &os, const auto &effort){
@@ -371,7 +371,7 @@ namespace proast { namespace presenter {
     }
     void Presenter::commander_open(Open open, std::string cmd)
     {
-        if (auto me = model_.node_000())
+        if (auto me = model_.node_c())
         {
             const auto path = me->path();
             scheduled_operation_ = [=]() mutable

@@ -5,7 +5,7 @@
 namespace proast { namespace model {
     ContentMgr::ContentMgr()
     {
-        allowed_extensions_ = {".md", ".h", ".c", ".hpp", ".cpp", ".txt", ".naft", ".tsv", ".rb", ".chai"};
+        allowed_extensions_ = {".md", ".h", ".c", ".hpp", ".cpp", ".txt", ".naft", ".tsv", ".rb", ".chai", ".log"};
     }
 
     dto::List::Ptr ContentMgr::load(const std::filesystem::path &path) const

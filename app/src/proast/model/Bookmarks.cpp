@@ -32,7 +32,7 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Bookmarks::get(Path &path, char ch) const
+    bool Bookmarks::get(StringPath &path, char ch) const
     {
         MSS_BEGIN(bool);
         auto it = ch__path_.find(ch);
@@ -40,7 +40,7 @@ namespace proast { namespace model {
         path = it->second;
         MSS_END();
     }
-    void Bookmarks::set(char ch, const Path &path)
+    void Bookmarks::set(char ch, const StringPath &path)
     {
         ch__path_[ch] = path;
     }
@@ -73,7 +73,7 @@ namespace proast { namespace model {
 
             MSS(range0.pop_attr(key, value));
             MSS(key == "path");
-            const auto path = to_path(value);
+            const auto path = to_string_path(value);
 
             ch__path_[ch] = path;
         }

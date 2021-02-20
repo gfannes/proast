@@ -1,21 +1,21 @@
-#include <proast/model/Path.hpp>
+#include <proast/model/StringPath.hpp>
 #include <sstream>
 #include <string_view>
 
 namespace proast { namespace model { 
 
-    std::string to_string(const Path &path)
+    std::string to_string(const StringPath &path)
     {
         std::ostringstream oss;
         for (const auto &e: path)
             oss << '/' << e;
         return oss.str();
     }
-    Path to_path(const std::string &str)
+    StringPath to_string_path(const std::string &str)
     {
         const auto sep = '/';
 
-        Path path;
+        StringPath path;
 
         std::string_view sv{str};
 
@@ -40,7 +40,7 @@ namespace proast { namespace model {
         return path;
     }
 
-    bool pop_if(Path &path, const Path &needle)
+    bool pop_if(StringPath &path, const StringPath &needle)
     {
         const auto needle_size = needle.size();
 

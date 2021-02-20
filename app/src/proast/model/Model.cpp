@@ -13,7 +13,7 @@ namespace proast { namespace model {
     Model::Model()
     {
         root_ = Node_::create(Type::Virtual, "<ROOT>");
-        current_node_ = root_;
+        focus_ = {root_};
         metadata_filename_ = "proast-metadata.naft";
     }
     Model::~Model()
@@ -116,26 +116,16 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    bool Model::focus(const Path &path)
+    bool Model::focus(const StringPath &path)
     {
         MSS_BEGIN(bool);
 
         MSS(!!root_);
 
-        if (auto node = root_->find(path))
-        {
-            //Reroute navigation.child for parent and grand_parent
-            for (auto ix = 0u; node; ++ix)
-            {
-                if (ix < 3)
-                    //A is two levels deeper than the optimal focus point C
-                    current_node_ = node;
-                auto parent = node->parent.lock();
-                if (parent)
-                    parent->child = node;
-                node = parent;
-            }
-        }
+        MSS(root_->to_node_path(focus_, path));
+
+        for (auto ix = 1u; ix < focus_.size(); ++ix)
+            focus_[ix-1]->child = focus_[ix];
 
         MSS_END();
     }
@@ -143,7 +133,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
         MSS(!!n);
-        MSS(focus(n->to_path()));
+        MSS(focus(n->to_string_path()));
         MSS_END();
     }
 
@@ -236,7 +226,7 @@ namespace proast { namespace model {
             auto append_row = [&](auto &node)
             {
                 if (auto e = node->metadata.effort)
-                    fo << to_string(node->to_path(n)) << '\t' << *e << std::endl;
+                    fo << to_string(node->to_string_path(n)) << '\t' << *e << std::endl;
             };
             depth_first_search(n, append_row);
         }
@@ -464,7 +454,7 @@ namespace proast { namespace model {
         auto n = node();
         MSS(!!n);
 
-        bookmarks_.set(ch, n->to_path());
+        bookmarks_.set(ch, n->to_string_path());
 
         MSS_END();
     }
@@ -472,7 +462,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        Path path;
+        StringPath path;
         MSS(bookmarks_.get(path, ch));
 
         MSS(focus(path));
@@ -482,163 +472,149 @@ namespace proast { namespace model {
 
     Node Model::node()
     {
-        if (auto n = node_000())
+        if (auto n = node_c())
             return n;
-        if (auto n = node_00())
+        if (auto n = node_b())
             return n;
-        if (auto n = node_0())
+        if (auto n = node_a())
             return n;
         return Node{};
     }
-    Node Model::node_0()
+    Node Model::node_a()
     {
-        return current_node_;
+        if (focus_.size() < 3)
+            return Node{};
+        return focus_[focus_.size()-3];
     }
-    Node Model::node_00()
+    Node Model::node_b()
     {
-        if (current_node_)
-            return current_node_->child.lock();
+        if (focus_.size() < 2)
+            return Node{};
+        return focus_[focus_.size()-2];
+    }
+    Node Model::node_b_pre()
+    {
+        if (auto b = node_b())
+            return b->up.lock();
         return Node{};
     }
-    Node Model::node_0a()
+    Node Model::node_b_post()
     {
-        if (auto node00 = node_00())
-            return node00->up.lock();
+        if (auto b = node_b())
+            return b->down.lock();
         return Node{};
     }
-    Node Model::node_0b()
+    Node Model::node_c()
     {
-        if (auto node00 = node_00())
-            return node00->down.lock();
+        if (focus_.size() < 1)
+            return Node{};
+        return focus_[focus_.size()-1];
+    }
+    Node Model::node_c_pre()
+    {
+        if (auto c = node_c())
+            return c->up.lock();
         return Node{};
     }
-    Node Model::node_000()
+    Node Model::node_c_post()
     {
-        if (auto node00 = node_00())
-            return node00->child.lock();
+        if (auto c = node_c())
+            return c->down.lock();
         return Node{};
-    }
-    Node Model::node_00a()
-    {
-        if (auto node000 = node_000())
-            return node000->up.lock();
-        return Node{};
-    }
-    Node Model::node_00b()
-    {
-        if (auto node000 = node_000())
-            return node000->down.lock();
-        return Node{};
-    }
-
-    std::size_t Model::selected_ix(Node &node)
-    {
-        if (node)
-            if (auto child = node->child.lock())
-            {
-                const auto &childs = node->childs;
-                for (auto ix = 0u; ix < childs.size(); ++ix)
-                    if (child == childs[ix])
-                        return ix;
-            }
-        return 0;
     }
 
     bool Model::move(Movement movement, bool me, bool move_node)
     {
         MSS_BEGIN(bool);
-
-        MSS(!!current_node_);
-
         if (move_node)
         {
             switch (movement)
             {
-                case Movement::Down:
-                    if (me)
-                    {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ix = selected_ix(child); ix+1 < child->childs.size())
-                            {
-                                std::swap(child->childs[ix], child->childs[ix+1]);
-                                setup_up_down_(child);
-                            }
-                    }
-                    else
-                    {
-                        if (auto ix = selected_ix(current_node_); ix+1 < current_node_->childs.size())
-                        {
-                            std::swap(current_node_->childs[ix], current_node_->childs[ix+1]);
-                            setup_up_down_(current_node_);
-                        }
-                    }
-                    break;
                 case Movement::Up:
-                    if (me)
+                case Movement::Down:
+                case Movement::Top:
+                case Movement::Bottom:
+                    if (focus_.size() >= 2)
                     {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ix = selected_ix(child); ix > 0)
-                            {
-                                std::swap(child->childs[ix], child->childs[ix-1]);
-                                setup_up_down_(child);
-                            }
-                    }
-                    else
-                    {
-                        if (auto ix = selected_ix(current_node_); ix > 0)
+                        auto &b = focus_[focus_.size()-2];
+                        auto &c = focus_[focus_.size()-1];
+                        if (c)
                         {
-                            std::swap(current_node_->childs[ix], current_node_->childs[ix-1]);
-                            setup_up_down_(current_node_);
+                            std::size_t c_ix;
+                            MSS(b->get_child_ix(c_ix, c));
+                            switch (movement)
+                            {
+                                case Movement::Up:
+                                    if (c_ix > 0)
+                                    {
+                                        std::swap(b->childs[c_ix], b->childs[c_ix-1]);
+                                        c = b->childs[c_ix-1];
+                                        b->child = c;
+                                    }
+                                    break;
+                                case Movement::Down:
+                                    if (c_ix+1 < b->childs.size())
+                                    {
+                                        std::swap(b->childs[c_ix], b->childs[c_ix+1]);
+                                        c = b->childs[c_ix+1];
+                                        b->child = c;
+                                    }
+                                    break;
+                                case Movement::Top:
+                                    if (c_ix > 0)
+                                    {
+                                        auto tmp = b->childs[c_ix];
+                                        b->childs.erase(b->childs.begin()+c_ix);
+                                        b->childs.insert(b->childs.begin(), tmp);
+                                        c = b->childs.front();
+                                        b->child = c;
+                                    }
+                                    break;
+                                case Movement::Bottom:
+                                    if (c_ix+1 < b->childs.size())
+                                    {
+                                        auto tmp = b->childs[c_ix];
+                                        b->childs.erase(b->childs.begin()+c_ix);
+                                        b->childs.push_back(tmp);
+                                        c = b->childs.back();
+                                        b->child = c;
+                                    }
+                                    break;
+                            }
                         }
                     }
                     break;
+
                 case Movement::Left:
-                    if (me)
+                    if (focus_.size() >= 3)
                     {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ptr = child->child.lock())
-                            {
-                                MSS(erase_node_(ptr));
-                                MSS(paste_(current_node_, ptr, ptr->path()));
-                                MSS(focus(ptr));
-                            }
+                        auto &a = focus_[focus_.size()-3];
+                        auto &b = focus_[focus_.size()-2];
+                        auto c = focus_[focus_.size()-1];
+                        if (c)
+                        {
+                            MSS(erase_node_(c));
+                            MSS(paste_(a, c, c->path()));
+                            b = c;
+                            a->child = b;
+                        }
+                        focus_.pop_back();
                     }
                     break;
                 case Movement::Right:
-                    if (me)
+                    if (focus_.size() >= 2)
                     {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ptr = child->child.lock())
-                                if (!std::filesystem::is_directory(ptr->path()))
-                                {
-                                    MSS(rework_into_directory_(ptr));
-                                    current_node_ = child;
-                                }
+                        auto &b = focus_[focus_.size()-2];
+                        auto &c = focus_[focus_.size()-1];
+                        if (c)
+                            if (!std::filesystem::is_directory(c->path()))
+                            {
+                                MSS(rework_into_directory_(c));
+                                if (!c->childs.empty())
+                                    focus_.push_back(c->childs.front());
+                            }
                     }
                     break;
-                case Movement::Top:
-                    if (auto child = current_node_->child.lock())
-                        if (auto ix = selected_ix(child); ix != 0)
-                        {
-                            auto it = child->childs.begin()+ix;
-                            auto tmp = *it;
-                            child->childs.erase(it);
-                            child->childs.insert(child->childs.begin(), tmp);
-                            setup_up_down_(child);
-                        }
-                    break;
-                case Movement::Bottom:
-                    if (auto child = current_node_->child.lock())
-                        if (auto ix = selected_ix(child); ix != child->childs.size()-1)
-                        {
-                            auto it = child->childs.begin()+ix;
-                            auto tmp = *it;
-                            child->childs.erase(it);
-                            child->childs.push_back(tmp);
-                            setup_up_down_(child);
-                        }
-                    break;
-
             }
 
             //Node order is actual metadata and should be saved
@@ -648,87 +624,57 @@ namespace proast { namespace model {
         {
             switch (movement)
             {
-                case Movement::Down:
-                    if (me)
-                    {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ptr = child->child.lock())
-                            {
-                                if (auto down = ptr->down.lock())
-                                    child->child = down;
-                            }
-                            else if (auto content = child->content)
-                            {
-                                if (content->ix+1 < content->items.size())
-                                    ++content->ix;
-                            }
-                    }
-                    else
-                    {
-                        if (auto child = current_node_->child.lock())
-                        {
-                            if (auto down = child->down.lock())
-                            {
-                                current_node_->child = down;
-                            }
-                        }
-                        else if (auto content = current_node_->content)
-                        {
-                            if (content->ix+1 < content->items.size())
-                                ++content->ix;
-                        }
-                    }
-                    break;
                 case Movement::Up:
-                    if (me)
+                case Movement::Down:
+                case Movement::Top:
+                case Movement::Bottom:
+                    if (focus_.size() >= 2)
                     {
-                        if (auto child = current_node_->child.lock())
-                            if (auto ptr = child->child.lock())
-                            {
-                                if (auto up = ptr->up.lock())
-                                    child->child = up;
-                            }
-                            else if (auto content = child->content)
-                            {
-                                if (content->ix > 0)
-                                    --content->ix;
-                            }
-                    }
-                    else
-                    {
-                        if (auto child = current_node_->child.lock())
+                        auto &b = focus_[focus_.size()-2];
+                        auto &c = focus_[focus_.size()-1];
+                        if (c)
                         {
-                            if (auto up = child->up.lock())
-                                current_node_->child = up;
-                        }
-                        else if (auto content = current_node_->content)
-                        {
-                            if (content->ix > 0)
-                                --content->ix;
+                            Node new_c;
+                            switch (movement)
+                            {
+                                case Movement::Up:
+                                    new_c = c->up.lock();
+                                    break;
+                                case Movement::Down:
+                                    new_c = c->down.lock();
+                                    break;
+                                case Movement::Top:
+                                    if (!b->childs.empty())
+                                        new_c = b->childs.front();
+                                    break;
+                                case Movement::Bottom:
+                                    if (!b->childs.empty())
+                                        new_c = b->childs.back();
+                                    break;
+                            }
+                            if (new_c)
+                            {
+                                b->child = new_c;
+                                c = new_c;
+                            }
                         }
                     }
                     break;
+
                 case Movement::Left:
-                    if (auto ptr = current_node_->parent.lock())
-                        current_node_ = ptr;
+                    if (focus_.size() > 1)
+                        focus_.pop_back();
                     break;
                 case Movement::Right:
-                    if (auto ptr = current_node_->child.lock())
-                        current_node_ = ptr;
-                    break;
-                case Movement::Top:
-                    if (auto child = current_node_->child.lock())
-                        if (child->childs.empty())
-                            child->child.reset();
-                        else
-                            child->child = child->childs[0];
-                    break;
-                case Movement::Bottom:
-                    if (auto child = current_node_->child.lock())
-                        if (child->childs.empty())
-                            child->child.reset();
-                        else
-                            child->child = child->childs[child->childs.size()-1];
+                    if (focus_.size() >= 1)
+                    {
+                        auto &c = focus_[focus_.size()-1];
+                        if (c)
+                            if (auto ix = c->selected_ix(); ix < c->childs.size())
+                                focus_.push_back(c->childs[ix]);
+                            else
+                                focus_.emplace_back();
+                    }
                     break;
             }
         }
@@ -781,21 +727,20 @@ namespace proast { namespace model {
         MSS_BEGIN(bool);
 
         std::ofstream fo{current_location_fn_};
-        if (auto n = node())
-            fo << to_string(n->to_path());
+        fo << to_string(to_string_path(focus_));
 
         MSS_END();
     }
     bool Model::load_current_location_()
     {
-        MSS_BEGIN(bool);
+        MSS_BEGIN(bool, "");
 
-        current_node_ = root_;
+        focus_ = {root_};
 
         std::string content;
         MSS(gubg::file::read(content, current_location_fn_));
 
-        for (auto p = to_path(content); !p.empty(); p.pop_back())
+        for (auto p = to_string_path(content); !p.empty(); p.pop_back())
             if (focus(p))
                 break;
 
@@ -947,19 +892,27 @@ namespace proast { namespace model {
 
         auto parent = n->parent.lock();
         MSS(!!parent);
-        auto ix = selected_ix(parent);
+
+        std::size_t child_ix;
+        MSS(parent->get_child_ix(child_ix, n));
+
+        const auto selected_ix = parent->selected_ix();
+
         auto &childs = parent->childs;
 
         //Remove ptr from childs
-        childs.erase(childs.begin()+ix);
+        childs.erase(childs.begin()+child_ix);
 
-        //Set new child selection
-        if (ix >= childs.size() && ix > 0)
-            --ix;
-        if (ix >= childs.size())
-            parent->child.reset();
-        else
-            parent->child = childs[ix];
+        //Set new child selection if we just removed it
+        if (selected_ix == child_ix)
+        {
+            if (child_ix >= childs.size() && child_ix > 0)
+                --child_ix;
+            if (child_ix >= childs.size())
+                parent->child.reset();
+            else
+                parent->child = childs[child_ix];
+        }
 
         setup_up_down_(parent);
 
@@ -1037,7 +990,7 @@ namespace proast { namespace model {
             {
                 log::ostream() << "Saving MD for " << node->path() << std::endl;
                 auto n = doc.node("Metadata");
-                n.attr("path", to_string(node->to_path(base)));
+                n.attr("path", to_string(node->to_string_path(base)));
                 node->metadata.stream(n);
             }
 
@@ -1069,7 +1022,7 @@ namespace proast { namespace model {
                 if (actual_order != default_order)
                 {
                     auto n = doc.node("Order");
-                    n.attr("path", to_string(node->to_path(base)));
+                    n.attr("path", to_string(node->to_string_path(base)));
                     for (auto &name: actual_order)
                         n.attr("name", name);
                 }
@@ -1092,7 +1045,7 @@ namespace proast { namespace model {
         MSS(gubg::file::read(content, fp));
 
         std::string tag, key, value;
-        Path path;
+        StringPath path;
         std::map<std::string, std::optional<std::size_t>> name__ix;
         for (gubg::naft::Range range{content}; range.pop_tag(tag);)
         {
@@ -1101,7 +1054,7 @@ namespace proast { namespace model {
             {
                 MSS(range.pop_attr(key, value));
                 MSS(key == "path");
-                path = to_path(value);
+                path = to_string_path(value);
 
                 gubg::naft::Range subrange;
                 MSS(range.pop_block(subrange));
@@ -1117,7 +1070,7 @@ namespace proast { namespace model {
             {
                 MSS(range.pop_attr(key, value));
                 MSS(key == "path");
-                path = to_path(value);
+                path = to_string_path(value);
 
                 name__ix.clear();
                 for (auto ix = 0u; range.pop_attr(key, value); ++ix)

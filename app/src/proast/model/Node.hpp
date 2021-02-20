@@ -3,7 +3,7 @@
 
 #include <proast/model/enums.hpp>
 #include <proast/model/Metadata.hpp>
-#include <proast/model/Path.hpp>
+#include <proast/model/StringPath.hpp>
 #include <proast/dto/List.hpp>
 #include <string>
 #include <filesystem>
@@ -41,7 +41,7 @@ namespace proast { namespace model {
         std::vector<Ptr> childs;
 
         Ptr append_child(Type);
-        Ptr find(const Path &);
+        Ptr find(const StringPath &);
         template <typename Ftor>
         Ptr find_child(Ftor &&ftor)
         {
@@ -55,8 +55,12 @@ namespace proast { namespace model {
             return Ptr{};
         }
 
-        Path to_path() const;
-        Path to_path(Ptr &root) const;
+        StringPath to_string_path() const;
+        StringPath to_string_path(Ptr &root) const;
+        bool to_node_path(std::vector<Ptr> &, const StringPath &);
+
+        std::size_t selected_ix() const;
+        bool get_child_ix(std::size_t &child_ix, const Ptr &child) const;
 
         void clear_dependencies();
         void add_dependencies(Ptr);

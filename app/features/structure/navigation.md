@@ -14,6 +14,8 @@
 * `JKHL` for window A
 * `g` and `G` for start and end
 * Show root in B
+* Support for empty C
+  * Needed to create a file/folder in an empty file/folder
 
 ## Moving node
 

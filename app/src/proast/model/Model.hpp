@@ -2,6 +2,7 @@
 #define HEADER_proast_model_Model_hpp_ALREADY_INCLUDED
 
 #include <proast/model/Node.hpp>
+#include <proast/model/NodePath.hpp>
 #include <proast/model/Bookmarks.hpp>
 #include <proast/model/JumpList.hpp>
 #include <proast/types.hpp>
@@ -35,7 +36,7 @@ namespace proast { namespace model {
 
         bool move(Movement, bool me, bool move_node);
 
-        bool focus(const Path &);
+        bool focus(const StringPath &);
         bool focus(Node);
 
         bool create(const std::string &name, bool create_file, bool create_in);
@@ -51,14 +52,14 @@ namespace proast { namespace model {
         bool set_order_sequential(bool order_sequential);
 
         Node node();
-        Node node_0();
-        Node node_00();
-        Node node_0a();
-        Node node_0b();
-        Node node_000();
-        Node node_00a();
-        Node node_00b();
-        static std::size_t selected_ix(Node &);
+
+        Node node_a();
+        Node node_b();
+        Node node_b_pre();
+        Node node_b_post();
+        Node node_c();
+        Node node_c_pre();
+        Node node_c_post();
 
         void recompute_metadata();
         bool save_metadata();
@@ -74,7 +75,7 @@ namespace proast { namespace model {
 
     private:
         Node root_;
-        Node current_node_;
+        NodePath focus_;
         std::list<Node> deletes_;
 
         bool add_(Node, const std::filesystem::path &, const Config &);
