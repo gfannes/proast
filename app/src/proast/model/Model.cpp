@@ -620,7 +620,10 @@ namespace proast { namespace model {
                     if (auto child = current_node_->child.lock())
                         if (auto ix = selected_ix(child); ix != 0)
                         {
-                            std::swap(child->childs[ix], child->childs[0]);
+                            auto it = child->childs.begin()+ix;
+                            auto tmp = *it;
+                            child->childs.erase(it);
+                            child->childs.insert(child->childs.begin(), tmp);
                             setup_up_down_(child);
                         }
                     break;
@@ -628,7 +631,10 @@ namespace proast { namespace model {
                     if (auto child = current_node_->child.lock())
                         if (auto ix = selected_ix(child); ix != child->childs.size()-1)
                         {
-                            std::swap(child->childs[ix], child->childs[child->childs.size()-1]);
+                            auto it = child->childs.begin()+ix;
+                            auto tmp = *it;
+                            child->childs.erase(it);
+                            child->childs.push_back(tmp);
                             setup_up_down_(child);
                         }
                     break;
