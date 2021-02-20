@@ -253,18 +253,21 @@ namespace proast { namespace presenter {
                     case 'q': r.commander_quit(); break;
 
                     case 'j':
-                    case ArrowDown:  r.commander_move(Direction::Down, true, alt); break;
-                    case 'J':        r.commander_move(Direction::Down, false, alt); break;
+                    case ArrowDown:  r.commander_move(Movement::Down, true, alt); break;
+                    case 'J':        r.commander_move(Movement::Down, false, alt); break;
 
                     case 'k':
-                    case ArrowUp:    r.commander_move(Direction::Up, true, alt); break;
-                    case 'K':        r.commander_move(Direction::Up, false, alt); break;
+                    case ArrowUp:    r.commander_move(Movement::Up, true, alt); break;
+                    case 'K':        r.commander_move(Movement::Up, false, alt); break;
 
                     case 'h': 
-                    case ArrowLeft:  r.commander_move(Direction::Left, true, alt); break;
+                    case ArrowLeft:  r.commander_move(Movement::Left, true, alt); break;
 
                     case 'l':
-                    case ArrowRight: r.commander_move(Direction::Right, true, alt); break;
+                    case ArrowRight: r.commander_move(Movement::Right, true, alt); break;
+
+                    case 'g': r.commander_move(Movement::Top, true, alt); break;
+                    case 'G': r.commander_move(Movement::Bottom, true, alt); break;
 
                     case Return: r.commander_open(Open::View); break;
                     case 'e': r.commander_open(Open::Edit); break;

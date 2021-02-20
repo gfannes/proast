@@ -23,7 +23,7 @@ namespace proast { namespace presenter {
 
         //Commander API
         void commander_quit();
-        void commander_move(Direction, bool me, bool move_node);
+        void commander_move(Movement, bool me, bool move_node);
         void commander_open(Open, std::string cmd = {});
         void commander_bookmark(char ch, bool do_register);
         void commander_set_metadata(MetadataField, const std::string &content);

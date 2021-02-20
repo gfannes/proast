@@ -5,9 +5,9 @@
 #include <set>
 
 namespace proast { 
-    enum class Direction
+    enum class Movement
     {
-        Down, Up, Left, Right,
+        Down, Up, Left, Right, Top, Bottom,
     };
 
     using Tag = std::string;

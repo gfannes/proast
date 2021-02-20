@@ -33,7 +33,7 @@ namespace proast { namespace model {
         template <typename Ftor>
         void each_bookmark(Ftor &&ftor){bookmarks_.each(ftor);}
 
-        bool move(Direction, bool me, bool move_node);
+        bool move(Movement, bool me, bool move_node);
 
         bool focus(const Path &);
         bool focus(Node);

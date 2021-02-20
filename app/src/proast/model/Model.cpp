@@ -544,7 +544,7 @@ namespace proast { namespace model {
         return 0;
     }
 
-    bool Model::move(Direction direction, bool me, bool move_node)
+    bool Model::move(Movement movement, bool me, bool move_node)
     {
         MSS_BEGIN(bool);
 
@@ -552,9 +552,9 @@ namespace proast { namespace model {
 
         if (move_node)
         {
-            switch (direction)
+            switch (movement)
             {
-                case Direction::Down:
+                case Movement::Down:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -573,7 +573,7 @@ namespace proast { namespace model {
                         }
                     }
                     break;
-                case Direction::Up:
+                case Movement::Up:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -592,7 +592,7 @@ namespace proast { namespace model {
                         }
                     }
                     break;
-                case Direction::Left:
+                case Movement::Left:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -604,7 +604,7 @@ namespace proast { namespace model {
                             }
                     }
                     break;
-                case Direction::Right:
+                case Movement::Right:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -616,6 +616,23 @@ namespace proast { namespace model {
                                 }
                     }
                     break;
+                case Movement::Top:
+                    if (auto child = current_node_->child.lock())
+                        if (auto ix = selected_ix(child); ix != 0)
+                        {
+                            std::swap(child->childs[ix], child->childs[0]);
+                            setup_up_down_(child);
+                        }
+                    break;
+                case Movement::Bottom:
+                    if (auto child = current_node_->child.lock())
+                        if (auto ix = selected_ix(child); ix != child->childs.size()-1)
+                        {
+                            std::swap(child->childs[ix], child->childs[child->childs.size()-1]);
+                            setup_up_down_(child);
+                        }
+                    break;
+
             }
 
             //Node order is actual metadata and should be saved
@@ -623,9 +640,9 @@ namespace proast { namespace model {
         }
         else
         {
-            switch (direction)
+            switch (movement)
             {
-                case Direction::Down:
+                case Movement::Down:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -656,7 +673,7 @@ namespace proast { namespace model {
                         }
                     }
                     break;
-                case Direction::Up:
+                case Movement::Up:
                     if (me)
                     {
                         if (auto child = current_node_->child.lock())
@@ -685,13 +702,27 @@ namespace proast { namespace model {
                         }
                     }
                     break;
-                case Direction::Left:
+                case Movement::Left:
                     if (auto ptr = current_node_->parent.lock())
                         current_node_ = ptr;
                     break;
-                case Direction::Right:
+                case Movement::Right:
                     if (auto ptr = current_node_->child.lock())
                         current_node_ = ptr;
+                    break;
+                case Movement::Top:
+                    if (auto child = current_node_->child.lock())
+                        if (child->childs.empty())
+                            child->child.reset();
+                        else
+                            child->child = child->childs[0];
+                    break;
+                case Movement::Bottom:
+                    if (auto child = current_node_->child.lock())
+                        if (child->childs.empty())
+                            child->child.reset();
+                        else
+                            child->child = child->childs[child->childs.size()-1];
                     break;
             }
         }

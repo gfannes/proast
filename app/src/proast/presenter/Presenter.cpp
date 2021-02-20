@@ -365,9 +365,9 @@ namespace proast { namespace presenter {
     {
         view_.quit();
     }
-    void Presenter::commander_move(Direction direction, bool me, bool move_node)
+    void Presenter::commander_move(Movement movement, bool me, bool move_node)
     {
-        model_.move(direction, me, move_node);
+        model_.move(movement, me, move_node);
     }
     void Presenter::commander_open(Open open, std::string cmd)
     {
