@@ -24,6 +24,7 @@ namespace proast { namespace model {
             log::ostream() << "Warning: could not save the current location to " << current_location_fn_ << std::endl;
         if (!save_metadata())
             log::ostream() << "Warning: could not save metadata" << std::endl;
+        std::filesystem::remove(lock_fn_);
     }
 
     Model::Config::Config()
@@ -54,6 +55,12 @@ namespace proast { namespace model {
                 log::ostream() << "Warning: could not load bookmarks from " << bookmarks_fp_ << std::endl;
         }
         current_location_fn_ = home_dir/"current_location.txt";
+
+        {
+            lock_fn_ = home_dir/"lock.txt";
+            MSS(!std::filesystem::is_regular_file(lock_fn_), std::cout << "Error: Until proper filesystem race condition protection is in place, only a single instance of proast is allowed." << std::endl);
+            std::ofstream fo{lock_fn_};
+        }
 
         MSS_END();
     }
@@ -100,6 +107,7 @@ namespace proast { namespace model {
 
         save_current_location_();
         bookmarks_.save(bookmarks_fp_);
+        std::filesystem::remove(lock_fn_);
 
         MSS(set_home_dir(home_dir_));
 
@@ -169,7 +177,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         const auto orig_fp = n->path();
@@ -187,7 +195,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         if (auto p = n->parent.lock())
@@ -223,7 +231,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         auto p = n->parent.lock();
@@ -233,6 +241,7 @@ namespace proast { namespace model {
 
         {
             std::ofstream fo{fp};
+            fo << "Path" << 't' << "Effort" << std::endl;
             auto append_row = [&](auto &node)
             {
                 if (auto e = node->metadata.effort)
@@ -252,7 +261,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         auto p = n->parent.lock();
@@ -300,7 +309,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         const auto plan_name = n->name()+":PLAN";
@@ -353,7 +362,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         n->metadata.state = state;
@@ -367,7 +376,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         n->metadata.order_sequential = order_sequential;
@@ -465,7 +474,7 @@ namespace proast { namespace model {
     {
         MSS_BEGIN(bool);
 
-        auto n = node();
+        auto n = node_c();
         MSS(!!n);
 
         bookmarks_.set(ch, n->to_string_path());
@@ -484,16 +493,6 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    Node Model::node()
-    {
-        if (auto n = node_c())
-            return n;
-        if (auto n = node_b())
-            return n;
-        if (auto n = node_a())
-            return n;
-        return Node{};
-    }
     Node Model::node_a()
     {
         if (focus_.size() < 3)

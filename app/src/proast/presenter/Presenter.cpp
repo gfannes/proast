@@ -17,7 +17,7 @@ namespace proast { namespace presenter {
     {
         MSS_BEGIN(bool);
 
-        MSS(load_preferences());
+        load_preferences();
 
         for (bool do_run = true; do_run;)
         {
@@ -90,7 +90,7 @@ namespace proast { namespace presenter {
         //Header
         {
             oss_.str("");
-            if (auto n = model_.node())
+            if (auto n = model_.node_c())
                 oss_ << model::to_string(n->to_string_path());
             else
                 oss_ << "<no valid node>";
@@ -188,7 +188,7 @@ namespace proast { namespace presenter {
                 auto lst = dto::List::create();
                 lst->name.ix__attention[0] = 2;
                 lst->name.ix__bold[0] = true;
-                if (auto node = model_.node())
+                if (auto node = model_.node_c())
                 {
                     lst->name = model::to_string(node->to_string_path());
 
@@ -343,18 +343,56 @@ namespace proast { namespace presenter {
                             add_help('\0', "^/: Search pattern for file and folder names");
                             add_help('/', "Search pattern for file content");
                             break;
-                        default: break;
+                        case State::Command:
+                            lst->name = "Command";
+                            break;
+                        default:
+                            break;
                     }
                 else
                 {
-                    unsigned int nr_deletes = 0;
-                    model_.each_delete([&](auto &n){++nr_deletes;});
-                    if (nr_deletes > 0)
+                    if (show_help_)
                     {
-                        oss_.str("");
-                        oss_ << "Deletes: " << nr_deletes;
-                        lst->name = oss_.str();
-                        model_.each_delete([&](auto &n){lst->items.emplace_back(n->name());});
+                        lst->name = "Help";
+                        add_help('e', "Edit file with $EDITOR");
+                        add_help('S', "Open shell");
+                        add_help('E', "Run with external program");
+                        add_help('m', "Register bookmark");
+                        add_help('\'', "Jump to bookmark");
+                        add_help('s', "Set data");
+                        add_help('M', "Show metadata");
+                        add_help('x', "Export tree");
+                        add_help('P', "Create planning");
+
+                        add_help('q', "Quit");
+
+                        add_help('h', "Move focus left");
+                        add_help('j', "Move focus down");
+                        add_help('k', "Move focus up");
+                        add_help('l', "Move focus right");
+                        add_help('g', "Move focus to top");
+                        add_help('G', "Move focus to bottom");
+
+                        add_help('c', "Create new node");
+                        add_help('d', "Delete node");
+                        add_help('D', "Duplicate node");
+                        add_help('r', "Rename node");
+                        add_help('p', "Paste deleted nodes");
+                        add_help('R', "Reload");
+
+                        add_help(':', "Command");
+                    }
+                    else
+                    {
+                        unsigned int nr_deletes = 0;
+                        model_.each_delete([&](auto &n){++nr_deletes;});
+                        if (nr_deletes > 0)
+                        {
+                            oss_.str("");
+                            oss_ << "Deletes: " << nr_deletes;
+                            lst->name = oss_.str();
+                            model_.each_delete([&](auto &n){lst->items.emplace_back(n->name());});
+                        }
                     }
                 }
                 view_.details = lst;
@@ -388,6 +426,7 @@ namespace proast { namespace presenter {
                                                        oss_ << "Search in content: ";
                                                    oss_ << Commander::content;
                                                    break;
+                    case State::Command:           oss_ << "Command: " << Commander::content; break;
                     default: break;
                 }
             view_.footer = oss_.str();
@@ -467,7 +506,7 @@ namespace proast { namespace presenter {
     }
     void Presenter::commander_set_metadata(MetadataField field, const std::string &content)
     {
-        if (auto node = model_.node())
+        if (auto node = model_.node_c())
         {
             bool was_set = true;
             auto as_number = [&](auto &dst, auto default_value)
@@ -551,6 +590,12 @@ namespace proast { namespace presenter {
     {
         model_.do_export(name);
     }
+    void Presenter::commander_command(const std::string &cmd)
+    {
+        if (false) {}
+        else if (cmd == "h")
+            show_help_ = true;
+    }
     void Presenter::commander_search(const std::string &pattern, bool in_content)
     {
         model_.search(pattern, in_content);
@@ -582,5 +627,7 @@ namespace proast { namespace presenter {
 
         Commander::process(wchar, alt);
         refresh_view_();
+
+        show_help_ = false;
     }
 } } 

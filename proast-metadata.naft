@@ -1,32 +1,27 @@
-[Metadata](path:/@design/annotation.md){
-  [Effort](value:1)
-}
 [Metadata](path:/@design/decisions.md){
-  [Effort](value:2)
+  [Effort](value:0.2)
 }
 [Metadata](path:/@design/markdown.md){
-  [Effort](value:3)
+  [Effort](value:0.3)
 }
 [Metadata](path:/@design/modes.md){
-  [Effort](value:4)
+  [Effort](value:0.4)
 }
 [Metadata](path:/@design/proast/architecture.md){
-  [Effort](value:5)
+  [Effort](value:0.5)
 }
 [Metadata](path:/@design/proast){
-  [Effort](value:6)
+  [Effort](value:0.6)
 }
 [Metadata](path:/@design){
   [State](value:Implementing)(done:no)
 }
-[Order](path:/app/features/structure)(name:aggregation.md)(name:dependencies.md)(name:inheritance.md)(name:metadata.md)(name:navigation.md)(name:node.md)(name:order.md)(name:storage.md)(name:Use NodePath to keep track of focus.md)
+[Order](path:/app/features/structure)(name:aggregation.md)(name:dependencies.md)(name:inheritance.md)(name:metadata.md)(name:navigation.md)(name:node.md)(name:order.md)(name:storage.md)(name:focus)
+[Order](path:/app/features/multi_instance)(name:Refuse to start second instance.md)(name:Handle race condition for file system.md)
 [Order](path:/app/features/order)(name:support_sorting_based_on_state.md)(name:Place index first in default order.md)
 [Metadata](path:/app/features/priority/Show prio for nodes with effort.md){
-  [Effort](value:1)
+  [Effort](value:0.1)
   [Impact](value:1)
 }
 [Order](path:/app/features)(name:Execute file of key-presses.md)(name:Help.md)(name:Planning.md)(name:structure)(name:file_mgt)(name:options)(name:multi_instance)(name:order)(name:output)(name:priority)(name:search)(name:ui)(name:import)
-[Metadata](path:/naming){
-  [Effort](value:12)
-}
-[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)
+[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:generated)

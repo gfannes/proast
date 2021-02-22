@@ -34,6 +34,7 @@ namespace proast { namespace presenter {
         void commander_create(const std::string &name);
         void commander_rename(const std::string &name);
         void commander_export(const std::string &name);
+        void commander_command(const std::string &name);
         void commander_duplicate(const std::string &name);
         void commander_search(const std::string &pattern, bool in_content);
         void commander_plan();
@@ -48,6 +49,7 @@ namespace proast { namespace presenter {
 
         model::Model &model_;
         std::optional<MetadataField> show_metadata_field_;
+        bool show_help_ = false;
         view::View &view_;
 
         model::ContentMgr content_mgr_;

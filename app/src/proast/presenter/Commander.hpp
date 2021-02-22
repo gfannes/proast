@@ -214,6 +214,9 @@ namespace proast { namespace presenter {
                             read_content(lambda);
                         }
                         break;
+                    case State::Command:
+                        read_content([&](){r.commander_command(content);});
+                        break;
                 }
             }
             else
@@ -254,6 +257,7 @@ namespace proast { namespace presenter {
                     case 'r':  state = State::Rename; break;
                     case 'x':  state = State::Export; break;
                     case '/':  state = State::Search; break;
+                    case ':':  state = State::Command; break;
 
                     case 'p':  r.commander_paste(); break;
 

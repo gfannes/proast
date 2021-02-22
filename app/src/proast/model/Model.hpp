@@ -52,8 +52,6 @@ namespace proast { namespace model {
         bool set_node_state(std::optional<State>, bool done);
         bool set_order_sequential(bool order_sequential);
 
-        Node node();
-
         Node node_a();
         Node node_b();
         Node node_b_pre();
@@ -89,6 +87,8 @@ namespace proast { namespace model {
         std::filesystem::path bookmarks_fp_;
         Bookmarks bookmarks_;
         JumpList jump_list_;
+
+        std::filesystem::path lock_fn_;
 
         std::filesystem::path current_location_fn_;
         bool save_current_location_();

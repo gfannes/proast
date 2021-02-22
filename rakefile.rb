@@ -28,7 +28,9 @@ task :dependencies => [".extern/termbox/ok", ".extern/ftxui/ok"]
 # task :dependencies => ".extern/ftxui/ok"
 
 task :version_git_hash_header do
-    File.open("app/src/proast/version_git_hash.hpp", "w") do |fo|
+    fp = "generated/proast/version_git_hash.hpp"
+    FileUtils.mkdir_p(File.dirname(fp))
+    File.open(fp, "w") do |fo|
         git_hash = `git log -n1 --abbrev=8 --abbrev-commit`.split[1]
         case git_hash
         when NilClass
