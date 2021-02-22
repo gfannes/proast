@@ -34,7 +34,7 @@ namespace proast { namespace model {
             extensions_to_skip.insert(ext);
     }
 
-    bool Model::set_home(const std::filesystem::path &home_dir)
+    bool Model::set_home_dir(const std::filesystem::path &home_dir)
     {
         MSS_BEGIN(bool);
 
@@ -56,6 +56,10 @@ namespace proast { namespace model {
         current_location_fn_ = home_dir/"current_location.txt";
 
         MSS_END();
+    }
+    std::filesystem::path Model::get_home_dir() const
+    {
+        return home_dir_;
     }
 
     bool Model::add_root(const std::filesystem::path &path, const Config &config)
@@ -97,7 +101,7 @@ namespace proast { namespace model {
         save_current_location_();
         bookmarks_.save(bookmarks_fp_);
 
-        MSS(set_home(home_dir_));
+        MSS(set_home_dir(home_dir_));
 
         depth_first_search(root_, [](auto &n){n->clear_dependencies();});
         root_ = Node_::create(Type::Virtual, "<ROOT>");
@@ -410,6 +414,8 @@ namespace proast { namespace model {
         }
         focus_.back() = p->child.lock();
 
+        MSS(recompute_metadata());
+
         MSS_END();
     }
     bool Model::clear_deletes()
@@ -448,6 +454,8 @@ namespace proast { namespace model {
         focus_.back() = last_ok;
 
         MSS(deletes_.empty());
+
+        MSS(recompute_metadata());
 
         MSS_END();
     }
@@ -588,6 +596,7 @@ namespace proast { namespace model {
                                     break;
                             }
                         }
+                        setup_up_down_(b);
                     }
                     break;
 
@@ -687,10 +696,14 @@ namespace proast { namespace model {
         MSS_END();
     }
 
-    void Model::recompute_metadata()
+    bool Model::recompute_metadata()
     {
-        if (root_)
-            recompute_metadata_(root_);
+        MSS_BEGIN(bool);
+
+        MSS(!!root_);
+        recompute_metadata_(root_);
+
+        MSS_END();
     }
     bool Model::save_metadata()
     {

@@ -29,4 +29,4 @@
 [Metadata](path:/naming){
   [Effort](value:12)
 }
-[Order](path:)(name:readme.md)(name:proast)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:info.md)
+[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)

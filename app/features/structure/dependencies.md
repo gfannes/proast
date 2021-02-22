@@ -5,3 +5,5 @@
 * Introduce a Virtual node to implement cross-tree dependencies
   * Can have its own local name
 * Support saving/loading virtual nodes
+* Support for adding dependencies
+  * Maybe with a MoSCoW on top of it to allow milestone definition

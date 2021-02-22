@@ -12,7 +12,7 @@ namespace proast {
         }
         else
         {
-            MSS(model_.set_home(options.home_dir));
+            MSS(model_.set_home_dir(options.home_dir));
 
             proast::model::Model::Config config;
             for (const auto &root: options.roots)

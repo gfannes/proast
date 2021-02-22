@@ -1,5 +1,8 @@
 #include <proast/presenter/Presenter.hpp>
 #include <proast/log.hpp>
+#include <gubg/naft/Document.hpp>
+#include <gubg/naft/Range.hpp>
+#include <gubg/file/system.hpp>
 #include <gubg/mss.hpp>
 #include <fstream>
 #include <algorithm>
@@ -14,11 +17,15 @@ namespace proast { namespace presenter {
     {
         MSS_BEGIN(bool);
 
+        MSS(load_preferences());
+
         for (bool do_run = true; do_run;)
         {
             MSS(refresh_view_());
 
             view_.run();
+
+            MSS(save_preferences());
 
             do_run = false;
             if (scheduled_operation_)
@@ -30,6 +37,47 @@ namespace proast { namespace presenter {
             }
         }
 
+        MSS_END();
+    }
+
+    bool Presenter::load_preferences()
+    {
+        MSS_BEGIN(bool);
+
+        const auto fp = model_.get_home_dir() / "Presenter.naft";
+        std::string content;
+        MSS(gubg::file::read(content, fp));
+
+        gubg::naft::Range range{content};
+
+        for (std::string tag; range.pop_tag(tag); )
+        {
+            std::string key, value;
+
+            if (false) {}
+            else if (tag == "ShowMetadataField")
+            {
+                MSS(range.pop_attr(key, value));
+                MSS(key == "value");
+                auto opt = to_MetadataField(value);
+                MSS(!!opt);
+                show_metadata_field_ = opt;
+            }
+        }
+
+        MSS_END();
+    }
+    bool Presenter::save_preferences() const
+    {
+        MSS_BEGIN(bool);
+        const auto fp = model_.get_home_dir() / "Presenter.naft";
+        std::ofstream fo{fp};
+        gubg::naft::Document doc{fo};
+        if (show_metadata_field_)
+        {
+            auto n = doc.node("ShowMetadataField");
+            n.attr("value", to_string(*show_metadata_field_));
+        }
         MSS_END();
     }
 

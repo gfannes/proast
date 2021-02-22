@@ -2,10 +2,13 @@
 #define HEADER_proast_presenter_enums_hpp_ALREADY_INCLUDED
 
 #include <string>
+#include <ostream>
+#include <optional>
 
 namespace proast { namespace presenter { 
 #define ftor_value_(t,v) v,
 #define ftor_case_(t,v) case t::v: return #v;
+#define ftor_elif_(t,v) else if (str == #v) {return t::v;}
 #define define_enum_(type, each_value) \
     enum class type \
     { \
@@ -19,6 +22,12 @@ namespace proast { namespace presenter {
             default: break; \
         } \
         return "<unknown value>"; \
+    } \
+    inline std::optional<type> to_##type(const std::string &str) \
+    { \
+        if (false) {} \
+        each_value(type, ftor_elif_) \
+        return std::nullopt; \
     } \
     inline std::ostream &operator<<(std::ostream &os, type v) \
     { \

@@ -17,7 +17,8 @@ namespace proast { namespace model {
         Model();
         ~Model();
 
-        bool set_home(const std::filesystem::path &);
+        bool set_home_dir(const std::filesystem::path &);
+        std::filesystem::path get_home_dir() const;
 
         struct Config
         {
@@ -61,7 +62,7 @@ namespace proast { namespace model {
         Node node_c_pre();
         Node node_c_post();
 
-        void recompute_metadata();
+        bool recompute_metadata();
         bool save_metadata();
         bool load_metadata();
 

@@ -18,6 +18,9 @@ namespace proast { namespace presenter {
 
         bool run();
 
+        bool load_preferences();
+        bool save_preferences() const;
+
         //View::Events API
         void received(wchar_t, bool alt) override;
 
