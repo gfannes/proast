@@ -1,4 +1,5 @@
 #include <proast/Options.hpp>
+#include <gubg/naft/Document.hpp>
 #include <gubg/mss.hpp>
 #include <iostream>
 #include <cstdlib>
@@ -51,6 +52,10 @@ namespace proast {
                 MSS(pop_arg(dir), std::cout << "Error: No home directory was specified" << std::endl);
                 home_dir = dir;
             }
+            else if (matches("-c", "--command"))
+            {
+                MSS(pop_arg(command), std::cout << "Error: No command was specified" << std::endl);
+            }
             else { std::cout << "Error: unknown CLI argument \"" << arg << "\"" << std::endl; }
         }
 
@@ -59,11 +64,21 @@ namespace proast {
 
     void Options::stream(std::ostream &os) const
     {
-        os << "[Options]{" << std::endl;
-        os << "  [Home](path:" << home_dir << ")" << std::endl;
-        for (const auto &root: roots)
-            os << "  [Root](path:" << root << ")" << std::endl;
-        os << "}" << std::endl;
+        gubg::naft::Document doc{os};
+        {
+            auto options_node = doc.node("Options");
+            {
+                auto home_node = options_node.node("Home");
+                home_node.attr("path", home_dir);
+                if (!command.empty())
+                    home_node.attr("command", command);
+                for (const auto &root: roots)
+                {
+                    auto root_node = home_node.node("Root");
+                    root_node.attr("path", root);
+                }
+            }
+        }
     }
 
     std::string Options::help() const
@@ -73,6 +88,7 @@ namespace proast {
 -r    --root    FOLDER  Add FOLDER as root tree, multiple roots are supported
 -V    --verbose LEVEL   Set verbosity LEVEL
 -L    --home    FOLDER  Set home FOLDER, default is $HOME/.config/proast
+-c    --command STRING  Run command in each root and exit
 )EOF";
     }
 } 

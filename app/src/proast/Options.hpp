@@ -14,6 +14,7 @@ namespace proast {
         unsigned int verbose = 0;
         std::vector<std::string> roots;
         std::filesystem::path home_dir;
+        std::string command;
 
         bool parse(int argc, const char **argv);
 
