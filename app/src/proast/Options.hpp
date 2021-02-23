@@ -11,7 +11,7 @@ namespace proast {
     public:
         std::string exe_filename;
         bool print_help = false;
-        unsigned int verbose = 0;
+        int verbose_level = 0;
         std::vector<std::string> roots;
         std::filesystem::path home_dir;
         std::string command;

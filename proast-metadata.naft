@@ -17,6 +17,7 @@
   [State](value:Implementing)(done:no)
 }
 [Order](path:/app/features/structure)(name:aggregation.md)(name:dependencies.md)(name:inheritance.md)(name:metadata.md)(name:navigation.md)(name:node.md)(name:order.md)(name:storage.md)(name:focus)
+[Order](path:/app/features/options)(name:index.md)(name:HOME dir.md)(name:Index filename.md)(name:Command.md)
 [Order](path:/app/features/multi_instance)(name:Refuse to start second instance.md)(name:Handle race condition for file system.md)
 [Order](path:/app/features/order)(name:support_sorting_based_on_state.md)(name:Place index first in default order.md)
 [Metadata](path:/app/features/priority/Show prio for nodes with effort.md){
@@ -24,4 +25,4 @@
   [Impact](value:1)
 }
 [Order](path:/app/features)(name:Execute file of key-presses.md)(name:Help.md)(name:Planning.md)(name:structure)(name:file_mgt)(name:options)(name:multi_instance)(name:order)(name:output)(name:priority)(name:search)(name:ui)(name:import)
-[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:generated)
+[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:generated)(name:proast)(name:info.md)

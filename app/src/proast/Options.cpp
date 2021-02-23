@@ -44,7 +44,7 @@ namespace proast {
             {
                 std::string level;
                 MSS(pop_arg(level), std::cout << "Error: No verbose level was specified" << std::endl);
-                verbose = std::stoul(level);
+                verbose_level = std::stoul(level);
             }
             else if (matches("-L", "--home"))
             {
@@ -67,6 +67,7 @@ namespace proast {
         gubg::naft::Document doc{os};
         {
             auto options_node = doc.node("Options");
+            options_node.attr("verbose_level", verbose_level);
             {
                 auto home_node = options_node.node("Home");
                 home_node.attr("path", home_dir);

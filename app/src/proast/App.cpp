@@ -54,8 +54,12 @@ namespace proast {
 
             proast::model::Model::Config config;
             for (const auto &root: options.roots)
-                if (model_.add_root(root, config))
+            {
+                if (options.verbose_level >= 0)
+                    std::cout << "Loading " << root << std::endl;
+                if (!model_.add_root(root, config))
                     std::cout << "Error: could not add " << root << std::endl;
+            }
 
             MSS(presenter_.run());
         }

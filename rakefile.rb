@@ -44,7 +44,7 @@ end
 desc "Build proast"
 task :build => [:dependencies, :version_git_hash_header] do
     mode = :debug
-    # mode = :release
+    mode = :release
     sh "cook -g ninja -T c++.std=2a -T #{mode} proast/app ftxui/app"
     sh "ninja -v"
 end

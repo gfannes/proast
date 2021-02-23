@@ -751,7 +751,7 @@ namespace proast { namespace model {
     }
     bool Model::load_current_location_()
     {
-        MSS_BEGIN(bool, "");
+        MSS_BEGIN(bool);
 
         focus_ = {root_};
 
