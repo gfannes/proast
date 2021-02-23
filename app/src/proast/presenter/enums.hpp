@@ -67,6 +67,7 @@ namespace proast { namespace presenter {
 
 #define my_each_value_(type, ftor) \
     ftor(type, Effort) \
+    ftor(type, Todo) \
     ftor(type, Volume) \
     ftor(type, Impact) \
     ftor(type, CompletionPct) \

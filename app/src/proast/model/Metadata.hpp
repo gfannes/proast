@@ -29,6 +29,8 @@ namespace proast { namespace model {
         double get_volume_db() const;
         double get_impact() const;
         double get_age() const;
+        double get_completion_frac() const;
+        double get_todo() const;
 
         bool has_local_data() const;
 

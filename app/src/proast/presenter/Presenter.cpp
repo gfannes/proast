@@ -141,13 +141,30 @@ namespace proast { namespace presenter {
                                     switch (*show_metadata_field_)
                                     {
                                         case MetadataField::Effort:
-                                            width = 5;
-                                            oss_ << std::fixed << std::setprecision(1) << std::setw(width);
-                                            if (auto effort = child->total_effort(); effort > 0)
-                                                oss_ << effort;
-                                            else
+                                        case MetadataField::Todo:
+                                            {
+                                                width = 5;
+                                                oss_ << std::setw(width);
+                                                if (child->metadata.state && *child->metadata.state == model::State::Validating && child->metadata.done)
+                                                {
+                                                    oss_ << "done";
+                                                }
+                                                else
+                                                {
+                                                    oss_ << std::fixed << std::setprecision(1);
+                                                    double v = 0.0;
+                                                    switch (*show_metadata_field_)
+                                                    {
+                                                        case MetadataField::Effort: v = child->total_effort(); break;
+                                                        case MetadataField::Todo:   v = child->total_todo(); break;
+                                                    }
+                                                    if (v)
+                                                        oss_ << v;
+                                                    else
+                                                        oss_ << ' ';
+                                                }
                                                 oss_ << ' ';
-                                            oss_ << ' ';
+                                            }
                                             break;
                                         case MetadataField::Dependency:
                                             width = 4;
@@ -160,7 +177,13 @@ namespace proast { namespace presenter {
                                     oss_ << ' ';
                                 oss_ << child->name();
                                 lst->items.emplace_back(oss_.str());
+                                if (child->metadata.state)
+                                {
+                                    lst->items.back().ix__attention[0] = (unsigned int)*child->metadata.state+3;
+                                    lst->items.back().ix__bold[0] = child->metadata.done;
+                                }
                                 lst->items.back().ix__attention[width] = type__attention(child->type);
+                                lst->items.back().ix__bold[width] = false;
                             }
                             lst->ix = rnode->selected_ix();
                             break;

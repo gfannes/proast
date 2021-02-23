@@ -39,6 +39,27 @@ namespace proast { namespace model {
         //TODO: compute actual age as new-live
         return 1.0;
     }
+    double Metadata::get_completion_frac() const
+    {
+        double frac = 0.0;
+        if (completion_pct)
+        {
+            frac = *completion_pct/100.0;
+        }
+        else if (state)
+        {
+            const auto i = (unsigned int)*state;
+            frac = (i+(done?1:0))/5.0;
+        }
+
+        frac = std::max(0.0, std::min(frac, 1.0));
+
+        return frac;
+    }
+    double Metadata::get_todo() const
+    {
+        return effort.value_or(0.0)*(1.0-get_completion_frac());
+    }
 
     void Metadata::stream(gubg::naft::Node &body)
     {

@@ -15,6 +15,7 @@ namespace proast { namespace presenter {
         switch (ch)
         {
             case 'e': return MetadataField::Effort;
+            case 'T': return MetadataField::Todo;
             case 'v': return MetadataField::Volume;
             case 'i': return MetadataField::Impact;
             case 'c': return MetadataField::CompletionPct;

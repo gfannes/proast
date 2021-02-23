@@ -191,6 +191,18 @@ namespace proast { namespace model {
         }
         return sum;
     }
+    double Node_::total_todo() const
+    {
+        double sum = 0.0;
+        if (auto self = shared_from_this()->resolve())
+        {
+            sum = self->metadata.get_todo();
+            for (auto &wptr: self->all_dependencies_)
+                if (auto ptr = wptr.lock())
+                    sum += ptr->metadata.get_todo();
+        }
+        return sum;
+    }
     std::optional<double> Node_::priority() const
     {
         std::optional<double> prio;
