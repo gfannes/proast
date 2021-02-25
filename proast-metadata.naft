@@ -25,4 +25,4 @@
   [Impact](value:1)
 }
 [Order](path:/app/features)(name:Execute file of key-presses.md)(name:Help.md)(name:Planning.md)(name:structure)(name:file_mgt)(name:options)(name:multi_instance)(name:order)(name:output)(name:priority)(name:search)(name:ui)(name:import)
-[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:generated)(name:proast)(name:info.md)
+[Order](path:)(name:readme.md)(name:@input)(name:@model)(name:@sprint)(name:@design)(name:app)(name:file_format)(name:proast-metadata.naft)(name:brainstorms)(name:rakefile.rb)(name:recipes.chai)(name:schema)(name:site)(name:naming)(name:proast.log)(name:generated)

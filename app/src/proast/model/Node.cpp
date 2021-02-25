@@ -203,6 +203,14 @@ namespace proast { namespace model {
         }
         return sum;
     }
+    double Node_::total_completion_pct() const
+    {
+        const auto te = total_effort();
+        if (te <= 0.0)
+            return 0.0;
+        const auto tt = total_todo();
+        return 100.0*(te-tt)/te;
+    }
     std::optional<double> Node_::priority() const
     {
         std::optional<double> prio;

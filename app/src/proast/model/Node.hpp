@@ -76,6 +76,7 @@ namespace proast { namespace model {
 
         double total_effort() const;
         double total_todo() const;
+        double total_completion_pct() const;
         Tags all_tags() const;
         std::optional<double> priority() const;
 

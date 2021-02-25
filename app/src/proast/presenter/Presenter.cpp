@@ -142,6 +142,7 @@ namespace proast { namespace presenter {
                                     {
                                         case MetadataField::Effort:
                                         case MetadataField::Todo:
+                                        case MetadataField::CompletionPct:
                                             {
                                                 width = 5;
                                                 oss_ << std::setw(width);
@@ -151,17 +152,29 @@ namespace proast { namespace presenter {
                                                 }
                                                 else
                                                 {
-                                                    oss_ << std::fixed << std::setprecision(1);
                                                     double v = 0.0;
                                                     switch (*show_metadata_field_)
                                                     {
-                                                        case MetadataField::Effort: v = child->total_effort(); break;
-                                                        case MetadataField::Todo:   v = child->total_todo(); break;
+                                                        case MetadataField::Effort:        v = child->total_effort(); break;
+                                                        case MetadataField::Todo:          v = child->total_todo(); break;
+                                                        case MetadataField::CompletionPct: v = child->total_completion_pct(); break;
                                                     }
-                                                    if (v)
-                                                        oss_ << v;
-                                                    else
-                                                        oss_ << ' ';
+                                                    switch (*show_metadata_field_)
+                                                    {
+                                                        case MetadataField::Effort:
+                                                        case MetadataField::Todo:
+                                                            oss_ << std::fixed << std::setprecision(1);
+                                                            if (v)
+                                                                oss_ << v;
+                                                            else
+                                                                oss_ << ' ';
+                                                            break;
+                                                        case MetadataField::CompletionPct:
+                                                            oss_ << std::fixed << std::setprecision(0);
+                                                            oss_ << std::setw(width-1);
+                                                            oss_ << v << '%';
+                                                            break;
+                                                    }
                                                 }
                                                 oss_ << ' ';
                                             }
@@ -283,7 +296,7 @@ namespace proast { namespace presenter {
                 auto lst = dto::List::create();
                 lst->name.ix__attention[0] = 2;
                 lst->name.ix__bold[0] = true;
-                auto add_help = [&](auto ch, auto descr)
+                auto add_help = [&](auto ch, auto descr, bool bold = false)
                 {
                     oss_.str("");
                     if (ch != '\0')
@@ -291,6 +304,7 @@ namespace proast { namespace presenter {
                     oss_ << descr;
                     lst->items.emplace_back(oss_.str());
                     lst->items.back().ix__attention[0] = 7;
+                    lst->items.back().ix__bold[0] = bold;
                 };
                 if (Commander::state)
                     switch (*Commander::state)
@@ -307,11 +321,17 @@ namespace proast { namespace presenter {
                             add_help('o', "Order");
                             break;
                         case State::SetMetadata:
-                        case State::ShowMetadata:
-                            lst->name = "Metadata fields";
+                            lst->name = "Set metadata fields";
                             for (auto ch: {'e', 'v', 'i', 'c', 'l', 'd', 't', 'D'})
                                 if (auto mf = to_metadata(ch))
                                     add_help(ch, to_string(*mf));
+                            add_help('~', "Erase metadata field");
+                            break;
+                        case State::ShowMetadata:
+                            lst->name = "Show metadata fields";
+                            for (auto ch: {'e', 'T', 'c'})
+                                if (auto mf = to_metadata(ch))
+                                    add_help(ch, to_string(*mf), !!show_metadata_field_ && *show_metadata_field_ == *mf);
                             add_help('~', "Erase metadata field");
                             break;
                         case State::SetState:
