@@ -239,6 +239,27 @@ namespace proast { namespace model {
         auto fp = p->path()/name;
         MSS(!std::filesystem::is_regular_file(fp));
 
+        const auto ext =  fp.extension();
+
+        if (ext == ".mm")
+        {
+            std::ofstream fo{fp};
+            fo << "<map version=\"freeplane 1.7.0\">" << std::endl;
+            std::function<void(Node &node)> append_node;
+            append_node = [&](auto &node)
+            {
+                fo << "<node TEXT=\"" << node->name() << "\">" << std::endl;
+                fo << "<attribute NAME=\"total effort\" VALUE=\"" << node->total_effort() << "\" />" << std::endl;
+                fo << "<attribute NAME=\"total todo\" VALUE=\"" << node->total_todo() << "\" />" << std::endl;
+                fo << "<attribute NAME=\"total completion\" VALUE=\"" << node->total_completion_pct() << "%\" />" << std::endl;
+                for (auto &child: node->childs)
+                    append_node(child);
+                fo << "</node>" << std::endl;
+            };
+            append_node(n);
+            fo << "</map>" << std::endl;
+        }
+        else
         {
             std::ofstream fo{fp};
             fo << "Path" << 't' << "Effort" << std::endl;
