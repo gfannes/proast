@@ -262,11 +262,13 @@ namespace proast { namespace model {
         else
         {
             std::ofstream fo{fp};
-            fo << "Path" << 't' << "Effort" << std::endl;
+            fo << "Path" << '\t' << "Effort" << std::endl;
             auto append_row = [&](auto &node)
             {
                 if (auto e = node->metadata.effort)
                     fo << to_string(node->to_string_path(n)) << '\t' << *e << std::endl;
+                else
+                    fo << to_string(node->to_string_path(n)) << '\t' << "" << std::endl;
             };
             depth_first_search(n, append_row);
         }
