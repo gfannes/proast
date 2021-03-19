@@ -1,4 +1,5 @@
 #include <proast/model/Model.hpp>
+#include <proast/model/ContentMgr.hpp>
 #include <proast/log.hpp>
 #include <gubg/file/system.hpp>
 #include <gubg/naft/Document.hpp>
@@ -246,12 +247,50 @@ namespace proast { namespace model {
             std::ofstream fo{fp};
             fo << "<map version=\"freeplane 1.7.0\">" << std::endl;
             std::function<void(Node &node)> append_node;
+            //TODO: move this to class level
+            ContentMgr content_mgr;
             append_node = [&](auto &node)
             {
                 fo << "<node TEXT=\"" << node->name() << "\">" << std::endl;
-                fo << "<attribute NAME=\"total effort\" VALUE=\"" << node->total_effort() << "\" />" << std::endl;
-                fo << "<attribute NAME=\"total todo\" VALUE=\"" << node->total_todo() << "\" />" << std::endl;
-                fo << "<attribute NAME=\"total completion\" VALUE=\"" << node->total_completion_pct() << "%\" />" << std::endl;
+
+                if (false)
+                {
+                    fo << "<attribute NAME=\"total effort\" VALUE=\"" << node->total_effort() << "\" />" << std::endl;
+                    fo << "<attribute NAME=\"total todo\" VALUE=\"" << node->total_todo() << "\" />" << std::endl;
+                    fo << "<attribute NAME=\"total completion\" VALUE=\"" << node->total_completion_pct() << "%\" />" << std::endl;
+                }
+                if (true)
+                {
+                    if (!node->content)
+                        node->content = content_mgr.load(node->path(), true);
+                    if (node->content && !node->content->items.empty())
+                    {
+                        fo << "<richcontent TYPE=\"DETAILS\" HIDDEN=\"true\">" << std::endl;
+                        fo << "<html>" << std::endl;
+                        fo << "<head/>" << std::endl;
+                        fo << "<body>" << std::endl;
+                        for (const auto &ss: node->content->items)
+                        {
+                            fo << "<p>" << std::endl;
+                            auto starts_with = [&](const std::string &needle){return ss.str.substr(0, needle.size()) == needle;};
+                            if (starts_with("## "))
+                            {
+                                fo << "<b>" << std::endl;
+                                fo << ss.str.substr(3) << std::endl;
+                                fo << "</b>" << std::endl;
+                            }
+                            else
+                            {
+                                fo << ss.str << std::endl;
+                            }
+                            fo << "</p>" << std::endl;
+                        }
+                        fo << "</body>" << std::endl;
+                        fo << "</html>" << std::endl;
+                        fo << "</richcontent>" << std::endl;
+                    }
+                }
+
                 for (auto &child: node->childs)
                     append_node(child);
                 fo << "</node>" << std::endl;
@@ -265,10 +304,14 @@ namespace proast { namespace model {
             fo << "Path" << '\t' << "Effort" << std::endl;
             auto append_row = [&](auto &node)
             {
-                if (auto e = node->metadata.effort)
-                    fo << to_string(node->to_string_path(n)) << '\t' << *e << std::endl;
-                else
-                    fo << to_string(node->to_string_path(n)) << '\t' << "" << std::endl;
+                //TODO: decide from extra args what the export should actually do
+                if (node->type == Type::File)
+                {
+                    if (auto e = node->metadata.effort)
+                        fo << to_string(node->to_string_path(n)) << '\t' << *e << std::endl;
+                    else
+                        fo << to_string(node->to_string_path(n)) << '\t' << "" << std::endl;
+                }
             };
             depth_first_search(n, append_row);
         }

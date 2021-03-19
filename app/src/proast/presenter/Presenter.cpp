@@ -207,9 +207,12 @@ namespace proast { namespace presenter {
                     lst->items.emplace_back("<could not resolve node>");
                 }
 
-                lst->name = model::to_string(node->to_string_path());
-                lst->name.ix__bold[0] = true;
-                lst->name.ix__attention[0] = type__attention(node->type);
+                if (lst)
+                {
+                    lst->name = model::to_string(node->to_string_path());
+                    lst->name.ix__bold[0] = true;
+                    lst->name.ix__attention[0] = type__attention(node->type);
+                }
             };
             set_view_dto(view_.n0,   model_.node_a());
             set_view_dto(view_.n0a,  model_.node_b_pre());

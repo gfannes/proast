@@ -12,7 +12,7 @@ namespace proast { namespace model {
     public:
         ContentMgr();
 
-        dto::List::Ptr load(const std::filesystem::path &path) const;
+        dto::List::Ptr load(const std::filesystem::path &path, bool quiet = false) const;
 
     private:
         std::set<std::string> allowed_extensions_;
