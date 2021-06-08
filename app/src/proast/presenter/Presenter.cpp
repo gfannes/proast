@@ -412,12 +412,12 @@ namespace proast { namespace presenter {
 
                         add_help('q', "Quit");
 
-                        add_help('h', "Move focus left");
-                        add_help('j', "Move focus down");
-                        add_help('k', "Move focus up");
-                        add_help('l', "Move focus right");
-                        add_help('g', "Move focus to top");
-                        add_help('G', "Move focus to bottom");
+                        add_help('h', "Move focus left, +Ctrl to drag");
+                        add_help('j', "Move focus down, +Ctrl to drag");
+                        add_help('k', "Move focus up, +Ctrl to drag");
+                        add_help('l', "Move focus right, +Ctrl to drag");
+                        add_help('g', "Move focus to top, +Ctrl to drag");
+                        add_help('G', "Move focus to bottom, +Ctrl to drag");
 
                         add_help('c', "Create new node");
                         add_help('d', "Delete node");
