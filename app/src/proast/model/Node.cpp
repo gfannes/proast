@@ -2,6 +2,7 @@
 #include <proast/log.hpp>
 #include <gubg/mss.hpp>
 #include <cmath>
+#include <algorithm>
 
 namespace proast { namespace model { 
     Node_::Node_(Type t): type(t)
