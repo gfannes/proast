@@ -15,3 +15,5 @@ proast2.ut
 generated/
 proast.log
 .clangd
+compile_commands.json
+.cache/

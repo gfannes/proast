@@ -95,4 +95,9 @@ task :clangd do
         fo.puts('CompileFlags:')
         fo.puts("    Add: [-std=c++17, #{include_dirs*', '}]")
     end
+    
+    require_relative('../gubg/gubg.build/load.rb')
+    require('gubg/build/Cooker')
+    cooker = Gubg::Build::Cooker.new()
+    cooker.generate(:ninja).ninja_compdb()
 end
