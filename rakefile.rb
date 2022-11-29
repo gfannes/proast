@@ -83,3 +83,16 @@ desc "Remove everything"
 task :proper => :clear do
     FileUtils.rm_rf(".extern")
 end
+
+desc "Generate .clangd file"
+task :clangd do
+    include_dirs = []
+    include_dirs += %w[app/src .extern/ftxui/include]
+    %w[std io].each{|name|include_dirs << "../gubg/gubg.#{name}/src"}
+    
+    include_dirs.map!{|id|"-I#{File.absolute_path(id)}"}
+    File.open('.clangd', 'w') do |fo|
+        fo.puts('CompileFlags:')
+        fo.puts("    Add: [-std=c++17, #{include_dirs*', '}]")
+    end
+end

@@ -14,3 +14,4 @@ proast2.ut
 *.a
 generated/
 proast.log
+.clangd
